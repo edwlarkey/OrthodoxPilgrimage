@@ -5,16 +5,34 @@ import (
 	"database/sql"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db"
 	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 )
 
+//go:generate sh -c "cd ../../ && go run github.com/sqlc-dev/sqlc/cmd/sqlc generate"
+
 // application holds the application-wide dependencies.
 type application struct {
-	db *sqlcdb.Queries
+	db        *sqlcdb.Queries
+	templates map[string]*template.Template
+}
+
+// churchJSON is a struct for serializing church data to JSON with camelCase keys.
+type churchJSON struct {
+	ID          int64          `json:"id"`
+	Name        string         `json:"name"`
+	AddressText string         `json:"addressText"`
+	City        string         `json:"city"`
+	Latitude    float64        `json:"latitude"`
+	Longitude   float64        `json:"longitude"`
+	Website     sql.NullString `json:"website"`
+	Description sql.NullString `json:"description"`
 }
 
 func main() {
@@ -36,24 +54,42 @@ func main() {
 	}
 	log.Println("Database migrations successful")
 
-	// Create a new application instance.
-	app := &application{
-		db: sqlcdb.New(dbConn),
+	queries := sqlcdb.New(dbConn)
+
+	// If the -seed flag is provided, seed the database.
+	if *seed {
+		count, err := queries.CountChurches(context.Background())
+		if err != nil {
+			log.Fatalf("failed to count churches: %v", err)
+		}
+
+		if count == 0 {
+			log.Println("Seeding database...")
+			if err := seedDatabase(context.Background(), queries); err != nil {
+				log.Fatalf("failed to seed database: %v", err)
+			}
+			log.Println("Database seeded successfully")
+		} else {
+			log.Println("Database already seeded")
+		}
 	}
 
-	// If the -seed flag is provided, seed the database and exit.
-	if *seed {
-		log.Println("Seeding database...")
-		if err := app.seedDatabase(context.Background()); err != nil {
-			log.Fatalf("failed to seed database: %v", err)
-		}
-		log.Println("Database seeded successfully")
-		return
+	// Parse and cache templates.
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		log.Fatalf("failed to create template cache: %v", err)
+	}
+
+	// Create a new application instance.
+	app := &application{
+		db:        queries,
+		templates: templateCache,
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", app.homeHandler)
 	mux.HandleFunc("/api/v1/churches", app.listChurchesHandler)
+	mux.HandleFunc("/churches/", app.churchDetailHandler)
 
 	log.Println("Starting server on :8080")
 	err = http.ListenAndServe(":8080", mux)
@@ -62,16 +98,90 @@ func main() {
 	}
 }
 
-// homeHandler is the handler for the root path.
-// It explicitly checks for the "/" path to avoid catching all other routes.
+// newTemplateCache creates a template cache as a map[string]*template.Template.
+func newTemplateCache() (map[string]*template.Template, error) {
+	cache := map[string]*template.Template{}
+
+	var pages []string
+	var err error
+
+	pages, err = filepath.Glob("./web/templates/*.html")
+	if err != nil || len(pages) == 0 {
+		pages, err = filepath.Glob("../../web/templates/*.html")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(pages) == 0 {
+		return nil, fmt.Errorf("no template files found")
+	}
+
+	for _, page := range pages {
+		name := filepath.Base(page)
+		if name == "base.html" {
+			continue
+		}
+
+		ts, err := template.ParseFiles(pages...)
+		if err != nil {
+			return nil, err
+		}
+
+		cache[name] = ts
+	}
+
+	return cache, nil
+}
+
+// homeHandler renders the main map page.
+// It can also handle loading a specific church by ID if the path is /churches/{id}.
 func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
+	var data interface{}
+	var err error
+
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		var id int64
+		if _, err = fmt.Sscanf(r.URL.Path, "/churches/%d", &id); err == nil {
+			data, err = app.db.GetChurch(r.Context(), id)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					http.NotFound(w, r)
+					return
+				}
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			http.NotFound(w, r)
+			return
+		}
+	}
+
+	app.render(w, "index.html", data)
+}
+
+// render is a helper function for rendering templates.
+func (app *application) render(w http.ResponseWriter, name string, data interface{}) {
+	ts, ok := app.templates[name]
+	if !ok {
+		http.Error(w, fmt.Sprintf("The template %s does not exist", name), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Server is running!"))
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	// If the template name is "church-detail.html", we execute the specific template.
+	// Otherwise, we execute the "base.html" which then includes the page template.
+	tmplToExecute := "base.html"
+	if name == "church-detail.html" {
+		tmplToExecute = "church-detail"
+	}
+
+	err := ts.ExecuteTemplate(w, tmplToExecute, data)
+	if err != nil {
+		log.Printf("Error executing template %s: %v", name, err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 // listChurchesHandler retrieves and returns a list of all churches.
@@ -83,28 +193,100 @@ func (app *application) listChurchesHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Convert to JSON-specific struct.
+	churchesJSON := make([]churchJSON, len(churches))
+	for i, c := range churches {
+		churchesJSON[i] = churchJSON{
+			ID:          c.ID,
+			Name:        c.Name,
+			AddressText: c.AddressText,
+			City:        c.City,
+			Latitude:    c.Latitude,
+			Longitude:   c.Longitude,
+			Website:     c.Website,
+			Description: c.Description,
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(churches); err != nil {
+	if err := json.NewEncoder(w).Encode(churchesJSON); err != nil {
 		http.Error(w, "Failed to encode churches to JSON", http.StatusInternalServerError)
 		log.Printf("Error encoding churches: %v", err)
 	}
 }
 
-func (app *application) seedDatabase(ctx context.Context) error {
-	// For now, we are not implementing the geocoding logic.
-	// We will add it later. We are hardcoding the coordinates for now.
-	_, err := app.db.CreateChurch(ctx, sqlcdb.CreateChurchParams{
-		Name:          "St. John the Baptist Greek Orthodox Church",
-		AddressText:   "123 Main St, New York, NY 10001",
-		City:          "New York",
-		StateProvince: "NY",
-		CountryCode:   "US",
-		Latitude:      40.7128,
-		Longitude:     -74.0060,
-		Jurisdiction: sql.NullString{
-			String: "Greek Orthodox Archdiocese of America",
-			Valid:  true,
+// churchDetailHandler renders an HTML fragment for a single church's details.
+func (app *application) churchDetailHandler(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	if len(path) < 11 {
+		http.NotFound(w, r)
+		return
+	}
+
+	idStr := path[10:]
+	if idStr == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	var id int64
+	if _, err := fmt.Sscanf(idStr, "%d", &id); err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	church, err := app.db.GetChurch(r.Context(), id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, "Failed to retrieve church", http.StatusInternalServerError)
+		log.Printf("Error retrieving church %d: %v", id, err)
+		return
+	}
+
+	// Push the URL to the browser's history
+	w.Header().Set("HX-Push-Url", fmt.Sprintf("/churches/%d", id))
+
+	app.render(w, "church-detail.html", church)
+}
+
+func seedDatabase(ctx context.Context, queries *sqlcdb.Queries) error {
+	churches := []sqlcdb.CreateChurchParams{
+		{
+			Name:          "St. John the Baptist Greek Orthodox Church",
+			AddressText:   "123 Main St, New York, NY 10001",
+			City:          "New York",
+			StateProvince: "NY",
+			CountryCode:   "US",
+			Latitude:      40.7128,
+			Longitude:     -74.0060,
+			Jurisdiction: sql.NullString{
+				String: "Greek Orthodox Archdiocese of America",
+				Valid:  true,
+			},
 		},
-	})
-	return err
+		{
+			Name:          "Holy Trinity Orthodox Cathedral",
+			AddressText:   "1121 N Leavitt St, Chicago, IL 60622",
+			City:          "Chicago",
+			StateProvince: "IL",
+			CountryCode:   "US",
+			Latitude:      41.9022,
+			Longitude:     -87.6818,
+			Jurisdiction: sql.NullString{
+				String: "Orthodox Church in America",
+				Valid:  true,
+			},
+		},
+	}
+
+	for _, church := range churches {
+		_, err := queries.CreateChurch(ctx, church)
+		if err != nil {
+			return fmt.Errorf("failed to create church %s: %w", church.Name, err)
+		}
+	}
+	return nil
 }

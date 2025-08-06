@@ -9,7 +9,7 @@ import (
 )
 
 type Querier interface {
-	// queries.sql
+	CountChurches(ctx context.Context) (int64, error)
 	CreateChurch(ctx context.Context, arg CreateChurchParams) (Church, error)
 	GetChurch(ctx context.Context, id int64) (Church, error)
 	ListChurches(ctx context.Context) ([]Church, error)

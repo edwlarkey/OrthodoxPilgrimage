@@ -10,8 +10,18 @@ import (
 	"database/sql"
 )
 
-const createChurch = `-- name: CreateChurch :one
+const countChurches = `-- name: CountChurches :one
+SELECT count(*) FROM churches
+`
 
+func (q *Queries) CountChurches(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countChurches)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const createChurch = `-- name: CreateChurch :one
 INSERT INTO churches (
     name,
     address_text,
@@ -42,7 +52,6 @@ type CreateChurchParams struct {
 	Description   sql.NullString `json:"description"`
 }
 
-// queries.sql
 func (q *Queries) CreateChurch(ctx context.Context, arg CreateChurchParams) (Church, error) {
 	row := q.db.QueryRowContext(ctx, createChurch,
 		arg.Name,

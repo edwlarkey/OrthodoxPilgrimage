@@ -1,5 +1,3 @@
--- queries.sql
-
 -- name: CreateChurch :one
 INSERT INTO churches (
     name,
@@ -24,3 +22,6 @@ WHERE id = ?;
 -- name: ListChurches :many
 SELECT * FROM churches
 ORDER BY name;
+
+-- name: CountChurches :one
+SELECT count(*) FROM churches;
