@@ -145,3 +145,57 @@ func (q *Queries) ListChurches(ctx context.Context) ([]Church, error) {
 	}
 	return items, nil
 }
+
+const listChurchesInBounds = `-- name: ListChurchesInBounds :many
+SELECT id, name, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, description FROM churches
+WHERE latitude >= ? AND latitude <= ?
+  AND longitude >= ? AND longitude <= ?
+ORDER BY name
+`
+
+type ListChurchesInBoundsParams struct {
+	Latitude    float64 `json:"latitude"`
+	Latitude_2  float64 `json:"latitude_2"`
+	Longitude   float64 `json:"longitude"`
+	Longitude_2 float64 `json:"longitude_2"`
+}
+
+func (q *Queries) ListChurchesInBounds(ctx context.Context, arg ListChurchesInBoundsParams) ([]Church, error) {
+	rows, err := q.db.QueryContext(ctx, listChurchesInBounds,
+		arg.Latitude,
+		arg.Latitude_2,
+		arg.Longitude,
+		arg.Longitude_2,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Church
+	for rows.Next() {
+		var i Church
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.AddressText,
+			&i.City,
+			&i.StateProvince,
+			&i.CountryCode,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Jurisdiction,
+			&i.Website,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

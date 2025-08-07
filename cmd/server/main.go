@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
 
 	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db"
 	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
@@ -186,14 +187,62 @@ func (app *application) render(w http.ResponseWriter, name string, data interfac
 
 // listChurchesHandler retrieves and returns a list of all churches.
 func (app *application) listChurchesHandler(w http.ResponseWriter, r *http.Request) {
-	churches, err := app.db.ListChurches(r.Context())
+	ctx := r.Context()
+	minLatStr := r.URL.Query().Get("minLat")
+	maxLatStr := r.URL.Query().Get("maxLat")
+	minLngStr := r.URL.Query().Get("minLng")
+	maxLngStr := r.URL.Query().Get("maxLng")
+
+	if minLatStr != "" && maxLatStr != "" && minLngStr != "" && maxLngStr != "" {
+		minLat, err1 := strconv.ParseFloat(minLatStr, 64)
+		maxLat, err2 := strconv.ParseFloat(maxLatStr, 64)
+		minLng, err3 := strconv.ParseFloat(minLngStr, 64)
+		maxLng, err4 := strconv.ParseFloat(maxLngStr, 64)
+		if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+			http.Error(w, "Invalid bounding box parameters", http.StatusBadRequest)
+			return
+		}
+		params := sqlcdb.ListChurchesInBoundsParams{
+			Latitude:    minLat,
+			Latitude_2:  maxLat,
+			Longitude:   minLng,
+			Longitude_2: maxLng,
+		}
+		churches, err := app.db.ListChurchesInBounds(ctx, params)
+		if err != nil {
+			http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
+			log.Printf("Error retrieving churches in bounds: %v", err)
+			return
+		}
+		churchesJSON := make([]churchJSON, len(churches))
+		for i, c := range churches {
+			churchesJSON[i] = churchJSON{
+				ID:          c.ID,
+				Name:        c.Name,
+				AddressText: c.AddressText,
+				City:        c.City,
+				Latitude:    c.Latitude,
+				Longitude:   c.Longitude,
+				Website:     c.Website,
+				Description: c.Description,
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(churchesJSON); err != nil {
+			http.Error(w, "Failed to encode churches to JSON", http.StatusInternalServerError)
+			log.Printf("Error encoding churches: %v", err)
+		}
+		return
+	}
+
+	// fallback: return all churches
+	churches, err := app.db.ListChurches(ctx)
 	if err != nil {
 		http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
 		log.Printf("Error retrieving churches: %v", err)
 		return
 	}
 
-	// Convert to JSON-specific struct.
 	churchesJSON := make([]churchJSON, len(churches))
 	for i, c := range churches {
 		churchesJSON[i] = churchJSON{

@@ -25,3 +25,9 @@ ORDER BY name;
 
 -- name: CountChurches :one
 SELECT count(*) FROM churches;
+
+-- name: ListChurchesInBounds :many
+SELECT * FROM churches
+WHERE latitude >= ? AND latitude <= ?
+  AND longitude >= ? AND longitude <= ?
+ORDER BY name;

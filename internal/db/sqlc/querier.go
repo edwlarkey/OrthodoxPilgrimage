@@ -13,6 +13,7 @@ type Querier interface {
 	CreateChurch(ctx context.Context, arg CreateChurchParams) (Church, error)
 	GetChurch(ctx context.Context, id int64) (Church, error)
 	ListChurches(ctx context.Context) ([]Church, error)
+	ListChurchesInBounds(ctx context.Context, arg ListChurchesInBoundsParams) ([]Church, error)
 }
 
 var _ Querier = (*Queries)(nil)
