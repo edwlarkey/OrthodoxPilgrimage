@@ -1,4 +1,123 @@
-{{define "index"}}
+{{define "content"}}
 <h1>Welcome to Orthodox Pilgrimage</h1>
-<!-- Main content here -->
+<div class="app-container">
+    <div id="map"></div>
+    
+    <div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Church Details</h2>
+            <button onclick="toggleSidebar()" style="float: right; background: none; border: none; color: white; font-size: 18px; cursor: pointer;">&times;</button>
+        </div>
+        <div class="sidebar-content" id="church-details">
+            {{if .}}
+                <div class="church-detail" id="church-{{.ID}}">
+                    {{template "church-detail" .}}
+                </div>
+            {{else}}
+                <div class="loading">Select a church on the map to view details.</div>
+            {{end}}
+        </div>
+    </div>
+    
+    <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle" style="{{if .}}display: none;{{else}}display: block;{{end}}">
+        Church Info
+    </button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {{if and .Longitude .Latitude}}
+    var center = ol.proj.fromLonLat([{{.Longitude}}, {{.Latitude}}]);
+    var zoom = 10;
+    {{else}}
+    var center = ol.proj.fromLonLat([-98.5795, 39.8283]);
+    var zoom = 3;
+    {{end}}
+    const view = new ol.View({
+        center: center,
+        zoom: zoom
+    });
+    
+    const map = new ol.Map({
+        target: 'map',
+        layers: [ new ol.layer.Tile({ source: new ol.source.OSM() }) ],
+        view: view
+    });
+    console.log("Map object created:", map);
+    map.updateSize(); // Force map to re-calculate its size
+
+    const svgPin = '<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" fill="#4285F4"/></svg>';
+
+    const iconStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+            anchor: [0.5, 1],
+            src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgPin),
+            scale: 1.5,
+        }),
+    });
+    
+    const vectorSource = new ol.source.Vector();
+    const vectorLayer = new ol.layer.Vector({
+        source: vectorSource,
+        style: iconStyle,
+    });
+    map.addLayer(vectorLayer);
+
+    window.toggleSidebar = function() {
+        document.getElementById('sidebar').classList.toggle('hidden');
+        document.getElementById('sidebar-toggle').style.display = document.getElementById('sidebar').classList.contains('hidden') ? 'block' : 'none';
+    }
+
+    fetch('/api/v1/churches')
+        .then(response => response.json())
+        .then(churches => {
+            console.log("Fetched churches:", churches);
+            churches.forEach(church => {
+                if (church.latitude && church.longitude) {
+                    const feature = new ol.Feature({
+                        geometry: new ol.geom.Point(ol.proj.fromLonLat([church.longitude, church.latitude])),
+                        churchId: church.id
+                    });
+                    vectorSource.addFeature(feature);
+                }
+            });
+            console.log("Added features to map source.");
+        })
+        .catch(error => console.error('Error loading church data:', error));
+
+    map.on('pointermove', function (e) {
+        if (e.dragging) {
+            return;
+        }
+        const pixel = map.getEventPixel(e.originalEvent);
+        const hit = map.hasFeatureAtPixel(pixel);
+        map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+    });
+    
+    map.on('click', function (event) {
+        console.log("Map clicked.");
+        map.forEachFeatureAtPixel(event.pixel, function (feature) {
+            const churchId = feature.get('churchId');
+            console.log("Found feature with churchId:", churchId);
+            if (churchId) {
+                console.log("Issuing HTMX GET for churchId:", churchId);
+                htmx.ajax('GET', '/churches/' + churchId, {
+                    target: '#church-details',
+                    swap: 'innerHTML'
+                });
+            }
+        });
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        console.log("HTMX afterSwap event fired.", event.detail);
+        if (event.detail.target.id === 'church-details') {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('hidden')) {
+                toggleSidebar();
+            }
+        }
+    });
+});
+</script>
 {{end}}

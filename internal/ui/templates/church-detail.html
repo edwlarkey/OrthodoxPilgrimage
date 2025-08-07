@@ -1,47 +1,39 @@
 {{define "church-detail"}}
-<div class="church-detail" id="church-{{.ID}}">
-    <div class="church-header">
-        <h2>{{.Name}}</h2>
-        {{if .Jurisdiction.Valid}}
-            <p class="jurisdiction">{{.Jurisdiction.String}}</p>
-        {{end}}
-    </div>
-    
-    <div class="church-info">
-        <div class="address">
-            <h3>Address</h3>
-            <p>{{.AddressText}}</p>
-            <p>{{.City}}, {{.StateProvince}} {{.CountryCode}}</p>
-        </div>
-        
-        {{if .Website.Valid}}
-        <div class="website">
-            <h3>Website</h3>
-            <a href="{{.Website.String}}" target="_blank" rel="noopener noreferrer">
-                {{.Website.String}}
-            </a>
-        </div>
-        {{end}}
-        
-        {{if .Description.Valid}}
-        <div class="description">
-            <h3>About</h3>
-            <p>{{.Description.String}}</p>
-        </div>
-        {{end}}
-    </div>
-    
-    <!-- Relics section will be added later when we implement that data -->
-    <div class="relics">
-        <h3>Saints' Relics</h3>
-        <p><em>Relic information coming soon...</em></p>
-    </div>
-    
-    <div class="coordinates">
-        <small>Coordinates: {{printf "%.6f" .Latitude}}, {{printf "%.6f" .Longitude}}</small>
-    </div>
+<div class="church-header">
+    <h2>{{.Name}}</h2>
+    {{if .Jurisdiction.Valid}}
+        <p class="jurisdiction">{{.Jurisdiction.String}}</p>
+    {{end}}
 </div>
-
+<div class="church-info">
+    <div class="address">
+        <h3>Address</h3>
+        <p>{{.AddressText}}</p>
+        <p>{{.City}}, {{.StateProvince}} {{.CountryCode}}</p>
+    </div>
+    {{if .Website.Valid}}
+    <div class="website">
+        <h3>Website</h3>
+        <a href="{{.Website.String}}" target="_blank" rel="noopener noreferrer">
+            {{.Website.String}}
+        </a>
+    </div>
+    {{end}}
+    {{if .Description.Valid}}
+    <div class="description">
+        <h3>About</h3>
+        <p>{{.Description.String}}</p>
+    </div>
+    {{end}}
+</div>
+<!-- Relics section will be added later when we implement that data -->
+<div class="relics">
+    <h3>Saints' Relics</h3>
+    <p><em>Relic information coming soon...</em></p>
+</div>
+<div class="coordinates">
+    <small>Coordinates: {{printf "%.6f" .Latitude}}, {{printf "%.6f" .Longitude}}</small>
+</div>
 <style>
 .church-detail {
     max-width: 400px;

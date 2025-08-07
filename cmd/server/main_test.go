@@ -7,22 +7,24 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/app"
 	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db"
 	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
+	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/ui"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHomeHandler_NoChurch(t *testing.T) {
-	templateCache, err := newTemplateCache()
+	tmplMgr, err := ui.NewTemplateManager()
 	require.NoError(t, err)
-	app := &application{templates: templateCache}
+	appInstance := &app.Application{Templates: tmplMgr, DB: nil}
 
 	req, err := http.NewRequest("GET", "/", nil)
 	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(app.homeHandler)
+	handler := http.HandlerFunc(appInstance.HomeHandler)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
@@ -37,25 +39,25 @@ func TestHomeHandler_WithChurch(t *testing.T) {
 	err = db.MigrateUp(dbConn)
 	require.NoError(t, err)
 
-	templateCache, err := newTemplateCache()
+	tmplMgr, err := ui.NewTemplateManager()
 	require.NoError(t, err)
 
-	app := &application{
-		db:        sqlcdb.New(dbConn),
-		templates: templateCache,
+	appInstance := &app.Application{
+		DB:        sqlcdb.New(dbConn),
+		Templates: tmplMgr,
 	}
-	err = app.seedDatabase(context.Background())
+	err = appInstance.SeedDatabase(context.Background())
 	require.NoError(t, err)
 
 	req, err := http.NewRequest("GET", "/churches/1", nil)
 	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(app.homeHandler)
+	handler := http.HandlerFunc(appInstance.ChurchDetailHandler)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Contains(t, rr.Body.String(), "Welcome to Orthodox Pilgrimage")
+	assert.Contains(t, rr.Body.String(), "St. John the Baptist Greek Orthodox Church")
 }
 
 func TestListChurchesHandler(t *testing.T) {
@@ -67,17 +69,21 @@ func TestListChurchesHandler(t *testing.T) {
 	err = db.MigrateUp(dbConn)
 	require.NoError(t, err)
 
-	app := &application{
-		db: sqlcdb.New(dbConn),
+	tmplMgr, err := ui.NewTemplateManager()
+	require.NoError(t, err)
+
+	appInstance := &app.Application{
+		DB:        sqlcdb.New(dbConn),
+		Templates: tmplMgr,
 	}
-	err = app.seedDatabase(context.Background())
+	err = appInstance.SeedDatabase(context.Background())
 	require.NoError(t, err)
 
 	req, err := http.NewRequest("GET", "/api/v1/churches", nil)
 	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(app.listChurchesHandler)
+	handler := http.HandlerFunc(appInstance.ListChurchesHandler)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
@@ -97,10 +103,14 @@ func TestListChurchesHandler_Bounds(t *testing.T) {
 	err = db.MigrateUp(dbConn)
 	require.NoError(t, err)
 
-	app := &application{
-		db: sqlcdb.New(dbConn),
+	tmplMgr, err := ui.NewTemplateManager()
+	require.NoError(t, err)
+
+	appInstance := &app.Application{
+		DB:        sqlcdb.New(dbConn),
+		Templates: tmplMgr,
 	}
-	err = app.seedDatabase(context.Background())
+	err = appInstance.SeedDatabase(context.Background())
 	require.NoError(t, err)
 
 	// Bounding box that only includes the Chicago church
@@ -109,7 +119,7 @@ func TestListChurchesHandler_Bounds(t *testing.T) {
 	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(app.listChurchesHandler)
+	handler := http.HandlerFunc(appInstance.ListChurchesHandler)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
@@ -129,21 +139,21 @@ func TestChurchDetailHandler(t *testing.T) {
 	err = db.MigrateUp(dbConn)
 	require.NoError(t, err)
 
-	templateCache, err := newTemplateCache()
+	tmplMgr, err := ui.NewTemplateManager()
 	require.NoError(t, err)
 
-	app := &application{
-		db:        sqlcdb.New(dbConn),
-		templates: templateCache,
+	appInstance := &app.Application{
+		DB:        sqlcdb.New(dbConn),
+		Templates: tmplMgr,
 	}
-	err = app.seedDatabase(context.Background())
+	err = appInstance.SeedDatabase(context.Background())
 	require.NoError(t, err)
 
 	req, err := http.NewRequest("GET", "/churches/1", nil)
 	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(app.churchDetailHandler)
+	handler := http.HandlerFunc(appInstance.ChurchDetailHandler)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
