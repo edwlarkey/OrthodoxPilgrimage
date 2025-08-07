@@ -11,7 +11,7 @@ BIN_DIR = ./bin
 BIN_PATH = $(BIN_DIR)/$(APP_NAME)
 DOCKER_BIN_PATH = $(BIN_DIR)/$(APP_NAME)-$(GOARCH)
 # Build target path, defaults to all packages
-BUILD_TARGET ?= .
+BUILD_TARGET ?= ./cmd/server
 
 # =========================================================================== #
 # HELPERS

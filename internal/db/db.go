@@ -84,12 +84,16 @@ func MigrateUp(db *sql.DB) error {
 		}
 
 		if _, err := tx.Exec(string(content)); err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil {
+				return fmt.Errorf("failed to execute migration %s: %w (rollback error: %v)", fileName, err, rbErr)
+			}
 			return fmt.Errorf("failed to execute migration %s: %w", fileName, err)
 		}
 
 		if _, err := tx.Exec("INSERT INTO schema_migrations (version) VALUES (?)", fileName); err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil {
+				return fmt.Errorf("failed to record migration %s: %w (rollback error: %v)", fileName, err, rbErr)
+			}
 			return fmt.Errorf("failed to record migration %s: %w", fileName, err)
 		}
 
