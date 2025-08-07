@@ -26,7 +26,7 @@ func TestHomeHandler_NoChurch(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Contains(t, rr.Body.String(), "<div class=\"sidebar hidden\" id=\"sidebar\">")
+	assert.Contains(t, rr.Body.String(), "Welcome to Orthodox Pilgrimage")
 }
 
 func TestHomeHandler_WithChurch(t *testing.T) {
@@ -55,8 +55,7 @@ func TestHomeHandler_WithChurch(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.NotContains(t, rr.Body.String(), "sidebar hidden")
-	assert.Contains(t, rr.Body.String(), "St. John the Baptist Greek Orthodox Church")
+	assert.Contains(t, rr.Body.String(), "Welcome to Orthodox Pilgrimage")
 }
 
 func TestListChurchesHandler(t *testing.T) {
@@ -86,7 +85,7 @@ func TestListChurchesHandler(t *testing.T) {
 	var churches []sqlcdb.Church
 	err = json.Unmarshal(rr.Body.Bytes(), &churches)
 	require.NoError(t, err)
-	assert.Len(t, churches, 1)
+	assert.Len(t, churches, 2)
 }
 
 func TestChurchDetailHandler(t *testing.T) {

@@ -5,6 +5,7 @@ go 1.24.5
 require (
 	github.com/mattn/go-sqlite3 v1.14.30
 	github.com/sqlc-dev/sqlc v1.29.0
+	github.com/stretchr/testify v1.10.0
 )
 
 require (
@@ -39,7 +40,6 @@ require (
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stoewer/go-strcase v1.3.1 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/tetratelabs/wazero v1.9.0 // indirect
 	github.com/wasilibs/go-pgquery v0.0.0-20250409022910-10ac41983c07 // indirect
 	github.com/wasilibs/wazero-helpers v0.0.0-20240620070341-3dff1577cd52 // indirect

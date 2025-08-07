@@ -13,6 +13,8 @@ import (
 
 	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db"
 	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
+	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/ui"
+	// Import embedded templates from project root
 )
 
 //go:generate sh -c "cd ../../ && go run github.com/sqlc-dev/sqlc/cmd/sqlc generate"
@@ -21,6 +23,11 @@ import (
 type application struct {
 	db        *sqlcdb.Queries
 	templates map[string]*template.Template
+}
+
+// seedDatabase is now a method on *application for test compatibility.
+func (app *application) seedDatabase(ctx context.Context) error {
+	return seedDatabase(ctx, app.db)
 }
 
 // churchJSON is a struct for serializing church data to JSON with camelCase keys.
@@ -102,32 +109,31 @@ func main() {
 func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
-	var pages []string
-	var err error
+	entries, err := ui.TemplatesFS.ReadDir("templates")
+	if err != nil {
+		return nil, err
+	}
 
-	pages, err = filepath.Glob("./web/templates/*.html")
-	if err != nil || len(pages) == 0 {
-		pages, err = filepath.Glob("../../web/templates/*.html")
-		if err != nil {
-			return nil, err
+	var templateFiles []string
+	for _, entry := range entries {
+		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".html" {
+			templateFiles = append(templateFiles, "templates/"+entry.Name())
 		}
 	}
 
-	if len(pages) == 0 {
-		return nil, fmt.Errorf("no template files found")
+	if len(templateFiles) == 0 {
+		return nil, fmt.Errorf("no template files found in embedded FS")
 	}
 
-	for _, page := range pages {
+	// Parse all templates together for shared definitions
+	ts, err := template.New("").ParseFS(ui.TemplatesFS, templateFiles...)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, page := range templateFiles {
 		name := filepath.Base(page)
-		if name == "base.html" {
-			continue
-		}
-
-		ts, err := template.ParseFiles(pages...)
-		if err != nil {
-			return nil, err
-		}
-
+		name = name[:len(name)-len(filepath.Ext(name))] // strip .html
 		cache[name] = ts
 	}
 
@@ -158,7 +164,7 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	app.render(w, "index.html", data)
+	app.render(w, "index", data)
 }
 
 // render is a helper function for rendering templates.
@@ -170,14 +176,8 @@ func (app *application) render(w http.ResponseWriter, name string, data interfac
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	// If the template name is "church-detail.html", we execute the specific template.
-	// Otherwise, we execute the "base.html" which then includes the page template.
-	tmplToExecute := "base.html"
-	if name == "church-detail.html" {
-		tmplToExecute = "church-detail"
-	}
-
-	err := ts.ExecuteTemplate(w, tmplToExecute, data)
+	// Execute the template by its name ("index" or "church-detail")
+	err := ts.ExecuteTemplate(w, name[:len(name)-len(filepath.Ext(name))], data)
 	if err != nil {
 		log.Printf("Error executing template %s: %v", name, err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -249,7 +249,7 @@ func (app *application) churchDetailHandler(w http.ResponseWriter, r *http.Reque
 	// Push the URL to the browser's history
 	w.Header().Set("HX-Push-Url", fmt.Sprintf("/churches/%d", id))
 
-	app.render(w, "church-detail.html", church)
+	app.render(w, "church-detail", church)
 }
 
 func seedDatabase(ctx context.Context, queries *sqlcdb.Queries) error {
