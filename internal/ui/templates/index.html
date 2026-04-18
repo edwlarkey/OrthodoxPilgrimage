@@ -1,74 +1,87 @@
 {{define "content"}}
-<h1>Welcome to Orthodox Pilgrimage</h1>
-<div class="app-container">
-    <div id="map"></div>
-    
-    <div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
-        <div class="sidebar-header">
-            <h2>Church Details</h2>
-            <button onclick="toggleSidebar()" style="float: right; background: none; border: none; color: white; font-size: 18px; cursor: pointer;">&times;</button>
-        </div>
-        <div class="sidebar-content" id="church-details">
-            {{if .}}
-                {{if eq .Type "church"}}
-                    <div class="church-detail" id="church-{{.ID}}">
-                        {{template "church-detail" .}}
-                    </div>
-                {{else if eq .Type "saint"}}
-                    <div class="saint-detail" id="saint-{{.ID}}">
-                        {{template "saint-detail" .}}
-                    </div>
-                {{end}}
-            {{else}}
-                <div class="loading">Select a church on the map to view details.</div>
-            {{end}}
-        </div>
+<div id="map"></div>
+
+<div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
+    <div class="sidebar-header">
+        <h2 id="sidebar-title">Details</h2>
+        <button class="close-btn" onclick="toggleSidebar()" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
     </div>
-    
-    <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle" style="{{if .}}display: none;{{else}}display: block;{{end}}">
-        Church Info
-    </button>
+    <div class="sidebar-content" id="church-details">
+        {{if .}}
+            {{if eq .Type "church"}}
+                <div class="church-detail" id="church-{{.Church.ID}}">
+                    {{template "church-detail" .}}
+                </div>
+            {{else if eq .Type "saint"}}
+                <div class="saint-detail" id="saint-{{.Saint.ID}}">
+                    {{template "saint-detail" .}}
+                </div>
+            {{end}}
+        {{else}}
+            <div class="loading">Select a location on the map to begin your pilgrimage.</div>
+        {{end}}
+    </div>
 </div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle">
+    Church Info
+</button>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let initialZoom = 3;
+    let initialZoom = 4;
     let initialCenter = [-98.5795, 39.8283];
     let fetchUrl = '/api/v1/churches';
 
-    // Check if we are viewing a specific church or saint to set initial view
     {{if .}}
         {{if eq .Type "church"}}
-            // It's a Church
             initialCenter = [{{.Church.Longitude}}, {{.Church.Latitude}}];
-            initialZoom = 10;
+            initialZoom = 12;
+            document.getElementById('sidebar-title').innerText = "Church Info";
         {{else if eq .Type "saint"}}
-            // It's a Saint
             fetchUrl = '/api/v1/churches?saint={{.Saint.Slug}}';
-            // Zoom will be handled after fetching features
+            document.getElementById('sidebar-title').innerText = "Saint Info";
         {{end}}
     {{end}}
 
     const view = new ol.View({
         center: ol.proj.fromLonLat(initialCenter),
-        zoom: initialZoom
+        zoom: initialZoom,
+        constrainResolution: true,
+        smoothExtentConstraint: true
     });
     
+    const osmLayer = new ol.layer.Tile({ 
+        source: new ol.source.OSM()
+    });
+
+    // Apply a filter to make it look modern and minimalist
+    osmLayer.on('prerender', (event) => {
+        const ctx = event.context;
+        ctx.save();
+        ctx.filter = 'grayscale(75%) contrast(1.1) brightness(1.1)';
+    });
+
+    osmLayer.on('postrender', (event) => {
+        const ctx = event.context;
+        ctx.restore();
+    });
+
     const map = new ol.Map({
         target: 'map',
-        layers: [ new ol.layer.Tile({ source: new ol.source.OSM() }) ],
+        layers: [ osmLayer ],
         view: view
     });
-    console.log("Map object created:", map);
-    map.updateSize();
 
-    const svgPin = '<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" fill="#4285F4"/></svg>';
+    const svgPin = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21C16 17 20 13.4183 20 9C20 4.58172 16.4183 1 12 1C7.58172 1 4 4.58172 4 9C4 13.4183 8 17 12 21Z" fill="#3498db" stroke="white" stroke-width="1"/><circle cx="12" cy="9" r="3" fill="white"/></svg>';
 
     const iconStyle = new ol.style.Style({
         image: new ol.style.Icon({
             anchor: [0.5, 1],
             src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgPin),
-            scale: 1.5,
+            scale: 1,
         }),
     });
     
@@ -80,32 +93,36 @@ document.addEventListener('DOMContentLoaded', function() {
     map.addLayer(vectorLayer);
 
     window.toggleSidebar = function() {
-        document.getElementById('sidebar').classList.toggle('hidden');
-        document.getElementById('sidebar-toggle').style.display = document.getElementById('sidebar').classList.contains('hidden') ? 'block' : 'none';
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('hidden');
+        document.getElementById('sidebar-toggle').style.display = sidebar.classList.contains('hidden') ? 'block' : 'none';
     }
 
     fetch(fetchUrl)
         .then(response => response.json())
         .then(churches => {
-            console.log("Fetched churches:", churches);
             if (churches.length === 0) return;
-
             const features = [];
             churches.forEach(church => {
                 if (church.latitude && church.longitude) {
                     const feature = new ol.Feature({
                         geometry: new ol.geom.Point(ol.proj.fromLonLat([church.longitude, church.latitude])),
-                        churchSlug: church.slug || church.id // Fallback to ID if slug missing
+                        churchSlug: church.slug
                     });
                     features.push(feature);
                 }
             });
             vectorSource.addFeatures(features);
             
-            // If viewing a saint, fit the map to show all their churches
             {{if eq .Type "saint"}}
-            const extent = vectorSource.getExtent();
-            map.getView().fit(extent, { padding: [50, 50, 50, 50], maxZoom: 12 });
+            if (features.length > 0) {
+                const extent = vectorSource.getExtent();
+                map.getView().fit(extent, { 
+                    padding: [100, 100, 100, 100], 
+                    duration: 1000,
+                    maxZoom: 12 
+                });
+            }
             {{end}}
         })
         .catch(error => console.error('Error loading church data:', error));
@@ -118,15 +135,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     map.on('click', function (event) {
-        map.forEachFeatureAtPixel(event.pixel, function (feature) {
+        const feature = map.forEachFeatureAtPixel(event.pixel, f => f);
+        if (feature) {
             const slug = feature.get('churchSlug');
-            if (slug) {
-                htmx.ajax('GET', '/churches/' + slug, {
-                    target: '#church-details',
-                    swap: 'innerHTML'
-                });
-            }
-        });
+            document.getElementById('sidebar-title').innerText = "Church Info";
+            htmx.ajax('GET', '/churches/' + slug, {
+                target: '#church-details',
+                swap: 'innerHTML'
+            });
+            
+            // Pan to clicked church
+            const coords = feature.getGeometry().getCoordinates();
+            view.animate({ center: coords, duration: 500 });
+        }
     });
 
     document.body.addEventListener('htmx:afterSwap', function(event) {

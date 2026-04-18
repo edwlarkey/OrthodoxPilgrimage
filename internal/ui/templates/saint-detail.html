@@ -1,100 +1,157 @@
 {{define "saint-detail"}}
-<div class="saint-header">
-    <h2>{{.Name}}</h2>
-    <p class="feast-day">Feast Day: {{if .FeastDay.Valid}}{{.FeastDay.String}}{{else}}Unknown{{end}}</p>
-</div>
-<div class="saint-info">
-    {{if .ImageUrl.Valid}}
-    <div class="saint-image">
-        <img src="{{.ImageUrl.String}}" alt="{{.Name}}" style="max-width: 100%; border-radius: 4px;">
-    </div>
+<div class="detail-header">
+    <h1 class="title">{{.Saint.Name}}</h1>
+    {{if .Saint.FeastDay.Valid}}
+        <p class="subtitle">Feast Day: {{.Saint.FeastDay.String}}</p>
     {{end}}
-    
-    {{if .Description.Valid}}
-    <div class="description">
-        <h3>Life and Miracles</h3>
-        <p>{{.Description.String}}</p>
+</div>
+
+{{if .Saint.ImageUrl.Valid}}
+<div class="image-container">
+    <img src="{{.Saint.ImageUrl.String}}" alt="Icon of {{.Saint.Name}}" onerror="this.parentElement.style.display='none'">
+</div>
+{{end}}
+
+<div class="info-section">
+    {{if .Saint.Description.Valid}}
+    <div class="info-item">
+        <label>Life and Miracles</label>
+        <p class="description-text">{{.Saint.Description.String}}</p>
     </div>
     {{end}}
 
-    {{if .LivesUrl.Valid}}
-    <div class="lives-link">
-        <a href="{{.LivesUrl.String}}" target="_blank" rel="noopener noreferrer">
+    {{if .Saint.LivesUrl.Valid}}
+    <div class="info-item">
+        <label>Primary Source</label>
+        <a href="{{.Saint.LivesUrl.String}}" target="_blank" rel="noopener noreferrer" class="external-link">
             Read more about their life
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px; vertical-align: middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
         </a>
     </div>
     {{end}}
 </div>
+
 <div class="saint-footer">
-    <p><em>The map shows churches with relics of {{.Name}}.</em></p>
-    <a href="/" class="back-link">Show all churches</a>
+    <p><em>The map now shows all churches housing the relics of {{.Saint.Name}}.</em></p>
+    {{if .ReferringChurch}}
+        <a href="/churches/{{.ReferringChurch.Slug}}" class="back-to-church-btn">
+            &larr; Back to {{.ReferringChurch.Name}}
+        </a>
+    {{end}}
+
+    {{if .Churches}}
+    <div class="all-locations">
+        <h3>Veneration Locations</h3>
+        <ul class="church-list">
+            {{range .Churches}}
+            <li>
+                <a href="/churches/{{.Slug}}">
+                    <span class="church-name">{{.Name}}</span>
+                    <span class="church-loc">{{.City}}, {{.StateProvince}}</span>
+                </a>
+            </li>
+            {{end}}
+        </ul>
+    </div>
+    {{end}}
+    
+    <a href="/" class="clear-btn">Show all churches</a>
 </div>
 
 <style>
-.saint-detail {
-    max-width: 400px;
-    padding: 1rem;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    font-family: sans-serif;
-}
+    .detail-header { margin-bottom: 1.5rem; }
+    .title { font-size: 1.6rem; font-weight: 800; margin: 0 0 0.4rem 0; line-height: 1.2; }
+    .subtitle { font-size: 1rem; font-weight: 600; color: #7f8c8d; margin: 0; }
+    
+    .image-container { margin: 1rem -20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+    .image-container img { width: 100%; max-height: 350px; object-fit: contain; background: #fff; }
 
-.saint-header h2 {
-    margin: 0 0 0.25rem 0;
-    color: #2c3e50;
-    font-size: 1.5rem;
-}
+    .info-section { margin-bottom: 2rem; }
+    .info-item { margin-bottom: 1.5rem; }
+    .info-item label { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #bdc3c7; margin-bottom: 0.5rem; }
+    .info-item p { margin: 0; line-height: 1.6; font-size: 1rem; }
+    .external-link { color: var(--accent-color); text-decoration: none; font-weight: 700; display: flex; align-items: center; }
+    .external-link:hover { text-decoration: underline; }
+    .description-text { color: #2c3e50; }
 
-.feast-day {
-    margin: 0 0 1rem 0;
-    color: #7f8c8d;
-    font-weight: bold;
-}
+    .saint-footer { 
+        margin-top: 2rem; 
+        padding-top: 1.5rem; 
+        border-top: 1px solid rgba(0,0,0,0.05);
+        text-align: center;
+    }
+    .saint-footer p { font-size: 0.85rem; color: #95a5a6; margin-bottom: 1rem; }
+    
+    .back-to-church-btn {
+        display: block;
+        background: var(--accent-color);
+        color: white;
+        text-decoration: none;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+    }
+    .back-to-church-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(52, 152, 219, 0.3);
+    }
 
-.saint-info h3 {
-    margin: 1rem 0 0.5rem 0;
-    color: #34495e;
-    font-size: 1.1rem;
-    border-bottom: 1px solid #ecf0f1;
-    padding-bottom: 0.25rem;
-}
+    .all-locations {
+        text-align: left;
+        margin-bottom: 2rem;
+    }
+    .all-locations h3 {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #bdc3c7;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding-bottom: 0.5rem;
+    }
+    .church-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .church-list li {
+        margin-bottom: 12px;
+    }
+    .church-list a {
+        text-decoration: none;
+        display: block;
+        transition: transform 0.2s;
+    }
+    .church-list a:hover {
+        transform: translateX(5px);
+    }
+    .church-name {
+        display: block;
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 0.95rem;
+    }
+    .church-loc {
+        display: block;
+        font-size: 0.8rem;
+        color: #7f8c8d;
+    }
 
-.saint-info p {
-    margin: 0;
-    line-height: 1.6;
-}
-
-.lives-link {
-    margin-top: 1rem;
-}
-
-.lives-link a {
-    color: #3498db;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.lives-link a:hover {
-    text-decoration: underline;
-}
-
-.saint-footer {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #ecf0f1;
-}
-
-.back-link {
-    display: inline-block;
-    margin-top: 0.5rem;
-    color: #3498db;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.back-link:hover {
-    text-decoration: underline;
-}
+    .clear-btn {
+        display: inline-block;
+        background: #f1f2f6;
+        color: #7f8c8d;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .clear-btn:hover { background: #e1e2e6; color: #2c3e50; }
 </style>
 {{end}}

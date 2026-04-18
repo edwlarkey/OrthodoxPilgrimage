@@ -1,145 +1,99 @@
 {{define "church-detail"}}
-<div class="church-header">
-    <h2>{{.Name}}</h2>
+{{with .Church}}
+<div class="detail-header">
+    <h1 class="title">{{.Name}}</h1>
     {{if .Jurisdiction.Valid}}
-        <p class="jurisdiction">{{.Jurisdiction.String}}</p>
+        <p class="subtitle">{{.Jurisdiction.String}}</p>
     {{end}}
 </div>
-<div class="church-info">
-    <div class="address">
-        <h3>Address</h3>
+
+{{if .ImageUrl.Valid}}
+<div class="image-container">
+    <img src="{{.ImageUrl.String}}" alt="Photo of {{.Name}}" onerror="this.parentElement.style.display='none'">
+</div>
+{{end}}
+
+<div class="info-section">
+    <div class="info-item">
+        <label>Address</label>
         <p>{{.AddressText}}</p>
         <p>{{.City}}, {{.StateProvince}} {{.CountryCode}}</p>
     </div>
+    
     {{if .Website.Valid}}
-    <div class="website">
-        <h3>Website</h3>
-        <a href="{{.Website.String}}" target="_blank" rel="noopener noreferrer">
-            {{.Website.String}}
-        </a>
+    <div class="info-item">
+        <label>Website</label>
+        <a href="{{.Website.String}}" target="_blank" rel="noopener noreferrer">{{.Website.String}}</a>
     </div>
     {{end}}
+
+    {{if .Phone.Valid}}
+    <div class="info-item">
+        <label>Phone</label>
+        <p>{{.Phone.String}}</p>
+    </div>
+    {{end}}
+
     {{if .Description.Valid}}
-    <div class="description">
-        <h3>About</h3>
-        <p>{{.Description.String}}</p>
+    <div class="info-item">
+        <label>About</label>
+        <p class="description-text">{{.Description.String}}</p>
     </div>
     {{end}}
 </div>
+{{end}}
 
-<div class="relics">
+<div class="relics-section">
     <h3>Saints' Relics</h3>
     {{if .Relics}}
-        <ul class="relic-list">
+        <div class="relic-pills">
+        {{$churchSlug := .Church.Slug}}
         {{range .Relics}}
-            <li>
-                <a href="/{{.Slug}}" class="saint-link">{{.Name}}</a>
+            <a href="/{{.Slug}}?from={{$churchSlug}}" class="relic-pill">
+                <span class="saint-name">{{.Name}}</span>
                 {{if .RelicDescription.Valid}}
-                    <span class="relic-desc">- {{.RelicDescription.String}}</span>
+                    <span class="relic-type">{{.RelicDescription.String}}</span>
                 {{end}}
-            </li>
+            </a>
         {{end}}
-        </ul>
+        </div>
     {{else}}
-        <p><em>No relic information available for this church.</em></p>
+        <p class="empty-msg">No relic information available.</p>
     {{end}}
-</div>
-
-<div class="coordinates">
-    <small>Coordinates: {{printf "%.6f" .Latitude}}, {{printf "%.6f" .Longitude}}</small>
 </div>
 
 <style>
-.church-detail {
-    max-width: 400px;
-    padding: 1rem;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    font-family: sans-serif;
-}
+    .detail-header { margin-bottom: 1.5rem; }
+    .title { font-size: 1.6rem; font-weight: 800; margin: 0 0 0.4rem 0; line-height: 1.2; }
+    .subtitle { font-size: 0.9rem; color: #7f8c8d; margin: 0; font-style: italic; }
+    
+    .image-container { margin: 1rem -20px; }
+    .image-container img { width: 100%; height: 200px; object-fit: cover; }
 
-.church-header h2 {
-    margin: 0 0 0.5rem 0;
-    color: #2c3e50;
-    font-size: 1.5rem;
-}
+    .info-section { margin-bottom: 2rem; }
+    .info-item { margin-bottom: 1.2rem; }
+    .info-item label { display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #bdc3c7; margin-bottom: 0.3rem; }
+    .info-item p { margin: 0; line-height: 1.5; font-size: 0.95rem; }
+    .info-item a { color: var(--accent-color); text-decoration: none; font-size: 0.95rem; }
+    .info-item a:hover { text-decoration: underline; }
+    .description-text { color: #576574; }
 
-.jurisdiction {
-    margin: 0 0 1rem 0;
-    color: #7f8c8d;
-    font-style: italic;
-}
-
-.church-info > div {
-    margin-bottom: 1rem;
-}
-
-.church-info h3 {
-    margin: 0 0 0.5rem 0;
-    color: #34495e;
-    font-size: 1rem;
-    border-bottom: 1px solid #ecf0f1;
-    padding-bottom: 0.25rem;
-}
-
-.church-info p {
-    margin: 0;
-    line-height: 1.4;
-}
-
-.relics {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #ecf0f1;
-}
-
-.relics h3 {
-    margin: 0 0 0.5rem 0;
-    color: #34495e;
-    font-size: 1rem;
-}
-
-.relic-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.relic-list li {
-    margin-bottom: 0.5rem;
-}
-
-.saint-link {
-    color: #3498db;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.saint-link:hover {
-    text-decoration: underline;
-}
-
-.relic-desc {
-    color: #7f8c8d;
-    font-style: italic;
-    font-size: 0.9rem;
-}
-
-.website a {
-    color: #3498db;
-    text-decoration: none;
-}
-
-.website a:hover {
-    text-decoration: underline;
-}
-
-.coordinates {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #ecf0f1;
-    color: #95a5a6;
-}
+    .relics-section h3 { font-size: 1rem; margin-bottom: 1rem; }
+    .relic-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .relic-pill { 
+        background: white; 
+        border: 1px solid #eee; 
+        padding: 8px 14px; 
+        border-radius: 12px; 
+        text-decoration: none; 
+        color: inherit; 
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+    }
+    .relic-pill:hover { border-color: var(--accent-color); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .saint-name { font-weight: 700; font-size: 0.9rem; color: var(--accent-color); }
+    .relic-type { font-size: 0.75rem; color: #95a5a6; margin-top: 2px; }
+    .empty-msg { font-style: italic; color: #bdc3c7; }
 </style>
 {{end}}

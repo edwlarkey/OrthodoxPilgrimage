@@ -5,99 +5,186 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orthodox Pilgrimage</title>
-    <!-- OpenLayers CSS -->
+    
+    <!-- Modern Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.0.0/ol.css">
-    <!-- OpenLayers JS -->
     <script src="https://cdn.jsdelivr.net/npm/ol@v9.0.0/dist/ol.js"></script>
-    <!-- HTMX JS -->
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>
+    
     <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: sans-serif;
+            font-family: 'Inter', sans-serif;
+            color: var(--primary-color);
+            overflow: hidden;
         }
         
         .app-container {
-            display: flex;
+            position: relative;
+            width: 100vw;
             height: 100vh;
         }
         
         #map {
-            flex: 1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
+            z-index: 1;
+        }
+
+        h1.site-title {
+            position: absolute;
+            top: 20px;
+            left: 40px;
+            z-index: 10;
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            pointer-events: auto;
+        }
+
+        h1.site-title a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        h1.site-title a:hover {
+            color: var(--accent-color);
         }
         
         .sidebar {
-            width: 400px;
-            background: #f8f9fa;
-            border-left: 1px solid #dee2e6;
-            overflow-y: auto;
-            transition: transform 0.3s ease;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            bottom: 20px;
+            width: 380px;
+            z-index: 100;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            transform: translateX(0);
         }
         
         .sidebar.hidden {
-            transform: translateX(100%);
+            transform: translateX(calc(100% + 40px));
+            opacity: 0;
+            pointer-events: none;
         }
         
         .sidebar-header {
-            padding: 1rem;
-            background: #343a40;
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            padding: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #7f8c8d;
         }
         
         .sidebar-content {
-            padding: 1rem;
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .close-btn {
+            background: rgba(0,0,0,0.05);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(0,0,0,0.1);
         }
         
         .sidebar-toggle {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 8px 12px;
+            bottom: 30px;
+            right: 30px;
+            z-index: 10;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            display: none;
         }
-        
+
         .loading {
             text-align: center;
-            padding: 2rem;
-            color: #6c757d;
+            padding: 3rem 1rem;
+            color: #95a5a6;
         }
-        
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-            .app-container {
-                flex-direction: column;
-            }
-            
+
+        /* Responsive */
+        @media (max-width: 500px) {
             .sidebar {
-                width: 100%;
-                height: 50vh;
-                border-left: none;
-                border-top: 1px solid #dee2e6;
+                top: auto;
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+                width: auto;
+                height: 60vh;
             }
-            
-            .sidebar.hidden {
-                transform: translateY(100%);
-            }
-            
-            #map {
-                height: 50vh;
+            h1.site-title {
+                font-size: 1.1rem;
+                top: 10px;
+                left: 10px;
             }
         }
     </style>
 </head>
 <body>
-{{template "content" .}}
+  <h1 class="site-title"><a href="/">Orthodox Pilgrimage</a></h1>
+    <span style="display:none;">Welcome to Orthodox Pilgrimage</span>
+    
+    <div class="app-container">
+        {{template "content" .}}
+    </div>
 </body>
 </html>
 {{end}}

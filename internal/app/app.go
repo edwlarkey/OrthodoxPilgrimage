@@ -50,8 +50,10 @@ type ChurchWithRelics struct {
 }
 
 type SaintWithType struct {
-	Type string
+	Type            string
 	sqlcdb.Saint
+	ReferringChurch *sqlcdb.Church
+	Churches        []sqlcdb.Church
 }
 
 func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,10 +78,22 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 			slug := strings.TrimPrefix(path, "/")
 			saint, err := a.DB.GetSaintBySlug(r.Context(), slug)
 			if err == nil {
-				data = SaintWithType{
-					Type:  "saint",
-					Saint: saint,
+				// Fetch all churches for this saint
+				churches, _ := a.DB.ListChurchesBySaintSlug(r.Context(), slug)
+				
+				sData := SaintWithType{
+					Type:     "saint",
+					Saint:    saint,
+					Churches: churches,
 				}
+				// Optional: link back to referring church
+				fromSlug := r.URL.Query().Get("from")
+				if fromSlug != "" {
+					if church, err := a.DB.GetChurchBySlug(r.Context(), fromSlug); err == nil {
+						sData.ReferringChurch = &church
+					}
+				}
+				data = sData
 			}
 		}
 

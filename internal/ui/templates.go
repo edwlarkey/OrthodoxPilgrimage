@@ -49,7 +49,11 @@ func (tm *TemplateManager) Render(w io.Writer, _ string, data interface{}) error
 	if !ok {
 		return fmt.Errorf("the template 'base' does not exist")
 	}
-	return ts.ExecuteTemplate(w, "base", data)
+	err := ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		fmt.Printf("Error executing template: %v\n", err)
+	}
+	return err
 }
 
 func (tm *TemplateManager) Get(name string) (*template.Template, error) {

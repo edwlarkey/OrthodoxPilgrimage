@@ -125,6 +125,7 @@ func TestHomeHandler_WithSaint(t *testing.T) {
 	appInstance, dbConn := seedTestDB(t)
 	defer dbConn.Close()
 
+	// Test viewing a saint directly
 	req, err := http.NewRequest("GET", "/st-seraphim-of-sarov", nil)
 	require.NoError(t, err)
 
@@ -136,6 +137,16 @@ func TestHomeHandler_WithSaint(t *testing.T) {
 	assert.Contains(t, rr.Body.String(), "Saint Seraphim of Sarov")
 	assert.Contains(t, rr.Body.String(), "https://example.com/st-seraphim")
 	assert.Contains(t, rr.Body.String(), "Read more about their life")
+
+	// Test viewing a saint with a referring church
+	req, err = http.NewRequest("GET", "/st-seraphim-of-sarov?from=st-john-baptist-ny", nil)
+	require.NoError(t, err)
+
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Contains(t, rr.Body.String(), "Back to St. John the Baptist")
 }
 
 func TestListChurchesHandler(t *testing.T) {
