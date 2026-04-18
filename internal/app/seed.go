@@ -1,15 +1,19 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 
 	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 )
+
+//go:embed data/data.json
+var dataFile embed.FS
 
 type DataFile struct {
 	Saints   []SaintData  `json:"saints"`
@@ -49,12 +53,11 @@ type RelicData struct {
 }
 
 func SeedDatabase(ctx context.Context, queries *sqlcdb.Queries) error {
-	f, err := os.Open("data/data.json")
+	data, err := dataFile.ReadFile("data/data.json")
 	if err != nil {
-		return fmt.Errorf("failed to open data file: %w", err)
+		return fmt.Errorf("failed to read embedded data file: %w", err)
 	}
-	defer f.Close()
-	return SeedFromReader(ctx, queries, f)
+	return SeedFromReader(ctx, queries, bytes.NewReader(data))
 }
 
 func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) error {

@@ -57,6 +57,7 @@ type SaintWithType struct {
 }
 
 func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "public, max-age=86400")
 	var data interface{}
 	var err error
 
@@ -165,6 +166,7 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
 	if err := json.NewEncoder(w).Encode(churchesJSON); err != nil {
 		http.Error(w, "Failed to encode churches to JSON", http.StatusInternalServerError)
 		log.Printf("Error encoding churches: %v", err)
