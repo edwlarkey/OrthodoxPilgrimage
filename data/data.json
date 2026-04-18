@@ -1,0 +1,66 @@
+{
+  "saints": [
+    {
+      "name": "Saint Seraphim of Sarov",
+      "slug": "st-seraphim-of-sarov",
+      "feast_day": "January 2, July 19",
+      "description": "A Russian Orthodox monk and mystic who is one of the most renowned Eastern Orthodox saints.",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Seraphim_of_Sarov.jpg",
+      "lives_url": "https://www.oca.org/saints/lives/2026/01/02/100008-venerable-seraphim-the-wonderworker-of-sarov"
+    },
+    {
+      "name": "Saint Nektarios of Aegina",
+      "slug": "st-nektarios-of-aegina",
+      "feast_day": "November 9",
+      "description": "A Greek Orthodox saint and bishop known as a miracle-worker.",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Saint_Nektarios_of_Aegina.jpg",
+      "lives_url": "https://www.goarch.org/chapel/saints?contentid=281"
+    }
+  ],
+  "churches": [
+    {
+      "name": "St. John the Baptist Greek Orthodox Church",
+      "slug": "st-john-baptist-ny",
+      "type": "Parish",
+      "address_text": "123 Main St, New York, NY 10001",
+      "city": "New York",
+      "state_province": "NY",
+      "country_code": "US",
+      "latitude": 40.7128,
+      "longitude": -74.0060,
+      "jurisdiction": "Greek Orthodox Archdiocese of America",
+      "website": "https://stjohnbaptist.ny.goarch.org",
+      "phone": "212-555-0199",
+      "description": "A vibrant community in the heart of New York City.",
+      "image_url": "https://example.com/st-john.jpg",
+      "relics": [
+        {
+          "saint_slug": "st-seraphim-of-sarov",
+          "description": "A small portion of his relics."
+        }
+      ]
+    },
+    {
+      "name": "Holy Trinity Orthodox Cathedral",
+      "slug": "holy-trinity-chicago",
+      "type": "Cathedral",
+      "address_text": "1121 N Leavitt St, Chicago, IL 60622",
+      "city": "Chicago",
+      "state_province": "IL",
+      "country_code": "US",
+      "latitude": 41.9022,
+      "longitude": -87.6818,
+      "jurisdiction": "Orthodox Church in America",
+      "website": "https://holytrinitycathedral.net",
+      "phone": "773-555-0123",
+      "description": "The cathedral of the Diocese of the Midwest.",
+      "image_url": "https://example.com/holy-trinity.jpg",
+      "relics": [
+        {
+          "saint_slug": "st-nektarios-of-aegina",
+          "description": "A relic of the Saint."
+        }
+      ]
+    }
+  ]
+}

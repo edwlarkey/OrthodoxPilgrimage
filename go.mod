@@ -3,9 +3,9 @@ module git.sr.ht/~edwlarkey/orthodoxpilgrimage
 go 1.24.5
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.30
 	github.com/sqlc-dev/sqlc v1.29.0
 	github.com/stretchr/testify v1.10.0
+	modernc.org/sqlite v1.38.2
 )
 
 require (
@@ -64,5 +64,4 @@ require (
 	modernc.org/libc v1.66.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.38.2 // indirect
 )

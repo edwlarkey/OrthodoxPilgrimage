@@ -1,0 +1,100 @@
+{{define "saint-detail"}}
+<div class="saint-header">
+    <h2>{{.Name}}</h2>
+    <p class="feast-day">Feast Day: {{if .FeastDay.Valid}}{{.FeastDay.String}}{{else}}Unknown{{end}}</p>
+</div>
+<div class="saint-info">
+    {{if .ImageUrl.Valid}}
+    <div class="saint-image">
+        <img src="{{.ImageUrl.String}}" alt="{{.Name}}" style="max-width: 100%; border-radius: 4px;">
+    </div>
+    {{end}}
+    
+    {{if .Description.Valid}}
+    <div class="description">
+        <h3>Life and Miracles</h3>
+        <p>{{.Description.String}}</p>
+    </div>
+    {{end}}
+
+    {{if .LivesUrl.Valid}}
+    <div class="lives-link">
+        <a href="{{.LivesUrl.String}}" target="_blank" rel="noopener noreferrer">
+            Read more about their life
+        </a>
+    </div>
+    {{end}}
+</div>
+<div class="saint-footer">
+    <p><em>The map shows churches with relics of {{.Name}}.</em></p>
+    <a href="/" class="back-link">Show all churches</a>
+</div>
+
+<style>
+.saint-detail {
+    max-width: 400px;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    font-family: sans-serif;
+}
+
+.saint-header h2 {
+    margin: 0 0 0.25rem 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+.feast-day {
+    margin: 0 0 1rem 0;
+    color: #7f8c8d;
+    font-weight: bold;
+}
+
+.saint-info h3 {
+    margin: 1rem 0 0.5rem 0;
+    color: #34495e;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #ecf0f1;
+    padding-bottom: 0.25rem;
+}
+
+.saint-info p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.lives-link {
+    margin-top: 1rem;
+}
+
+.lives-link a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.lives-link a:hover {
+    text-decoration: underline;
+}
+
+.saint-footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ecf0f1;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+</style>
+{{end}}

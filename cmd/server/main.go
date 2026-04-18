@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-	seed := flag.Bool("seed", false, "Seed the database with initial data")
 	flag.Parse()
 
 	dsn := "orthodox_pilgrimage.db?_busy_timeout=5000"
@@ -31,21 +30,12 @@ func main() {
 
 	queries := sqlcdb.New(dbConn)
 
-	if *seed {
-		count, err := queries.CountChurches(context.Background())
-		if err != nil {
-			log.Fatalf("failed to count churches: %v", err)
-		}
-		if count == 0 {
-			log.Println("Seeding database...")
-			if err := app.SeedDatabase(context.Background(), queries); err != nil {
-				log.Fatalf("failed to seed database: %v", err)
-			}
-			log.Println("Database seeded successfully")
-		} else {
-			log.Println("Database already seeded")
-		}
+	// Seed database on every startup from data.json (source of truth)
+	log.Println("Syncing database with data/data.json...")
+	if err := app.SeedDatabase(context.Background(), queries); err != nil {
+		log.Fatalf("failed to seed database: %v", err)
 	}
+	log.Println("Database synced successfully")
 
 	tmplMgr, err := ui.NewTemplateManager()
 	if err != nil {

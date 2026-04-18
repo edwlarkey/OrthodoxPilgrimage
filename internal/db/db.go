@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 //go:embed migrations/*.sql
@@ -14,7 +14,7 @@ var migrationsFS embed.FS
 
 // New opens a connection to the database. The DSN should be properly formatted.
 func New(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", dsn)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

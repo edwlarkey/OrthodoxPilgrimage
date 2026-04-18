@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"os"
 	"testing"
 
@@ -10,9 +11,8 @@ import (
 
 func TestMigrateUp(t *testing.T) {
 	// Use an in-memory SQLite database for testing.
-	// The `cache=shared` is important to allow multiple connections to the same in-memory DB.
-	dsn := "file::memory:?cache=shared&_busy_timeout=5000"
-	db, err := New(dsn)
+	dsn := "file:memdb?mode=memory&cache=shared"
+	db, err := sql.Open("sqlite", dsn)
 	require.NoError(t, err, "failed to connect to in-memory db")
 	defer db.Close()
 

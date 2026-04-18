@@ -10,9 +10,15 @@
         </div>
         <div class="sidebar-content" id="church-details">
             {{if .}}
-                <div class="church-detail" id="church-{{.ID}}">
-                    {{template "church-detail" .}}
-                </div>
+                {{if eq .Type "church"}}
+                    <div class="church-detail" id="church-{{.ID}}">
+                        {{template "church-detail" .}}
+                    </div>
+                {{else if eq .Type "saint"}}
+                    <div class="saint-detail" id="saint-{{.ID}}">
+                        {{template "saint-detail" .}}
+                    </div>
+                {{end}}
             {{else}}
                 <div class="loading">Select a church on the map to view details.</div>
             {{end}}
@@ -26,16 +32,26 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    {{if and .Longitude .Latitude}}
-    var center = ol.proj.fromLonLat([{{.Longitude}}, {{.Latitude}}]);
-    var zoom = 10;
-    {{else}}
-    var center = ol.proj.fromLonLat([-98.5795, 39.8283]);
-    var zoom = 3;
+    let initialZoom = 3;
+    let initialCenter = [-98.5795, 39.8283];
+    let fetchUrl = '/api/v1/churches';
+
+    // Check if we are viewing a specific church or saint to set initial view
+    {{if .}}
+        {{if eq .Type "church"}}
+            // It's a Church
+            initialCenter = [{{.Church.Longitude}}, {{.Church.Latitude}}];
+            initialZoom = 10;
+        {{else if eq .Type "saint"}}
+            // It's a Saint
+            fetchUrl = '/api/v1/churches?saint={{.Saint.Slug}}';
+            // Zoom will be handled after fetching features
+        {{end}}
     {{end}}
+
     const view = new ol.View({
-        center: center,
-        zoom: zoom
+        center: ol.proj.fromLonLat(initialCenter),
+        zoom: initialZoom
     });
     
     const map = new ol.Map({
@@ -44,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
         view: view
     });
     console.log("Map object created:", map);
-    map.updateSize(); // Force map to re-calculate its size
+    map.updateSize();
 
     const svgPin = '<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" fill="#4285F4"/></svg>';
 
@@ -68,40 +84,44 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('sidebar-toggle').style.display = document.getElementById('sidebar').classList.contains('hidden') ? 'block' : 'none';
     }
 
-    fetch('/api/v1/churches')
+    fetch(fetchUrl)
         .then(response => response.json())
         .then(churches => {
             console.log("Fetched churches:", churches);
+            if (churches.length === 0) return;
+
+            const features = [];
             churches.forEach(church => {
                 if (church.latitude && church.longitude) {
                     const feature = new ol.Feature({
                         geometry: new ol.geom.Point(ol.proj.fromLonLat([church.longitude, church.latitude])),
-                        churchId: church.id
+                        churchSlug: church.slug || church.id // Fallback to ID if slug missing
                     });
-                    vectorSource.addFeature(feature);
+                    features.push(feature);
                 }
             });
-            console.log("Added features to map source.");
+            vectorSource.addFeatures(features);
+            
+            // If viewing a saint, fit the map to show all their churches
+            {{if eq .Type "saint"}}
+            const extent = vectorSource.getExtent();
+            map.getView().fit(extent, { padding: [50, 50, 50, 50], maxZoom: 12 });
+            {{end}}
         })
         .catch(error => console.error('Error loading church data:', error));
 
     map.on('pointermove', function (e) {
-        if (e.dragging) {
-            return;
-        }
+        if (e.dragging) return;
         const pixel = map.getEventPixel(e.originalEvent);
         const hit = map.hasFeatureAtPixel(pixel);
         map.getTargetElement().style.cursor = hit ? 'pointer' : '';
     });
     
     map.on('click', function (event) {
-        console.log("Map clicked.");
         map.forEachFeatureAtPixel(event.pixel, function (feature) {
-            const churchId = feature.get('churchId');
-            console.log("Found feature with churchId:", churchId);
-            if (churchId) {
-                console.log("Issuing HTMX GET for churchId:", churchId);
-                htmx.ajax('GET', '/churches/' + churchId, {
+            const slug = feature.get('churchSlug');
+            if (slug) {
+                htmx.ajax('GET', '/churches/' + slug, {
                     target: '#church-details',
                     swap: 'innerHTML'
                 });
@@ -110,7 +130,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.body.addEventListener('htmx:afterSwap', function(event) {
-        console.log("HTMX afterSwap event fired.", event.detail);
         if (event.detail.target.id === 'church-details') {
             const sidebar = document.getElementById('sidebar');
             if (sidebar.classList.contains('hidden')) {

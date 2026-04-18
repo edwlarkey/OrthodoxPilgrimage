@@ -32,6 +32,8 @@ confirm:
 install/tools:
 	@echo 'Installing golangci-lint...'
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@echo 'Installing sqlc...'
+	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
 # =========================================================================== #
 # DEVELOPMENT
@@ -72,19 +74,25 @@ test:
 # GENERATE
 # =========================================================================== #
 
+## generate: run sqlc generate
+.PHONY: generate
+generate:
+	@echo 'Generating sqlc code...'
+	sqlc generate
+
 # =========================================================================== #
 # BUILD
 # =========================================================================== #
 
 ## build: build the application to $(BIN_PATH)
 .PHONY: build
-build:
+build: generate
 	@echo 'Building $(APP_NAME)'
 	go build -ldflags="-s" -o=$(BIN_PATH) $(BUILD_TARGET)
 
 ## build.arch: build the application for docker to $(BIN_PATH)
 .PHONY: build.arch
-build.arch:
+build.arch: generate
 	@echo 'Building $(APP_NAME) for docker ($(GOARCH))...'
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) go build -tags lambda.norpc -o=$(DOCKER_BIN_PATH) $(BUILD_TARGET)
 

@@ -26,14 +26,29 @@
     </div>
     {{end}}
 </div>
-<!-- Relics section will be added later when we implement that data -->
+
 <div class="relics">
     <h3>Saints' Relics</h3>
-    <p><em>Relic information coming soon...</em></p>
+    {{if .Relics}}
+        <ul class="relic-list">
+        {{range .Relics}}
+            <li>
+                <a href="/{{.Slug}}" class="saint-link">{{.Name}}</a>
+                {{if .RelicDescription.Valid}}
+                    <span class="relic-desc">- {{.RelicDescription.String}}</span>
+                {{end}}
+            </li>
+        {{end}}
+        </ul>
+    {{else}}
+        <p><em>No relic information available for this church.</em></p>
+    {{end}}
 </div>
+
 <div class="coordinates">
     <small>Coordinates: {{printf "%.6f" .Latitude}}, {{printf "%.6f" .Longitude}}</small>
 </div>
+
 <style>
 .church-detail {
     max-width: 400px;
@@ -71,6 +86,44 @@
 .church-info p {
     margin: 0;
     line-height: 1.4;
+}
+
+.relics {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ecf0f1;
+}
+
+.relics h3 {
+    margin: 0 0 0.5rem 0;
+    color: #34495e;
+    font-size: 1rem;
+}
+
+.relic-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.relic-list li {
+    margin-bottom: 0.5rem;
+}
+
+.saint-link {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.saint-link:hover {
+    text-decoration: underline;
+}
+
+.relic-desc {
+    color: #7f8c8d;
+    font-style: italic;
+    font-size: 0.9rem;
 }
 
 .website a {

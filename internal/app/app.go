@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/ui"
@@ -33,6 +34,7 @@ func (a *Application) Routes() http.Handler {
 type churchJSON struct {
 	ID          int64          `json:"id"`
 	Name        string         `json:"name"`
+	Slug        string         `json:"slug"`
 	AddressText string         `json:"addressText"`
 	City        string         `json:"city"`
 	Latitude    float64        `json:"latitude"`
@@ -41,24 +43,53 @@ type churchJSON struct {
 	Description sql.NullString `json:"description"`
 }
 
+type ChurchWithRelics struct {
+	Type string
+	sqlcdb.Church
+	Relics []sqlcdb.ListRelicsForChurchRow
+}
+
+type SaintWithType struct {
+	Type string
+	sqlcdb.Saint
+}
+
 func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 	var data interface{}
 	var err error
 
 	if r.URL.Path != "/" {
-		var id int64
-		if _, err = fmt.Sscanf(r.URL.Path, "/churches/%d", &id); err == nil {
-			data, err = a.DB.GetChurch(r.Context(), id)
-			if err != nil {
-				if err == sql.ErrNoRows {
-					http.NotFound(w, r)
-					return
+		path := r.URL.Path
+		if strings.HasPrefix(path, "/churches/") {
+			slug := path[10:]
+			church, err := a.DB.GetChurchBySlug(r.Context(), slug)
+			if err == nil {
+				relics, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
+				data = ChurchWithRelics{
+					Type:   "church",
+					Church: church,
+					Relics: relics,
 				}
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
 			}
 		} else {
-			http.NotFound(w, r)
+			// Check if it's a saint slug (paths like /st-seraphim-of-sarov)
+			slug := strings.TrimPrefix(path, "/")
+			saint, err := a.DB.GetSaintBySlug(r.Context(), slug)
+			if err == nil {
+				data = SaintWithType{
+					Type:  "saint",
+					Saint: saint,
+				}
+			}
+		}
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.NotFound(w, r)
+				return
+			}
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			log.Printf("Error fetching data for path %s: %v", path, err)
 			return
 		}
 	}
@@ -71,8 +102,14 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 	maxLatStr := r.URL.Query().Get("maxLat")
 	minLngStr := r.URL.Query().Get("minLng")
 	maxLngStr := r.URL.Query().Get("maxLng")
+	saintSlug := r.URL.Query().Get("saint")
 
-	if minLatStr != "" && maxLatStr != "" && minLngStr != "" && maxLngStr != "" {
+	var churches []sqlcdb.Church
+	var err error
+
+	if saintSlug != "" {
+		churches, err = a.DB.ListChurchesBySaintSlug(ctx, saintSlug)
+	} else if minLatStr != "" && maxLatStr != "" && minLngStr != "" && maxLngStr != "" {
 		minLat, err1 := strconv.ParseFloat(minLatStr, 64)
 		maxLat, err2 := strconv.ParseFloat(maxLatStr, 64)
 		minLng, err3 := strconv.ParseFloat(minLngStr, 64)
@@ -87,34 +124,11 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 			Longitude:   minLng,
 			Longitude_2: maxLng,
 		}
-		churches, err := a.DB.ListChurchesInBounds(ctx, params)
-		if err != nil {
-			http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
-			log.Printf("Error retrieving churches in bounds: %v", err)
-			return
-		}
-		churchesJSON := make([]churchJSON, len(churches))
-		for i, c := range churches {
-			churchesJSON[i] = churchJSON{
-				ID:          c.ID,
-				Name:        c.Name,
-				AddressText: c.AddressText,
-				City:        c.City,
-				Latitude:    c.Latitude,
-				Longitude:   c.Longitude,
-				Website:     c.Website,
-				Description: c.Description,
-			}
-		}
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(churchesJSON); err != nil {
-			http.Error(w, "Failed to encode churches to JSON", http.StatusInternalServerError)
-			log.Printf("Error encoding churches: %v", err)
-		}
-		return
+		churches, err = a.DB.ListChurchesInBounds(ctx, params)
+	} else {
+		churches, err = a.DB.ListChurches(ctx)
 	}
 
-	churches, err := a.DB.ListChurches(ctx)
 	if err != nil {
 		http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
 		log.Printf("Error retrieving churches: %v", err)
@@ -126,6 +140,7 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 		churchesJSON[i] = churchJSON{
 			ID:          c.ID,
 			Name:        c.Name,
+			Slug:        c.Slug,
 			AddressText: c.AddressText,
 			City:        c.City,
 			Latitude:    c.Latitude,
@@ -144,47 +159,49 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 
 func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
+	// Expecting /churches/{slug}
 	if len(path) < 11 {
 		http.NotFound(w, r)
 		return
 	}
 
-	idStr := path[10:]
-	if idStr == "" {
+	slug := path[10:]
+	if slug == "" {
 		http.NotFound(w, r)
 		return
 	}
 
-	var id int64
-	if _, err := fmt.Sscanf(idStr, "%d", &id); err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	church, err := a.DB.GetChurch(r.Context(), id)
+	church, err := a.DB.GetChurchBySlug(r.Context(), slug)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.NotFound(w, r)
 			return
 		}
 		http.Error(w, "Failed to retrieve church", http.StatusInternalServerError)
-		log.Printf("Error retrieving church %d: %v", id, err)
+		log.Printf("Error retrieving church %s: %v", slug, err)
 		return
 	}
 
-	w.Header().Set("HX-Push-Url", fmt.Sprintf("/churches/%d", id))
+	relics, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
+	data := ChurchWithRelics{
+		Type:   "church",
+		Church: church,
+		Relics: relics,
+	}
+
+	w.Header().Set("HX-Push-Url", fmt.Sprintf("/churches/%s", slug))
 	if r.Header.Get("HX-Request") != "" {
 		ts, err := a.Templates.Get("church-detail")
 		if err != nil {
 			http.Error(w, "church-detail template not found", http.StatusInternalServerError)
 			return
 		}
-		err = ts.ExecuteTemplate(w, "church-detail", church)
+		err = ts.ExecuteTemplate(w, "church-detail", data)
 		if err != nil {
 			http.Error(w, "failed to render church detail", http.StatusInternalServerError)
 		}
 	} else {
-		a.Templates.Render(w, "index", church)
+		a.Templates.Render(w, "index", data)
 	}
 }
 
