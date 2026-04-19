@@ -1,3 +1,7 @@
+-- name: ListSaints :many
+SELECT * FROM saints
+ORDER BY name;
+
 -- name: CreateChurch :one
 INSERT INTO churches (
     name,

@@ -1,86 +1,64 @@
 {
   "saints": [
     {
-      "name": "Saint Seraphim of Sarov",
-      "slug": "st-seraphim-of-sarov",
-      "feast_day": "January 2, July 19",
-      "description": "A Russian Orthodox monk who is one of the most renowned Eastern Orthodox saints.",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Seraphim_of_Sarov.jpg",
-      "lives_url": "https://www.oca.org/saints/lives/2026/01/02/100008-venerable-seraphim-the-wonderworker-of-sarov"
+      "name": "Saint John of Shanghai and San Francisco",
+      "slug": "st-john-of-shanghai-and-san-francisco",
+      "feast_day": "July 2",
+      "description": "A Russian Orthodox Bishop who served from in Russia, France, China, and the United States.",
+      "image_url": "",
+      "lives_url": ""
     },
     {
-      "name": "Saint Nektarios of Aegina",
-      "slug": "st-nektarios-of-aegina",
-      "feast_day": "November 9",
-      "description": "A Greek Orthodox saint and bishop known as a miracle-worker.",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Saint_Nektarios_of_Aegina.jpg",
-      "lives_url": "https://www.goarch.org/chapel/saints?contentid=281"
+      "name": "Saint Mardarije of Libertyville",
+      "slug": "st-mardarije-libertyville",
+      "feast_day": "November 29/December 12",
+      "description": "",
+      "image_url": "",
+      "lives_url": ""
     }
   ],
   "churches": [
     {
-      "name": "St. John the Baptist Greek Orthodox Church",
-      "slug": "st-john-baptist-ny",
-      "type": "Parish",
-      "address_text": "123 Main St, New York, NY 10001",
-      "city": "New York",
-      "state_province": "NY",
-      "country_code": "US",
-      "latitude": 40.7128,
-      "longitude": -74.0060,
-      "jurisdiction": "Greek Orthodox Archdiocese of America",
-      "website": "https://stjohnbaptist.ny.goarch.org",
-      "phone": "212-555-0199",
-      "description": "A vibrant community in the heart of New York City.",
-      "image_url": "https://example.com/st-john.jpg",
-      "relics": [
-        {
-          "saint_slug": "st-seraphim-of-sarov",
-          "description": "A small portion of his relics."
-        }
-      ]
-    },
-    {
-      "name": "Holy Trinity Orthodox Cathedral",
-      "slug": "holy-trinity-chicago",
+      "name": "Holy Virgin Cathedral Joy of all Who Sorrow",
+      "slug": "holy-virgin-cathedral-san-francisco",
       "type": "Cathedral",
-      "address_text": "1121 N Leavitt St, Chicago, IL 60622",
-      "city": "Chicago",
-      "state_province": "IL",
+      "address_text": "6210 Geary Boulevard",
+      "city": "San Francisco",
+      "state_province": "CA",
       "country_code": "US",
-      "latitude": 41.9022,
-      "longitude": -87.6818,
-      "jurisdiction": "Orthodox Church in America",
-      "website": "https://holytrinitycathedral.net",
-      "phone": "773-555-0123",
-      "description": "The cathedral of the Diocese of the Midwest.",
-      "image_url": "https://example.com/holy-trinity.jpg",
+      "latitude": 37.780331,
+      "longitude": -122.486256,
+      "jurisdiction": "Russian Orthodox Church Outside Russia (ROCOR)",
+      "website": "https://sfsobor.com/",
+      "phone": "(415) 221-3255",
+      "description": "",
+      "image_url": "",
       "relics": [
         {
-          "saint_slug": "st-nektarios-of-aegina",
-          "description": "A relic of the Saint."
+          "saint_slug": "st-john-of-shanghai-and-san-francisco",
+          "description": "Incorrupt relics"
         }
       ]
     },
     {
-      "name": "Test Church",
-      "slug": "test-church-omaha",
-      "type": "Parish",
-      "address_text": "1121 N Leavitt St, Chicago, IL 60622",
-      "city": "Chicago",
+      "name": "Saint Sava Monastery",
+      "slug": "saint-sava-monastery-libertyville",
+      "type": "Monastery",
+      "address_text": "32377 N Milwaukee Ave",
+      "city": "Libertyville",
       "state_province": "IL",
       "country_code": "US",
-      "latitude": 41.9022,
-      "longitude": -95.6818,
-      "jurisdiction": "Orthodox Church in America",
-      "website": "https://example.net",
-      "phone": "773-555-0123",
-      "description": "The cathedral of the Diocese of the Midwest.",
-      "image_url": "https://example.com/holy-trinity.jpg",
+      "latitude": 42.333607,
+      "longitude": -87.950749,
+      "jurisdiction": "Serbian Orthodox Church",
+      "website": "https://stsavamonastery.org/",
+      "phone": "",
+      "description": "",
+      "image_url": "",
       "relics": [
         {
-          "saint_slug": "st-nektarios-of-aegina",
-          "description": "A relic of the Saint."
+          "saint_slug": "st-mardarije-libertyville",
+          "description": "Incorrupt relics"
         }
       ]
     }

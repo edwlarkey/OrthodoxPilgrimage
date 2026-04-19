@@ -28,6 +28,9 @@ func (a *Application) Routes() http.Handler {
 	mux.HandleFunc("/", a.homeHandler)
 	mux.HandleFunc("/api/v1/churches", a.listChurchesHandler)
 	mux.HandleFunc("/churches/", a.churchDetailHandler)
+	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "sitemap.xml")
+	})
 	return mux
 }
 

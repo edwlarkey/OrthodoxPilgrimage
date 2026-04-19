@@ -476,3 +476,39 @@ func (q *Queries) ListRelicsForChurch(ctx context.Context, churchID int64) ([]Li
 	}
 	return items, nil
 }
+
+const listSaints = `-- name: ListSaints :many
+SELECT id, name, slug, feast_day, description, image_url, lives_url FROM saints
+ORDER BY name
+`
+
+func (q *Queries) ListSaints(ctx context.Context) ([]Saint, error) {
+	rows, err := q.db.QueryContext(ctx, listSaints)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Saint
+	for rows.Next() {
+		var i Saint
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.FeastDay,
+			&i.Description,
+			&i.ImageUrl,
+			&i.LivesUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

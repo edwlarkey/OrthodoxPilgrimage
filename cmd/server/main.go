@@ -37,6 +37,12 @@ func main() {
 	}
 	log.Println("Database synced successfully")
 
+	log.Println("Generating sitemap.xml...")
+	if err := app.GenerateSitemap(context.Background(), queries, "https://orthodoxpilgrimage.com"); err != nil {
+		log.Fatalf("failed to generate sitemap: %v", err)
+	}
+	log.Println("Sitemap generated successfully")
+
 	tmplMgr, err := ui.NewTemplateManager()
 	if err != nil {
 		log.Fatalf("failed to create template manager: %v", err)
