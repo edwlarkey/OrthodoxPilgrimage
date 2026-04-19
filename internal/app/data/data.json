@@ -4,7 +4,7 @@
       "name": "Saint Seraphim of Sarov",
       "slug": "st-seraphim-of-sarov",
       "feast_day": "January 2, July 19",
-      "description": "A Russian Orthodox monk and mystic who is one of the most renowned Eastern Orthodox saints.",
+      "description": "A Russian Orthodox monk who is one of the most renowned Eastern Orthodox saints.",
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Seraphim_of_Sarov.jpg",
       "lives_url": "https://www.oca.org/saints/lives/2026/01/02/100008-venerable-seraphim-the-wonderworker-of-sarov"
     },
@@ -52,6 +52,28 @@
       "longitude": -87.6818,
       "jurisdiction": "Orthodox Church in America",
       "website": "https://holytrinitycathedral.net",
+      "phone": "773-555-0123",
+      "description": "The cathedral of the Diocese of the Midwest.",
+      "image_url": "https://example.com/holy-trinity.jpg",
+      "relics": [
+        {
+          "saint_slug": "st-nektarios-of-aegina",
+          "description": "A relic of the Saint."
+        }
+      ]
+    },
+    {
+      "name": "Test Church",
+      "slug": "test-church-omaha",
+      "type": "Parish",
+      "address_text": "1121 N Leavitt St, Chicago, IL 60622",
+      "city": "Chicago",
+      "state_province": "IL",
+      "country_code": "US",
+      "latitude": 41.9022,
+      "longitude": -95.6818,
+      "jurisdiction": "Orthodox Church in America",
+      "website": "https://example.net",
       "phone": "773-555-0123",
       "description": "The cathedral of the Diocese of the Midwest.",
       "image_url": "https://example.com/holy-trinity.jpg",
