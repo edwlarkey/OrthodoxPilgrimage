@@ -43,16 +43,16 @@
     {
       "name": "Saint Anna",
       "slug": "st-anna",
-      "feast_day": "December 25",
-      "description": "Mother of the Theotokos (Virgin Mary) and grandmother of Jesus Christ.",
+      "feast_day": "September 9, July 25 (Dormition)",
+      "description": "Mother of the Theotokos (Virgin Mary) and grandmother of Jesus Christ. Wife of St. Joachim.",
       "image_url": "",
       "lives_url": ""
     },
     {
-      "name": "Saint Tikhon of Moscow",
-      "slug": "st-tikhon-of-moscow",
-      "feast_day": "March 25/April 7",
-      "description": "Patriarch of Moscow and Enlightener of North America.",
+      "name": "Saint Joachim",
+      "slug": "st-joachim",
+      "feast_day": "September 9",
+      "description": "Mother of the Theotokos (Virgin Mary) and grandmother of Jesus Christ. Wife of St. Joachim.",
       "image_url": "",
       "lives_url": ""
     }
@@ -218,19 +218,24 @@
       "country_code": "US",
       "latitude": 38.75968,
       "longitude": -121.24478,
-      "jurisdiction": "Greek Orthodox Metropolis of San Francisco",
+      "jurisdiction": "Greek Orthodox Archdiocese of America",
       "website": "https://www.saintanna.org/",
       "phone": "(916) 772-9372",
-      "description": "Gifted a quarter-piece of the skull of St. Anna from the Skete of St. Anna on Mount Athos.",
+      "description": "Portion of relics of Saints Joachim and Anna, parents of the Theotokos.",
       "image_url": "",
       "relics": [
         {
           "saint_slug": "st-anna",
           "description": "Quarter-piece of skull"
+        },
+        {
+          "saint_slug": "st-joachim",
+          "description": ""
         }
       ],
       "sources": [
-        "https://www.saintanna.org/the-first-holy-relic-of-saint-anna"
+        "https://www.saintanna.org/the-first-holy-relic-of-saint-anna",
+        "https://www.saintanna.org/the-holy-relics-of-saints-joachim-and-anna"
       ]
     }
   ]
