@@ -104,6 +104,9 @@ DELETE FROM saints;
 -- name: DeleteAllRelics :exec
 DELETE FROM relics;
 
+-- name: DeleteAllSources :exec
+DELETE FROM church_sources;
+
 -- name: CreateChurchSource :exec
 INSERT INTO church_sources (church_id, source) VALUES (?, ?);
 

@@ -79,6 +79,9 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 	if err := queries.DeleteAllRelics(ctx); err != nil {
 		return fmt.Errorf("failed to delete relics: %w", err)
 	}
+	if err := queries.DeleteAllSources(ctx); err != nil {
+		return fmt.Errorf("failed to delete sources: %w", err)
+	}
 	if err := queries.DeleteAllSaints(ctx); err != nil {
 		return fmt.Errorf("failed to delete saints: %w", err)
 	}

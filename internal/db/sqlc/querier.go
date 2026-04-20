@@ -18,6 +18,7 @@ type Querier interface {
 	DeleteAllChurches(ctx context.Context) error
 	DeleteAllRelics(ctx context.Context) error
 	DeleteAllSaints(ctx context.Context) error
+	DeleteAllSources(ctx context.Context) error
 	GetChurch(ctx context.Context, id int64) (Church, error)
 	GetChurchBySlug(ctx context.Context, slug string) (Church, error)
 	GetSaintBySlug(ctx context.Context, slug string) (Saint, error)

@@ -224,6 +224,15 @@ func (q *Queries) DeleteAllSaints(ctx context.Context) error {
 	return err
 }
 
+const deleteAllSources = `-- name: DeleteAllSources :exec
+DELETE FROM church_sources
+`
+
+func (q *Queries) DeleteAllSources(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAllSources)
+	return err
+}
+
 const getChurch = `-- name: GetChurch :one
 SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at FROM churches
 WHERE id = ?
