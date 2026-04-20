@@ -6,10 +6,10 @@ import (
 	"log"
 	"net/http"
 
-	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/app"
-	internaldb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db"
-	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
-	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/ui"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/app"
+	internaldb "github.com/edwlarkey/orthodoxpilgrimage/internal/db"
+	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 )
 
 func main() {

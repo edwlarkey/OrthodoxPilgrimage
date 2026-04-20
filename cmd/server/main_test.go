@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/app"
-	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db"
-	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
-	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/ui"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/app"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/db"
+	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

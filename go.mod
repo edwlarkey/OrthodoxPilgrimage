@@ -1,4 +1,4 @@
-module git.sr.ht/~edwlarkey/orthodoxpilgrimage
+module github.com/edwlarkey/orthodoxpilgrimage
 
 go 1.24.5
 

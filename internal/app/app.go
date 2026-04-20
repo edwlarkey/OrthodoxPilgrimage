@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
-	"git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/ui"
+	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 )
 
 type Application struct {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
+	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 )
 
 type URL struct {

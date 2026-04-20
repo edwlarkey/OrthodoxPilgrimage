@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	sqlcdb "git.sr.ht/~edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
+	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 )
 
 //go:embed data/data.json
