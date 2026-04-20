@@ -5,9 +5,14 @@
 <div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
     <div class="sidebar-header">
         <h2 id="sidebar-title">Details</h2>
-        <button class="close-btn" onclick="toggleSidebar()" aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
+        <div class="sidebar-actions">
+            <button class="minimize-btn" onclick="minimizeSidebar(event)" aria-label="Minimize" title="Minimize">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
+            </button>
+            <button class="close-btn" onclick="toggleSidebar()" aria-label="Close">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
     </div>
     <div class="sidebar-content" id="church-details">
         {{if .}}
@@ -36,10 +41,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let initialCenter = [-98.5795, 39.8283];
     let fetchUrl = '/api/v1/churches';
 
+    const isMobile = window.innerWidth <= 500;
+    if (isMobile) {
+        initialZoom -= 1;
+    }
+
     {{if .}}
         {{if eq .Type "church"}}
             initialCenter = [{{.Church.Longitude}}, {{.Church.Latitude}}];
-            initialZoom = 12;
+            initialZoom = isMobile ? 11 : 12;
             document.getElementById('sidebar-title').innerText = "Church Info";
         {{else if eq .Type "saint"}}
             fetchUrl = '/api/v1/churches?saint={{.Saint.Slug}}';
@@ -109,9 +119,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.toggleSidebar = function() {
         const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('hidden');
-        document.getElementById('sidebar-toggle').style.display = sidebar.classList.contains('hidden') ? 'block' : 'none';
+        const isHidden = sidebar.classList.toggle('hidden');
+        sidebar.classList.remove('minimized');
+        document.getElementById('sidebar-toggle').style.display = isHidden ? 'block' : 'none';
+        document.body.classList.toggle('sidebar-open', !isHidden);
     }
+
+    window.minimizeSidebar = function(e) {
+        if (e) e.stopPropagation();
+        if (window.innerWidth > 500) return;
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('minimized');
+    }
+
+    // Header click to toggle minimize on mobile
+    document.querySelector('.sidebar-header').addEventListener('click', function(e) {
+        if (window.innerWidth <= 500 && !e.target.closest('button')) {
+            minimizeSidebar();
+        }
+    });
+
+    {{if .}}
+        document.body.classList.add('sidebar-open');
+    {{end}}
 
     fetch(fetchUrl)
         .then(response => response.json())
@@ -174,11 +204,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Pan and zoom to clicked church
             const coords = feature.getGeometry().getCoordinates();
-            view.animate({ 
-                center: coords, 
-                zoom: 14,
-                duration: 500 
-            });
+            const zoom = 14;
+            
+            if (window.innerWidth <= 500) {
+                // On mobile, center the pin in the top 40% of the screen 
+                // to keep it visible above the 50vh sidebar
+                const resolution = view.getResolutionForZoom(zoom);
+                const offset = (window.innerHeight * 0.2) * resolution; // Offset by 20% of screen height
+                view.animate({
+                    center: [coords[0], coords[1] - offset],
+                    zoom: zoom,
+                    duration: 500
+                });
+            } else {
+                view.animate({ 
+                    center: coords, 
+                    zoom: zoom,
+                    duration: 500 
+                });
+            }
         }
     });
 

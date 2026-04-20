@@ -247,6 +247,33 @@ h1.site-title a {
     color: #7f8c8d;
 }
 
+.sidebar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.minimize-btn {
+    background: rgba(0,0,0,0.05);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    cursor: pointer;
+    display: none; /* Mobile only */
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.3s ease;
+}
+
+.minimize-btn:hover {
+    background: rgba(0,0,0,0.1);
+}
+
+.sidebar.minimized .minimize-btn {
+    transform: rotate(180deg);
+}
+
 .sidebar-content {
     padding: 20px;
     overflow-y: auto;
@@ -309,6 +336,13 @@ h1.site-title a {
     z-index: 1000;
     display: none;
     color: var(--primary-color);
+}
+
+/* Map Controls */
+.ol-zoom {
+    top: auto !important;
+    bottom: 40px !important;
+    left: 40px !important;
 }
 
 /* Detail Views (Church & Saint) */
@@ -439,20 +473,63 @@ h1.site-title a {
 @media (max-width: 500px) {
     .sidebar {
         top: auto;
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-        width: auto;
-        height: 60vh;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 50vh;
+        border-radius: 20px 20px 0 0;
+        transform: translateY(0);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sidebar.hidden {
+        transform: translateY(100%);
+        opacity: 1;
+        pointer-events: none;
+    }
+    .sidebar.minimized {
+        transform: translateY(calc(100% - 60px));
+        overflow: hidden;
+    }
+    .minimize-btn {
+        display: flex;
     }
     .site-header {
         width: calc(100% - 40px);
         left: 20px;
+        top: 10px;
     }
     h1.site-title {
         font-size: 1.1rem;
     }
     .search-container {
-        display: none; /* Hide search on very small mobile for now or reposition */
+        position: absolute;
+        top: auto;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        width: auto;
+        z-index: 10;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .search-results {
+        bottom: calc(100% + 10px);
+        top: auto;
+    }
+    /* Hide search container when sidebar is open */
+    body.sidebar-open .search-container {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+    .sidebar-toggle {
+        bottom: 80px;
+        right: 20px;
+    }
+    /* Move map controls to bottom left, above search */
+    .ol-zoom {
+        top: auto !important;
+        left: 20px !important;
+        bottom: 80px !important;
     }
 }
