@@ -1,5 +1,6 @@
 {{define "content"}}
 <div id="map"></div>
+<div id="tooltip" class="ol-tooltip"></div>
 
 <div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
     <div class="sidebar-header">
@@ -28,6 +29,26 @@
 <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle">
     Church Info
 </button>
+
+<style>
+    .ol-tooltip {
+        position: absolute;
+        background: var(--glass-bg);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        box-shadow: var(--shadow);
+        pointer-events: none;
+        white-space: nowrap;
+        z-index: 1000;
+        display: none;
+        color: var(--primary-color);
+    }
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -75,6 +96,14 @@ document.addEventListener('DOMContentLoaded', function() {
         view: view
     });
 
+    const tooltipElement = document.getElementById('tooltip');
+    const tooltipOverlay = new ol.Overlay({
+        element: tooltipElement,
+        offset: [10, -10],
+        positioning: 'bottom-left',
+    });
+    map.addOverlay(tooltipOverlay);
+
     const svgPin = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21C16 17 20 13.4183 20 9C20 4.58172 16.4183 1 12 1C7.58172 1 4 4.58172 4 9C4 13.4183 8 17 12 21Z" fill="#3498db" stroke="white" stroke-width="1"/><circle cx="12" cy="9" r="3" fill="white"/></svg>';
 
     const iconStyle = new ol.style.Style({
@@ -107,7 +136,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (church.latitude && church.longitude) {
                     const feature = new ol.Feature({
                         geometry: new ol.geom.Point(ol.proj.fromLonLat([church.longitude, church.latitude])),
-                        churchSlug: church.slug
+                        churchSlug: church.slug,
+                        churchName: church.name
                     });
                     features.push(feature);
                 }
@@ -128,10 +158,22 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => console.error('Error loading church data:', error));
 
     map.on('pointermove', function (e) {
-        if (e.dragging) return;
+        if (e.dragging) {
+            tooltipElement.style.display = 'none';
+            return;
+        }
         const pixel = map.getEventPixel(e.originalEvent);
-        const hit = map.hasFeatureAtPixel(pixel);
-        map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+        const feature = map.forEachFeatureAtPixel(pixel, f => f);
+        
+        if (feature) {
+            tooltipElement.style.display = 'block';
+            tooltipOverlay.setPosition(e.coordinate);
+            tooltipElement.innerText = feature.get('churchName');
+            map.getTargetElement().style.cursor = 'pointer';
+        } else {
+            tooltipElement.style.display = 'none';
+            map.getTargetElement().style.cursor = '';
+        }
     });
     
     map.on('click', function (event) {
@@ -144,9 +186,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 swap: 'innerHTML'
             });
             
-            // Pan to clicked church
+            // Pan and zoom to clicked church
             const coords = feature.getGeometry().getCoordinates();
-            view.animate({ center: coords, duration: 500 });
+            view.animate({ 
+                center: coords, 
+                zoom: 14,
+                duration: 500 
+            });
         }
     });
 

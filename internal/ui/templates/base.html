@@ -48,21 +48,32 @@
             z-index: 1;
         }
 
-        h1.site-title {
+        .site-header {
             position: absolute;
             top: 20px;
             left: 40px;
             z-index: 10;
-            margin: 0;
-            font-weight: 800;
-            font-size: 1.5rem;
             background: var(--glass-bg);
             backdrop-filter: blur(8px);
-            padding: 10px 20px;
             border-radius: 12px;
             border: 1px solid var(--glass-border);
             box-shadow: var(--shadow);
-            pointer-events: auto;
+            width: 280px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .site-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+        }
+
+        h1.site-title {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.2rem;
         }
 
         h1.site-title a {
@@ -70,10 +81,78 @@
             text-decoration: none;
         }
 
-        h1.site-title a:hover {
-            color: var(--accent-color);
+        .menu-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background 0.2s;
         }
-        
+
+        .menu-toggle:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .header-expandable {
+            max-height: 0;
+            transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
+            padding: 0 15px;
+        }
+
+        .site-header.expanded .header-expandable {
+            max-height: 1000px;
+            transition: max-height 0.4s ease-in-out;
+            padding-bottom: 20px;
+        }
+
+        .about-section {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #576574;
+            margin-top: 10px;
+        }
+
+        .about-section p {
+            margin: 0 0 10px 0;
+        }
+
+        .header-links {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 15px;
+        }
+
+        .header-links li {
+            margin-bottom: 8px;
+        }
+
+        .header-links a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .contact-info {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            font-style: italic;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 10px;
+        }
+
+        .contact-info a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
         .sidebar {
             position: absolute;
             top: 20px;
@@ -179,12 +258,45 @@
     </style>
 </head>
 <body>
-  <h1 class="site-title"><a href="/">Orthodox Pilgrimage</a></h1>
-    <span style="display:none;">Welcome to Orthodox Pilgrimage</span>
-    
+    <header class="site-header" id="site-header">
+        <div class="site-header-top">
+            <h1 class="site-title"><a href="/">Orthodox Pilgrimage</a></h1>
+            <button class="menu-toggle" onclick="toggleHeader()" aria-label="Toggle menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="header-expandable">
+            <div class="about-section">
+                <p>Welcome to Orthodox Pilgrimage, a dedicated guide to locating and venerating the relics of Orthodox Saints across North America and beyond.</p>
+                <p>Our mission is to help the faithful discover these holy sites and plan their spiritual journeys.</p>
+            </div>
+
+            <ul class="header-links">
+                <!-- Future links will be added here -->
+                <li><a href="/">Home</a></li>
+            </ul>
+
+            <div class="contact-info">
+                Help us keep this map accurate. If you have corrections or new information, please reach out at <a href="mailto:info@orthodoxpilgrimage.com">info@orthodoxpilgrimage.com</a>.
+            </div>
+        </div>
+    </header>
+
     <div class="app-container">
         {{template "content" .}}
     </div>
+
+    <script>
+        function toggleHeader() {
+            const header = document.getElementById('site-header');
+            header.classList.toggle('expanded');
+        }
+    </script>
 </body>
 </html>
 {{end}}
