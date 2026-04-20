@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 )
@@ -27,6 +28,7 @@ type SaintData struct {
 	Description string `json:"description"`
 	ImageURL    string `json:"image_url"`
 	LivesURL    string `json:"lives_url"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type ChurchData struct {
@@ -46,6 +48,7 @@ type ChurchData struct {
 	ImageURL      string      `json:"image_url"`
 	Relics        []RelicData `json:"relics"`
 	Sources       []string    `json:"sources"`
+	UpdatedAt     string      `json:"updated_at"`
 }
 
 type RelicData struct {
@@ -86,6 +89,12 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 	// 3. Insert Saints
 	saintMap := make(map[string]int64)
 	for _, s := range df.Saints {
+		updatedAt := sql.NullTime{}
+		if s.UpdatedAt != "" {
+			if t, err := time.Parse("2006-01-02", s.UpdatedAt); err == nil {
+				updatedAt = sql.NullTime{Time: t, Valid: true}
+			}
+		}
 		saint, err := queries.CreateSaint(ctx, sqlcdb.CreateSaintParams{
 			Name: s.Name,
 			Slug: s.Slug,
@@ -105,6 +114,7 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 				String: s.LivesURL,
 				Valid:  s.LivesURL != "",
 			},
+			UpdatedAt: updatedAt,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create saint %s: %w", s.Name, err)
@@ -114,6 +124,12 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 
 	// 4. Insert Churches and Relics
 	for _, c := range df.Churches {
+		updatedAt := sql.NullTime{}
+		if c.UpdatedAt != "" {
+			if t, err := time.Parse("2006-01-02", c.UpdatedAt); err == nil {
+				updatedAt = sql.NullTime{Time: t, Valid: true}
+			}
+		}
 		church, err := queries.CreateChurch(ctx, sqlcdb.CreateChurchParams{
 			Name:          c.Name,
 			Slug:          c.Slug,
@@ -129,6 +145,7 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 			Phone:         sql.NullString{String: c.Phone, Valid: c.Phone != ""},
 			Description:   sql.NullString{String: c.Description, Valid: c.Description != ""},
 			ImageUrl:      sql.NullString{String: c.ImageURL, Valid: c.ImageURL != ""},
+			UpdatedAt:     updatedAt,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create church %s: %w", c.Name, err)

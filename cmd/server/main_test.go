@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/app"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/db"
@@ -24,7 +26,8 @@ const testDataJSON = `{
       "slug": "st-seraphim-of-sarov",
       "feast_day": "January 2",
       "description": "Russian monk",
-      "lives_url": "https://example.com/st-seraphim"
+      "lives_url": "https://example.com/st-seraphim",
+      "updated_at": "2026-01-15"
     }
   ],
   "churches": [
@@ -46,7 +49,8 @@ const testDataJSON = `{
       "sources": [
         "https://example.com/source1",
         "Called and confirmed"
-      ]
+      ],
+      "updated_at": "2026-03-10"
     },
     {
       "name": "Holy Trinity",
@@ -275,4 +279,47 @@ func TestHomeHandler_ChurchWithSources(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Contains(t, rr.Body.String(), "Sources")
 	assert.Contains(t, rr.Body.String(), "https://example.com/source1")
+}
+
+func TestGenerateSitemap_UsesUpdatedDates(t *testing.T) {
+	appInstance, dbConn := seedTestDB(t)
+	defer dbConn.Close()
+
+	ctx := context.Background()
+
+	err := app.GenerateSitemap(ctx, appInstance.DB, "https://example.com")
+	require.NoError(t, err)
+
+	data, err := os.ReadFile("sitemap.xml")
+	require.NoError(t, err)
+	defer os.Remove("sitemap.xml")
+
+	body := string(data)
+
+	assert.Contains(t, body, "<loc>https://example.com/churches/st-john-baptist-ny</loc>")
+	assert.Contains(t, body, "<loc>https://example.com/st-seraphim-of-sarov</loc>")
+
+	assert.Contains(t, body, "2026-03-10")
+	assert.Contains(t, body, "2026-01-15")
+}
+
+func TestGenerateSitemap_NoUpdatedDate(t *testing.T) {
+	appInstance, dbConn := seedTestDB(t)
+	defer dbConn.Close()
+
+	ctx := context.Background()
+
+	err := app.GenerateSitemap(ctx, appInstance.DB, "https://example.com")
+	require.NoError(t, err)
+
+	data, err := os.ReadFile("sitemap.xml")
+	require.NoError(t, err)
+	defer os.Remove("sitemap.xml")
+
+	body := string(data)
+
+	assert.Contains(t, body, "<loc>https://example.com/churches/holy-trinity-chicago</loc>")
+
+	today := time.Now().Format("2006-01-02")
+	assert.Contains(t, body, today)
 }

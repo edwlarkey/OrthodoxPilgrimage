@@ -24,6 +24,7 @@ type Church struct {
 	Phone         sql.NullString `json:"phone"`
 	Description   sql.NullString `json:"description"`
 	ImageUrl      sql.NullString `json:"image_url"`
+	UpdatedAt     sql.NullTime   `json:"updated_at"`
 }
 
 type ChurchSource struct {
@@ -46,4 +47,5 @@ type Saint struct {
 	Description sql.NullString `json:"description"`
 	ImageUrl    sql.NullString `json:"image_url"`
 	LivesUrl    sql.NullString `json:"lives_url"`
+	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }

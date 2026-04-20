@@ -6,7 +6,8 @@
       "feast_day": "July 2",
       "description": "A Russian Orthodox Bishop who served in Russia, France, China, and the United States. Known as the Wonderworker of Shanghai and San Francisco.",
       "image_url": "",
-      "lives_url": ""
+      "lives_url": "",
+      "updated_at": "2026-04-20"
     },
     {
       "name": "Saint Mardarije of Libertyville",
@@ -14,7 +15,8 @@
       "feast_day": "November 29/December 12",
       "description": "First Serbian Orthodox bishop in America. Founded the Serbian Orthodox Church in North America.",
       "image_url": "",
-      "lives_url": ""
+      "lives_url": "",
+      "updated_at": "2026-04-20"
     },
     {
       "name": "Saint Alexis Toth",
@@ -22,7 +24,8 @@
       "feast_day": "May 7",
       "description": "Missionary priest and defender of Orthodoxy in America. Led thousands of Carpatho-Russian immigrants from the Uniate Greek Catholic Church to the Orthodox Church.",
       "image_url": "",
-      "lives_url": ""
+      "lives_url": "",
+      "updated_at": "2026-04-20"
     },
     {
       "name": "Saint Herman of Alaska",
@@ -30,7 +33,8 @@
       "feast_day": "August 9",
       "description": "First Orthodox saint of America. A missionary monk who lived among the Orthodox Alaskans on Spruce Island.",
       "image_url": "",
-      "lives_url": ""
+      "lives_url": "",
+      "updated_at": "2026-04-20"
     },
     {
       "name": "Saint John of Chicago",
@@ -38,7 +42,8 @@
       "feast_day": "October 31",
       "description": "Hieromartyr of the Bolshevik Revolution. Founded Holy Trinity Cathedral in Chicago and was the first priest martyred at the outset of the Bolshevik Revolution.",
       "image_url": "",
-      "lives_url": ""
+      "lives_url": "",
+      "updated_at": "2026-04-20"
     },
     {
       "name": "Saint Anna",
@@ -46,7 +51,8 @@
       "feast_day": "September 9, July 25 (Dormition)",
       "description": "Mother of the Theotokos (Virgin Mary) and grandmother of Jesus Christ. Wife of St. Joachim.",
       "image_url": "",
-      "lives_url": ""
+      "lives_url": "",
+      "updated_at": "2026-04-20"
     },
     {
       "name": "Saint Joachim",
@@ -54,7 +60,8 @@
       "feast_day": "September 9",
       "description": "Mother of the Theotokos (Virgin Mary) and grandmother of Jesus Christ. Wife of St. Joachim.",
       "image_url": "",
-      "lives_url": ""
+      "lives_url": "",
+      "updated_at": "2026-04-20"
     }
   ],
   "churches": [
@@ -81,7 +88,8 @@
       ],
       "sources": [
         "https://sfsobor.com/st-john.php"
-      ]
+      ],
+      "updated_at": "2026-04-20"
     },
     {
       "name": "Saint Sava Monastery",
@@ -106,7 +114,8 @@
       ],
       "sources": [
         "https://www.synod.com/synod/eng2017/20170516_print_enlibertyville.html"
-      ]
+      ],
+      "updated_at": "2026-04-20"
     },
     {
       "name": "St. Tikhon's Orthodox Monastery",
@@ -131,7 +140,8 @@
       ],
       "sources": [
         "https://www.orthodoxhistory.org/2025/08/07/the-other-american-orthodox-saints-a-pilgrims-guide/"
-      ]
+      ],
+      "updated_at": "2026-04-20"
     },
     {
       "name": "Holy Resurrection Orthodox Cathedral",
@@ -156,7 +166,8 @@
       ],
       "sources": [
         "https://www.kodiakhrc.org/"
-      ]
+      ],
+      "updated_at": "2026-04-20"
     },
     {
       "name": "Holy Trinity Orthodox Cathedral",
@@ -181,7 +192,8 @@
       ],
       "sources": [
         "https://domoca.org/relics-of-st-john-of-chicago-enshrined-at-diocesan-cathedral-on-the-feast-of-the-hieromartyr/"
-      ]
+      ],
+      "updated_at": "2026-04-20"
     },
     {
       "name": "St. Innocent of Irkutsk Orthodox Church",
@@ -206,7 +218,8 @@
       ],
       "sources": [
         "https://www.stinnocentchurch.com/shrineofstjohnofshanghaiandsanfrancisco"
-      ]
+      ],
+      "updated_at": "2026-04-20"
     },
     {
       "name": "St. Anna Greek Orthodox Church",
@@ -236,7 +249,8 @@
       "sources": [
         "https://www.saintanna.org/the-first-holy-relic-of-saint-anna",
         "https://www.saintanna.org/the-holy-relics-of-saints-joachim-and-anna"
-      ]
+      ],
+      "updated_at": "2026-04-20"
     }
   ]
 }

@@ -38,16 +38,24 @@ func GenerateSitemap(ctx context.Context, queries *sqlcdb.Queries, baseURL strin
 	}
 
 	for _, c := range churches {
+		lastMod := time.Now().Format("2006-01-02")
+		if c.UpdatedAt.Valid {
+			lastMod = c.UpdatedAt.Time.Format("2006-01-02")
+		}
 		urlSet.URLs = append(urlSet.URLs, URL{
 			Loc:     fmt.Sprintf("%s/churches/%s", baseURL, c.Slug),
-			LastMod: time.Now().Format("2006-01-02"),
+			LastMod: lastMod,
 		})
 	}
 
 	for _, s := range saints {
+		lastMod := time.Now().Format("2006-01-02")
+		if s.UpdatedAt.Valid {
+			lastMod = s.UpdatedAt.Time.Format("2006-01-02")
+		}
 		urlSet.URLs = append(urlSet.URLs, URL{
 			Loc:     fmt.Sprintf("%s/%s", baseURL, s.Slug),
-			LastMod: time.Now().Format("2006-01-02"),
+			LastMod: lastMod,
 		})
 	}
 

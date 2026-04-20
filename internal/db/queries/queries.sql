@@ -43,9 +43,10 @@ INSERT INTO churches (
     website,
     phone,
     description,
-    image_url
+    image_url,
+    updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 RETURNING *;
 
@@ -56,9 +57,10 @@ INSERT INTO saints (
     feast_day,
     description,
     image_url,
-    lives_url
+    lives_url,
+    updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?
 )
 RETURNING *;
 

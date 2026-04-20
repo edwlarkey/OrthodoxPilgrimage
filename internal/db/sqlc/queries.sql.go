@@ -47,11 +47,12 @@ INSERT INTO churches (
     website,
     phone,
     description,
-    image_url
+    image_url,
+    updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
-RETURNING id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url
+RETURNING id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at
 `
 
 type CreateChurchParams struct {
@@ -69,6 +70,7 @@ type CreateChurchParams struct {
 	Phone         sql.NullString `json:"phone"`
 	Description   sql.NullString `json:"description"`
 	ImageUrl      sql.NullString `json:"image_url"`
+	UpdatedAt     sql.NullTime   `json:"updated_at"`
 }
 
 func (q *Queries) CreateChurch(ctx context.Context, arg CreateChurchParams) (Church, error) {
@@ -87,6 +89,7 @@ func (q *Queries) CreateChurch(ctx context.Context, arg CreateChurchParams) (Chu
 		arg.Phone,
 		arg.Description,
 		arg.ImageUrl,
+		arg.UpdatedAt,
 	)
 	var i Church
 	err := row.Scan(
@@ -105,6 +108,7 @@ func (q *Queries) CreateChurch(ctx context.Context, arg CreateChurchParams) (Chu
 		&i.Phone,
 		&i.Description,
 		&i.ImageUrl,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -151,11 +155,12 @@ INSERT INTO saints (
     feast_day,
     description,
     image_url,
-    lives_url
+    lives_url,
+    updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?
 )
-RETURNING id, name, slug, feast_day, description, image_url, lives_url
+RETURNING id, name, slug, feast_day, description, image_url, lives_url, updated_at
 `
 
 type CreateSaintParams struct {
@@ -165,6 +170,7 @@ type CreateSaintParams struct {
 	Description sql.NullString `json:"description"`
 	ImageUrl    sql.NullString `json:"image_url"`
 	LivesUrl    sql.NullString `json:"lives_url"`
+	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }
 
 func (q *Queries) CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint, error) {
@@ -175,6 +181,7 @@ func (q *Queries) CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint
 		arg.Description,
 		arg.ImageUrl,
 		arg.LivesUrl,
+		arg.UpdatedAt,
 	)
 	var i Saint
 	err := row.Scan(
@@ -185,6 +192,7 @@ func (q *Queries) CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint
 		&i.Description,
 		&i.ImageUrl,
 		&i.LivesUrl,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -217,7 +225,7 @@ func (q *Queries) DeleteAllSaints(ctx context.Context) error {
 }
 
 const getChurch = `-- name: GetChurch :one
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at FROM churches
 WHERE id = ?
 `
 
@@ -240,12 +248,13 @@ func (q *Queries) GetChurch(ctx context.Context, id int64) (Church, error) {
 		&i.Phone,
 		&i.Description,
 		&i.ImageUrl,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getChurchBySlug = `-- name: GetChurchBySlug :one
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at FROM churches
 WHERE slug = ?
 `
 
@@ -268,12 +277,13 @@ func (q *Queries) GetChurchBySlug(ctx context.Context, slug string) (Church, err
 		&i.Phone,
 		&i.Description,
 		&i.ImageUrl,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getSaintBySlug = `-- name: GetSaintBySlug :one
-SELECT id, name, slug, feast_day, description, image_url, lives_url FROM saints
+SELECT id, name, slug, feast_day, description, image_url, lives_url, updated_at FROM saints
 WHERE slug = ?
 `
 
@@ -288,12 +298,13 @@ func (q *Queries) GetSaintBySlug(ctx context.Context, slug string) (Saint, error
 		&i.Description,
 		&i.ImageUrl,
 		&i.LivesUrl,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const listChurches = `-- name: ListChurches :many
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at FROM churches
 ORDER BY name
 `
 
@@ -322,6 +333,7 @@ func (q *Queries) ListChurches(ctx context.Context) ([]Church, error) {
 			&i.Phone,
 			&i.Description,
 			&i.ImageUrl,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -337,7 +349,7 @@ func (q *Queries) ListChurches(ctx context.Context) ([]Church, error) {
 }
 
 const listChurchesBySaintSlug = `-- name: ListChurchesBySaintSlug :many
-SELECT c.id, c.name, c.slug, c.type, c.address_text, c.city, c.state_province, c.country_code, c.latitude, c.longitude, c.jurisdiction, c.website, c.phone, c.description, c.image_url FROM churches c
+SELECT c.id, c.name, c.slug, c.type, c.address_text, c.city, c.state_province, c.country_code, c.latitude, c.longitude, c.jurisdiction, c.website, c.phone, c.description, c.image_url, c.updated_at FROM churches c
 JOIN relics r ON c.id = r.church_id
 JOIN saints s ON r.saint_id = s.id
 WHERE s.slug = ?
@@ -369,6 +381,7 @@ func (q *Queries) ListChurchesBySaintSlug(ctx context.Context, slug string) ([]C
 			&i.Phone,
 			&i.Description,
 			&i.ImageUrl,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -384,7 +397,7 @@ func (q *Queries) ListChurchesBySaintSlug(ctx context.Context, slug string) ([]C
 }
 
 const listChurchesInBounds = `-- name: ListChurchesInBounds :many
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at FROM churches
 WHERE latitude >= ? AND latitude <= ?
   AND longitude >= ? AND longitude <= ?
 ORDER BY name
@@ -427,6 +440,7 @@ func (q *Queries) ListChurchesInBounds(ctx context.Context, arg ListChurchesInBo
 			&i.Phone,
 			&i.Description,
 			&i.ImageUrl,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -442,7 +456,7 @@ func (q *Queries) ListChurchesInBounds(ctx context.Context, arg ListChurchesInBo
 }
 
 const listRelicsForChurch = `-- name: ListRelicsForChurch :many
-SELECT s.id, s.name, s.slug, s.feast_day, s.description, s.image_url, s.lives_url, r.description as relic_description
+SELECT s.id, s.name, s.slug, s.feast_day, s.description, s.image_url, s.lives_url, s.updated_at, r.description as relic_description
 FROM saints s
 JOIN relics r ON s.id = r.saint_id
 WHERE r.church_id = ?
@@ -456,6 +470,7 @@ type ListRelicsForChurchRow struct {
 	Description      sql.NullString `json:"description"`
 	ImageUrl         sql.NullString `json:"image_url"`
 	LivesUrl         sql.NullString `json:"lives_url"`
+	UpdatedAt        sql.NullTime   `json:"updated_at"`
 	RelicDescription sql.NullString `json:"relic_description"`
 }
 
@@ -476,6 +491,7 @@ func (q *Queries) ListRelicsForChurch(ctx context.Context, churchID int64) ([]Li
 			&i.Description,
 			&i.ImageUrl,
 			&i.LivesUrl,
+			&i.UpdatedAt,
 			&i.RelicDescription,
 		); err != nil {
 			return nil, err
@@ -492,7 +508,7 @@ func (q *Queries) ListRelicsForChurch(ctx context.Context, churchID int64) ([]Li
 }
 
 const listSaints = `-- name: ListSaints :many
-SELECT id, name, slug, feast_day, description, image_url, lives_url FROM saints
+SELECT id, name, slug, feast_day, description, image_url, lives_url, updated_at FROM saints
 ORDER BY name
 `
 
@@ -513,6 +529,7 @@ func (q *Queries) ListSaints(ctx context.Context) ([]Saint, error) {
 			&i.Description,
 			&i.ImageUrl,
 			&i.LivesUrl,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -555,7 +572,7 @@ func (q *Queries) ListSourcesForChurch(ctx context.Context, churchID int64) ([]s
 }
 
 const searchSaints = `-- name: SearchSaints :many
-SELECT id, name, slug, feast_day, description, image_url, lives_url FROM saints
+SELECT id, name, slug, feast_day, description, image_url, lives_url, updated_at FROM saints
 WHERE name LIKE ?
 ORDER BY name
 LIMIT 10
@@ -578,6 +595,7 @@ func (q *Queries) SearchSaints(ctx context.Context, name string) ([]Saint, error
 			&i.Description,
 			&i.ImageUrl,
 			&i.LivesUrl,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
