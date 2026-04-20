@@ -25,6 +25,7 @@ type Querier interface {
 	ListChurchesInBounds(ctx context.Context, arg ListChurchesInBoundsParams) ([]Church, error)
 	ListRelicsForChurch(ctx context.Context, churchID int64) ([]ListRelicsForChurchRow, error)
 	ListSaints(ctx context.Context) ([]Saint, error)
+	SearchSaints(ctx context.Context, name string) ([]Saint, error)
 }
 
 var _ Querier = (*Queries)(nil)

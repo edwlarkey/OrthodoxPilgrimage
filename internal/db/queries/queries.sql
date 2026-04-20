@@ -86,6 +86,12 @@ SELECT count(*) FROM churches;
 -- name: CountSaints :one
 SELECT count(*) FROM saints;
 
+-- name: SearchSaints :many
+SELECT * FROM saints
+WHERE name LIKE ?
+ORDER BY name
+LIMIT 10;
+
 -- name: DeleteAllChurches :exec
 DELETE FROM churches;
 

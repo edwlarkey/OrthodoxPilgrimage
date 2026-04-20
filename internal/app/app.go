@@ -27,10 +27,15 @@ func (a *Application) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", a.homeHandler)
 	mux.HandleFunc("/api/v1/churches", a.listChurchesHandler)
+	mux.HandleFunc("/api/v1/search", a.searchHandler)
 	mux.HandleFunc("/churches/", a.churchDetailHandler)
 	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "sitemap.xml")
 	})
+
+	// Static files
+	mux.Handle("/static/", http.FileServer(http.FS(ui.StaticFS)))
+
 	return mux
 }
 
@@ -44,6 +49,11 @@ type churchJSON struct {
 	Longitude   float64        `json:"longitude"`
 	Website     sql.NullString `json:"website"`
 	Description sql.NullString `json:"description"`
+}
+
+type searchResult struct {
+	Name string `json:"name"`
+	Slug string `json:"slug"`
 }
 
 type ChurchWithRelics struct {
@@ -234,4 +244,32 @@ func (a *Application) ListChurchesHandler(w http.ResponseWriter, r *http.Request
 
 func (a *Application) ChurchDetailHandler(w http.ResponseWriter, r *http.Request) {
 	a.churchDetailHandler(w, r)
+}
+
+func (a *Application) searchHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	if len(query) < 2 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]searchResult{})
+		return
+	}
+
+	searchTerm := "%" + query + "%"
+	saints, err := a.DB.SearchSaints(r.Context(), searchTerm)
+	if err != nil {
+		http.Error(w, "Search failed", http.StatusInternalServerError)
+		return
+	}
+
+	results := make([]searchResult, len(saints))
+	for i, s := range saints {
+		results[i] = searchResult{
+			Name: s.Name,
+			Slug: s.Slug,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	json.NewEncoder(w).Encode(results)
 }

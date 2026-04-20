@@ -512,3 +512,41 @@ func (q *Queries) ListSaints(ctx context.Context) ([]Saint, error) {
 	}
 	return items, nil
 }
+
+const searchSaints = `-- name: SearchSaints :many
+SELECT id, name, slug, feast_day, description, image_url, lives_url FROM saints
+WHERE name LIKE ?
+ORDER BY name
+LIMIT 10
+`
+
+func (q *Queries) SearchSaints(ctx context.Context, name string) ([]Saint, error) {
+	rows, err := q.db.QueryContext(ctx, searchSaints, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Saint
+	for rows.Next() {
+		var i Saint
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.FeastDay,
+			&i.Description,
+			&i.ImageUrl,
+			&i.LivesUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
