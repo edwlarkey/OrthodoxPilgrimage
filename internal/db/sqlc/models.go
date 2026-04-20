@@ -26,6 +26,12 @@ type Church struct {
 	ImageUrl      sql.NullString `json:"image_url"`
 }
 
+type ChurchSource struct {
+	ID       int64  `json:"id"`
+	ChurchID int64  `json:"church_id"`
+	Source   string `json:"source"`
+}
+
 type Relic struct {
 	ChurchID    int64          `json:"church_id"`
 	SaintID     int64          `json:"saint_id"`

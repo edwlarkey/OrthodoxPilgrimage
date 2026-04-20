@@ -57,9 +57,10 @@ type searchResult struct {
 }
 
 type ChurchWithRelics struct {
-	Type   string
-	Church sqlcdb.Church
-	Relics []sqlcdb.ListRelicsForChurchRow
+	Type    string
+	Church  sqlcdb.Church
+	Relics  []sqlcdb.ListRelicsForChurchRow
+	Sources []string
 }
 
 type SaintWithType struct {
@@ -81,10 +82,12 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 			church, err := a.DB.GetChurchBySlug(r.Context(), slug)
 			if err == nil {
 				relics, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
+				sources, _ := a.DB.ListSourcesForChurch(r.Context(), church.ID)
 				data = ChurchWithRelics{
-					Type:   "church",
-					Church: church,
-					Relics: relics,
+					Type:    "church",
+					Church:  church,
+					Relics:  relics,
+					Sources: sources,
 				}
 			}
 		} else {
@@ -212,10 +215,12 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	relics, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
+	sources, _ := a.DB.ListSourcesForChurch(r.Context(), church.ID)
 	data := ChurchWithRelics{
-		Type:   "church",
-		Church: church,
-		Relics: relics,
+		Type:    "church",
+		Church:  church,
+		Relics:  relics,
+		Sources: sources,
 	}
 
 	w.Header().Set("HX-Push-Url", fmt.Sprintf("/churches/%s", slug))

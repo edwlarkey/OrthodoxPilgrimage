@@ -45,6 +45,7 @@ type ChurchData struct {
 	Description   string      `json:"description"`
 	ImageURL      string      `json:"image_url"`
 	Relics        []RelicData `json:"relics"`
+	Sources       []string    `json:"sources"`
 }
 
 type RelicData struct {
@@ -149,6 +150,17 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create relic for church %s: %w", c.Name, err)
+			}
+		}
+
+		// Insert sources for this church
+		for _, source := range c.Sources {
+			err = queries.CreateChurchSource(ctx, sqlcdb.CreateChurchSourceParams{
+				ChurchID: church.ID,
+				Source:   source,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to create source for church %s: %w", c.Name, err)
 			}
 		}
 	}

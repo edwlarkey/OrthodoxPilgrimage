@@ -30,7 +30,13 @@ func NewTemplateManager() (*TemplateManager, error) {
 		return nil, fmt.Errorf("no template files found in embedded FS")
 	}
 
-	ts, err := template.New("").ParseFS(TemplatesFS, templateFiles...)
+	funcMap := template.FuncMap{
+		"hasPrefix": func(s, prefix string) bool {
+			return len(s) >= len(prefix) && s[:len(prefix)] == prefix
+		},
+	}
+
+	ts, err := template.New("").Funcs(funcMap).ParseFS(TemplatesFS, templateFiles...)
 	if err != nil {
 		return nil, err
 	}

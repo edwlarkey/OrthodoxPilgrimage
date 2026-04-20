@@ -42,6 +42,10 @@ const testDataJSON = `{
           "saint_slug": "st-seraphim-of-sarov",
           "description": "small portion"
         }
+      ],
+      "sources": [
+        "https://example.com/source1",
+        "Called and confirmed"
       ]
     },
     {
@@ -202,4 +206,73 @@ func TestChurchDetailHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Contains(t, rr.Body.String(), "St. John the Baptist")
 	assert.Equal(t, "/churches/st-john-baptist-ny", rr.Header().Get("HX-Push-Url"))
+}
+
+func TestChurchDetailHandler_Sources(t *testing.T) {
+	appInstance, dbConn := seedTestDB(t)
+	defer dbConn.Close()
+
+	req, err := http.NewRequest("GET", "/churches/st-john-baptist-ny", nil)
+	require.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(appInstance.ChurchDetailHandler)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Contains(t, rr.Body.String(), "Sources")
+	assert.Contains(t, rr.Body.String(), "https://example.com/source1")
+	assert.Contains(t, rr.Body.String(), "Called and confirmed")
+}
+
+func TestChurchDetailHandler_NoSources(t *testing.T) {
+	appInstance, dbConn := seedTestDB(t)
+	defer dbConn.Close()
+
+	req, err := http.NewRequest("GET", "/churches/holy-trinity-chicago", nil)
+	require.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(appInstance.ChurchDetailHandler)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.NotContains(t, rr.Body.String(), "Sources")
+}
+
+func TestChurchDetailHandler_SourceLinkRendering(t *testing.T) {
+	appInstance, dbConn := seedTestDB(t)
+	defer dbConn.Close()
+
+	req, err := http.NewRequest("GET", "/churches/st-john-baptist-ny", nil)
+	require.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(appInstance.ChurchDetailHandler)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	body := rr.Body.String()
+
+	assert.Contains(t, body, `href="https://example.com/source1"`)
+	assert.Contains(t, body, `target="_blank"`)
+	assert.Contains(t, body, "Called and confirmed")
+	assert.NotContains(t, body, `href="Called and confirmed"`)
+}
+
+func TestHomeHandler_ChurchWithSources(t *testing.T) {
+	appInstance, dbConn := seedTestDB(t)
+	defer dbConn.Close()
+
+	req, err := http.NewRequest("GET", "/churches/st-john-baptist-ny", nil)
+	require.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(appInstance.HomeHandler)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Contains(t, rr.Body.String(), "Sources")
+	assert.Contains(t, rr.Body.String(), "https://example.com/source1")
 }

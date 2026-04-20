@@ -109,6 +109,20 @@ func (q *Queries) CreateChurch(ctx context.Context, arg CreateChurchParams) (Chu
 	return i, err
 }
 
+const createChurchSource = `-- name: CreateChurchSource :exec
+INSERT INTO church_sources (church_id, source) VALUES (?, ?)
+`
+
+type CreateChurchSourceParams struct {
+	ChurchID int64  `json:"church_id"`
+	Source   string `json:"source"`
+}
+
+func (q *Queries) CreateChurchSource(ctx context.Context, arg CreateChurchSourceParams) error {
+	_, err := q.db.ExecContext(ctx, createChurchSource, arg.ChurchID, arg.Source)
+	return err
+}
+
 const createRelic = `-- name: CreateRelic :exec
 INSERT INTO relics (
     church_id,
@@ -503,6 +517,33 @@ func (q *Queries) ListSaints(ctx context.Context) ([]Saint, error) {
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSourcesForChurch = `-- name: ListSourcesForChurch :many
+SELECT source FROM church_sources WHERE church_id = ?
+`
+
+func (q *Queries) ListSourcesForChurch(ctx context.Context, churchID int64) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listSourcesForChurch, churchID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var source string
+		if err := rows.Scan(&source); err != nil {
+			return nil, err
+		}
+		items = append(items, source)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

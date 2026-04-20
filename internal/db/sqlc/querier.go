@@ -12,6 +12,7 @@ type Querier interface {
 	CountChurches(ctx context.Context) (int64, error)
 	CountSaints(ctx context.Context) (int64, error)
 	CreateChurch(ctx context.Context, arg CreateChurchParams) (Church, error)
+	CreateChurchSource(ctx context.Context, arg CreateChurchSourceParams) error
 	CreateRelic(ctx context.Context, arg CreateRelicParams) error
 	CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint, error)
 	DeleteAllChurches(ctx context.Context) error
@@ -25,6 +26,7 @@ type Querier interface {
 	ListChurchesInBounds(ctx context.Context, arg ListChurchesInBoundsParams) ([]Church, error)
 	ListRelicsForChurch(ctx context.Context, churchID int64) ([]ListRelicsForChurchRow, error)
 	ListSaints(ctx context.Context) ([]Saint, error)
+	ListSourcesForChurch(ctx context.Context, churchID int64) ([]string, error)
 	SearchSaints(ctx context.Context, name string) ([]Saint, error)
 }
 

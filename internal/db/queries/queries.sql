@@ -2,26 +2,6 @@
 SELECT * FROM saints
 ORDER BY name;
 
--- name: CreateChurch :one
-INSERT INTO churches (
-    name,
-    slug,
-    type,
-    address_text,
-    city,
-    state_province,
-    country_code,
-    latitude,
-    longitude,
-    jurisdiction,
-    website,
-    phone,
-    description,
-    image_url
-) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-)
-RETURNING *;
 
 -- name: GetChurch :one
 SELECT * FROM churches
@@ -47,6 +27,27 @@ JOIN relics r ON c.id = r.church_id
 JOIN saints s ON r.saint_id = s.id
 WHERE s.slug = ?
 ORDER BY c.name;
+
+-- name: CreateChurch :one
+INSERT INTO churches (
+    name,
+    slug,
+    type,
+    address_text,
+    city,
+    state_province,
+    country_code,
+    latitude,
+    longitude,
+    jurisdiction,
+    website,
+    phone,
+    description,
+    image_url
+) VALUES (
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+)
+RETURNING *;
 
 -- name: CreateSaint :one
 INSERT INTO saints (
@@ -100,3 +101,9 @@ DELETE FROM saints;
 
 -- name: DeleteAllRelics :exec
 DELETE FROM relics;
+
+-- name: CreateChurchSource :exec
+INSERT INTO church_sources (church_id, source) VALUES (?, ?);
+
+-- name: ListSourcesForChurch :many
+SELECT source FROM church_sources WHERE church_id = ?;

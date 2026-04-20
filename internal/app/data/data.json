@@ -4,7 +4,7 @@
       "name": "Saint John of Shanghai and San Francisco",
       "slug": "st-john-of-shanghai-and-san-francisco",
       "feast_day": "July 2",
-      "description": "A Russian Orthodox Bishop who served from in Russia, France, China, and the United States.",
+      "description": "A Russian Orthodox Bishop who served in Russia, France, China, and the United States. Known as the Wonderworker of Shanghai and San Francisco.",
       "image_url": "",
       "lives_url": ""
     },
@@ -12,14 +12,54 @@
       "name": "Saint Mardarije of Libertyville",
       "slug": "st-mardarije-libertyville",
       "feast_day": "November 29/December 12",
-      "description": "",
+      "description": "First Serbian Orthodox bishop in America. Founded the Serbian Orthodox Church in North America.",
+      "image_url": "",
+      "lives_url": ""
+    },
+    {
+      "name": "Saint Alexis Toth",
+      "slug": "st-alexis-toth",
+      "feast_day": "May 7",
+      "description": "Missionary priest and defender of Orthodoxy in America. Led thousands of Carpatho-Russian immigrants from the Uniate Greek Catholic Church to the Orthodox Church.",
+      "image_url": "",
+      "lives_url": ""
+    },
+    {
+      "name": "Saint Herman of Alaska",
+      "slug": "st-herman-of-alaska",
+      "feast_day": "August 9",
+      "description": "First Orthodox saint of America. A missionary monk who lived among the Orthodox Alaskans on Spruce Island.",
+      "image_url": "",
+      "lives_url": ""
+    },
+    {
+      "name": "Saint John of Chicago",
+      "slug": "st-john-of-chicago",
+      "feast_day": "October 31",
+      "description": "Hieromartyr of the Bolshevik Revolution. Founded Holy Trinity Cathedral in Chicago and was the first priest martyred at the outset of the Bolshevik Revolution.",
+      "image_url": "",
+      "lives_url": ""
+    },
+    {
+      "name": "Saint Anna",
+      "slug": "st-anna",
+      "feast_day": "December 25",
+      "description": "Mother of the Theotokos (Virgin Mary) and grandmother of Jesus Christ.",
+      "image_url": "",
+      "lives_url": ""
+    },
+    {
+      "name": "Saint Tikhon of Moscow",
+      "slug": "st-tikhon-of-moscow",
+      "feast_day": "March 25/April 7",
+      "description": "Patriarch of Moscow and Enlightener of North America. First Orthodox bishop in America. Consecrated Holy Trinity Cathedral in Chicago in 1903.",
       "image_url": "",
       "lives_url": ""
     }
   ],
   "churches": [
     {
-      "name": "Holy Virgin Cathedral Joy of all Who Sorrow",
+      "name": "Holy Virgin Cathedral Joy of All Who Sorrow",
       "slug": "holy-virgin-cathedral-san-francisco",
       "type": "Cathedral",
       "address_text": "6210 Geary Boulevard",
@@ -31,13 +71,16 @@
       "jurisdiction": "Russian Orthodox Church Outside Russia (ROCOR)",
       "website": "https://sfsobor.com/",
       "phone": "(415) 221-3255",
-      "description": "",
+      "description": "Oldest Russian Orthodox church in America, built in 1966. Houses the incorrupt relics of St. John of Shanghai and San Francisco.",
       "image_url": "",
       "relics": [
         {
           "saint_slug": "st-john-of-shanghai-and-san-francisco",
-          "description": "Incorrupt relics"
+          "description": "Incorrupt relics (full body)"
         }
+      ],
+      "sources": [
+        "https://sfsobor.com/st-john.php"
       ]
     },
     {
@@ -52,15 +95,185 @@
       "longitude": -87.950749,
       "jurisdiction": "Serbian Orthodox Church",
       "website": "https://stsavamonastery.org/",
-      "phone": "",
-      "description": "",
+      "phone": "(847) 362-2913",
+      "description": "Oldest Serbian Orthodox monastery in America. Houses the incorrupt relics of St. Mardarije of Libertyville.",
       "image_url": "",
       "relics": [
         {
           "saint_slug": "st-mardarije-libertyville",
-          "description": "Incorrupt relics"
+          "description": "Incorrupt relics (full body)"
         }
+      ],
+      "sources": [
+        "https://www.synod.com/synod/eng2017/20170516_print_enlibertyville.html"
       ]
+    },
+    {
+      "name": "Holy Resurrection Orthodox Cathedral",
+      "slug": "holy-resurrection-orthodox-cathedral-wilkes-barre",
+      "type": "Cathedral",
+      "address_text": "591 N Main St",
+      "city": "Wilkes-Barre",
+      "state_province": "PA",
+      "country_code": "US",
+      "latitude": 41.25622,
+      "longitude": -75.864423,
+      "jurisdiction": "Orthodox Church in America",
+      "website": "https://orthodox-wilkesbarre.org/",
+      "phone": "(570) 822-7725",
+      "description": "Founded in 1892 by St. Alexis Toth. A piece of his foot bone is in a reliquary.",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-alexis-toth",
+          "description": "Relic (piece of foot bone)"
+        }
+      ],
+      "sources": [
+        "https://apnews.com/article/religion-wilkes-barre-e9eb947609154ac5890def2328d564b7"
+      ]
+    },
+    {
+      "name": "St. Tikhon's Orthodox Monastery",
+      "slug": "st-tikhon-monastery-south-canaan",
+      "type": "Monastery",
+      "address_text": "175 St. Tikhon's Road",
+      "city": "South Canaan",
+      "state_province": "PA",
+      "country_code": "US",
+      "latitude": 41.51577,
+      "longitude": -75.40236,
+      "jurisdiction": "Orthodox Church in America",
+      "website": "https://sttikhonsmonastery.org/",
+      "phone": "(570) 937-4067",
+      "description": "First Orthodox monastery in North America, founded in 1905. Houses the full relics of St. Alexis Toth.",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-alexis-toth",
+          "description": "Full skeleton relics"
+        }
+      ],
+      "sources": [
+        "https://www.orthodoxhistory.org/2025/08/07/the-other-american-orthodox-saints-a-pilgrims-guide/"
+      ]
+    },
+    {
+      "name": "Holy Resurrection Orthodox Cathedral",
+      "slug": "holy-resurrection-cathedral-kodiak",
+      "type": "Cathedral",
+      "address_text": "410 Mission Road",
+      "city": "Kodiak",
+      "state_province": "AK",
+      "country_code": "US",
+      "latitude": 57.78861,
+      "longitude": -152.4025,
+      "jurisdiction": "Orthodox Church in America",
+      "website": "https://www.kodiakhrc.org/",
+      "phone": "(907) 486-3854",
+      "description": "One of the oldest Orthodox churches in North America, established in 1794. Houses the relics of St. Herman of Alaska.",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-herman-of-alaska",
+          "description": "Relics"
+        }
+      ],
+      "sources": [
+        "https://www.kodiakhrc.org/"
+      ]
+    },
+    {
+      "name": "Holy Trinity Orthodox Cathedral",
+      "slug": "holy-trinity-cathedral-chicago",
+      "type": "Cathedral",
+      "address_text": "1121 N Leavitt St",
+      "city": "Chicago",
+      "state_province": "IL",
+      "country_code": "US",
+      "latitude": 41.901939,
+      "longitude": -87.681881,
+      "jurisdiction": "Orthodox Church in America",
+      "website": "https://holytrinitycathedral.net/",
+      "phone": "(773) 486-6064",
+      "description": "Founded in 1892, designed by Louis Sullivan. Consecrated by St. Tikhon of Moscow in 1903. Houses relics of St. John of Chicago.",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-john-of-chicago",
+          "description": "Portion of relics"
+        }
+      ],
+      "sources": [
+        "https://domoca.org/relics-of-st-john-of-chicago-enshrined-at-diocesan-cathedral-on-the-feast-of-the-hieromartyr/"
+      ]
+    },
+    {
+      "name": "St. Innocent of Irkutsk Orthodox Church",
+      "slug": "st-innocent-orthodox-church-redford",
+      "type": "Church",
+      "address_text": "23300 West Chicago Rd",
+      "city": "Redford",
+      "state_province": "MI",
+      "country_code": "US",
+      "latitude": 42.3715,
+      "longitude": -83.2562,
+      "jurisdiction": "Russian Orthodox Church Outside Russia (ROCOR)",
+      "website": "https://www.stinnocentchurch.com/",
+      "phone": "(734) 743-1542",
+      "description": "Has a shrine dedicated to St. John of Shanghai and San Francisco with a portion of his relics.",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-john-of-shanghai-and-san-francisco",
+          "description": "Portion of relics"
+        }
+      ],
+      "sources": [
+        "https://www.stinnocentchurch.com/shrineofstjohnofshanghaiandsanfrancisco"
+      ]
+    },
+    {
+      "name": "St. Anna Greek Orthodox Church",
+      "slug": "st-anna-greek-orthodox-church-roseville",
+      "type": "Church",
+      "address_text": "1001 Stone Canyon Dr",
+      "city": "Roseville",
+      "state_province": "CA",
+      "country_code": "US",
+      "latitude": 38.75968,
+      "longitude": -121.24478,
+      "jurisdiction": "Greek Orthodox Metropolis of San Francisco",
+      "website": "https://www.saintanna.org/",
+      "phone": "(916) 772-9372",
+      "description": "Gifted a quarter-piece of the skull of St. Anna from the Skete of St. Anna on Mount Athos.",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-anna",
+          "description": "Quarter-piece of skull"
+        }
+      ],
+      "sources": [
+        "https://www.saintanna.org/the-first-holy-relic-of-saint-anna"
+      ]
+    },
+    {
+      "name": "Holy Dormition Convent Novo-Diveevo",
+      "slug": "novo-diveevo-convent-nanuet",
+      "type": "Convent",
+      "address_text": "100 Smith Rd",
+      "city": "Nanuet",
+      "state_province": "NY",
+      "country_code": "US",
+      "latitude": 41.110309,
+      "longitude": -74.025015,
+      "jurisdiction": "Russian Orthodox Church Outside Russia (ROCOR)",
+      "website": "https://novo-diveevo.org/",
+      "phone": "(845) 356-0425",
+      "description": "Founded in 1949. Orthodox convent dedicated to the Dormition and St. Seraphim of Sarov.",
+      "image_url": "",
+      "relics": []
     }
   ]
 }

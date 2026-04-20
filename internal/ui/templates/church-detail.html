@@ -62,4 +62,23 @@
     {{end}}
 </div>
 
+{{if .Sources}}
+<div class="relics-section">
+    <h3>Sources</h3>
+    <div class="relic-pills">
+    {{range .Sources}}
+        {{if or (hasPrefix . "http://") (hasPrefix . "https://") (hasPrefix . "www.")}}
+        <a href="{{.}}" target="_blank" rel="noopener noreferrer" class="relic-pill">
+            <span class="saint-name">{{.}}</span>
+        </a>
+        {{else}}
+        <span class="relic-pill">
+            <span class="saint-name">{{.}}</span>
+        </span>
+        {{end}}
+    {{end}}
+    </div>
+</div>
+{{end}}
+
 {{end}}
