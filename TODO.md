@@ -3,6 +3,7 @@
 This file tracks the remaining tasks for the Orthodox Pilgrimage website project.
 
 ## ✅ Completed
+
 - [x] ~~Set up the Go project structure~~
 - [x] ~~Define the database schema in SQL~~
 - [x] ~~Write initial queries and use `sqlc` to generate Go models and query code~~
@@ -12,6 +13,7 @@ This file tracks the remaining tasks for the Orthodox Pilgrimage website project
 - [x] ~~Build the initial frontend page with a full-screen Leaflet.js map that fetches and displays church locations from the API endpoint~~
 
 ## Phase 2: Core Map & API Endpoint
+
 - [ ] Add geographic boundary filtering to the `/api/v1/churches` endpoint.
 
 ## Phase 3: HTMX Interactivity & UI
@@ -24,5 +26,6 @@ This file tracks the remaining tasks for the Orthodox Pilgrimage website project
 
 ## Phase 4: Deployment
 
-- [ ] Containerize the application using a `Dockerfile`.
-- [ ] Prepare for deployment to a hosting service.
+- [x] Containerize the application using a `Dockerfile`.
+- [x] Prepare for deployment to a hosting service.
+

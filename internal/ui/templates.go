@@ -44,7 +44,7 @@ func NewTemplateManager() (*TemplateManager, error) {
 	return &TemplateManager{cache: cache}, nil
 }
 
-func (tm *TemplateManager) Render(w io.Writer, _ string, data interface{}) error {
+func (tm *TemplateManager) Render(w io.Writer, _ string, data any) error {
 	ts, ok := tm.cache["base"]
 	if !ok {
 		return fmt.Errorf("the template 'base' does not exist")

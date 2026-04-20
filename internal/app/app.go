@@ -47,21 +47,21 @@ type churchJSON struct {
 }
 
 type ChurchWithRelics struct {
-	Type string
-	sqlcdb.Church
+	Type   string
+	Church sqlcdb.Church
 	Relics []sqlcdb.ListRelicsForChurchRow
 }
 
 type SaintWithType struct {
 	Type            string
-	sqlcdb.Saint
+	Saint           sqlcdb.Saint
 	ReferringChurch *sqlcdb.Church
 	Churches        []sqlcdb.Church
 }
 
 func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=86400")
-	var data interface{}
+	var data any
 	var err error
 
 	if r.URL.Path != "/" {
@@ -84,7 +84,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				// Fetch all churches for this saint
 				churches, _ := a.DB.ListChurchesBySaintSlug(r.Context(), slug)
-				
+
 				sData := SaintWithType{
 					Type:     "saint",
 					Saint:    saint,

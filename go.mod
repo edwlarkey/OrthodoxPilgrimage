@@ -1,6 +1,6 @@
 module github.com/edwlarkey/orthodoxpilgrimage
 
-go 1.24.5
+go 1.26.2
 
 require (
 	github.com/sqlc-dev/sqlc v1.29.0
