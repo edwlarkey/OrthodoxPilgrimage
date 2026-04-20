@@ -59,11 +59,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Apply a filter to make it look modern and minimalist
-    osmLayer.on('prerender', (event) => {
-        const ctx = event.context;
-        ctx.save();
-        ctx.filter = 'grayscale(75%) contrast(1.1) brightness(1.1)';
-    });
+    // osmLayer.on('prerender', (event) => {
+    //     const ctx = event.context;
+    //     ctx.save();
+    //     ctx.filter = 'grayscale(75%) contrast(1.1) brightness(1.1)';
+    // });
+
+    // osmLayer.on('prerender', (event) => {
+    //     const ctx = event.context;
+    //     ctx.save();
+    //     ctx.filter = 'contrast(1.1) brightness(1.1)';
+    // });
 
     osmLayer.on('postrender', (event) => {
         const ctx = event.context;
