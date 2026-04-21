@@ -84,8 +84,8 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if strings.HasPrefix(path, "/churches/") {
 			slug := path[10:]
-			church, err := a.DB.GetChurchBySlug(r.Context(), slug)
-			if err == nil {
+			church, churchErr := a.DB.GetChurchBySlug(r.Context(), slug)
+			if churchErr == nil {
 				relics, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
 				sources, _ := a.DB.ListSourcesForChurch(r.Context(), church.ID)
 				data = ChurchWithRelics{
@@ -94,12 +94,14 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 					Relics:  relics,
 					Sources: sources,
 				}
+			} else {
+				err = churchErr
 			}
 		} else {
 			// Check if it's a saint slug (paths like /st-seraphim-of-sarov)
 			slug := strings.TrimPrefix(path, "/")
-			saint, err := a.DB.GetSaintBySlug(r.Context(), slug)
-			if err == nil {
+			saint, saintErr := a.DB.GetSaintBySlug(r.Context(), slug)
+			if saintErr == nil {
 				// Fetch all churches for this saint
 				churches, _ := a.DB.ListChurchesBySaintSlug(r.Context(), slug)
 
@@ -111,11 +113,13 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 				// Optional: link back to referring church
 				fromSlug := r.URL.Query().Get("from")
 				if fromSlug != "" {
-					if church, err := a.DB.GetChurchBySlug(r.Context(), fromSlug); err == nil {
-						sData.ReferringChurch = &church
+					if refChurch, refErr := a.DB.GetChurchBySlug(r.Context(), fromSlug); refErr == nil {
+						sData.ReferringChurch = &refChurch
 					}
 				}
 				data = sData
+			} else {
+				err = saintErr
 			}
 		}
 
