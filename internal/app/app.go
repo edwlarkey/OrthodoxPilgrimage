@@ -33,8 +33,12 @@ func (a *Application) Routes() http.Handler {
 		http.ServeFile(w, r, "sitemap.xml")
 	})
 
-	// Static files
-	mux.Handle("/static/", http.FileServer(http.FS(ui.StaticFS)))
+	// Static files with caching headers for Cloudflare
+	staticHandler := http.FileServer(http.FS(ui.StaticFS))
+	mux.Handle("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=86400")
+		staticHandler.ServeHTTP(w, r)
+	}))
 
 	return mux
 }
@@ -71,7 +75,8 @@ type SaintWithType struct {
 }
 
 func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
+	w.Header().Set("Vary", "Accept-Encoding")
 	var data any
 	var err error
 
@@ -124,7 +129,10 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	a.Templates.Render(w, "index", data)
+	if err := a.Templates.Render(w, "index", data); err != nil {
+		http.Error(w, "failed to render template", http.StatusInternalServerError)
+		log.Printf("Error rendering template: %v", err)
+	}
 }
 
 func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request) {
@@ -235,7 +243,12 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 			http.Error(w, "failed to render church detail", http.StatusInternalServerError)
 		}
 	} else {
-		a.Templates.Render(w, "index", data)
+		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
+		w.Header().Set("Vary", "Accept-Encoding")
+		if err := a.Templates.Render(w, "index", data); err != nil {
+			http.Error(w, "failed to render template", http.StatusInternalServerError)
+			log.Printf("Error rendering template: %v", err)
+		}
 	}
 }
 
@@ -255,7 +268,10 @@ func (a *Application) searchHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	if len(query) < 2 {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode([]searchResult{})
+		if err := json.NewEncoder(w).Encode([]searchResult{}); err != nil {
+			http.Error(w, "Failed to encode search results", http.StatusInternalServerError)
+			log.Printf("Error encoding search results: %v", err)
+		}
 		return
 	}
 
@@ -276,5 +292,8 @@ func (a *Application) searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=60, s-maxage=3600")
-	json.NewEncoder(w).Encode(results)
+	if err := json.NewEncoder(w).Encode(results); err != nil {
+		http.Error(w, "Failed to encode search results", http.StatusInternalServerError)
+		log.Printf("Error encoding search results: %v", err)
+	}
 }

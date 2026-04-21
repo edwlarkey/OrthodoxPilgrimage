@@ -44,19 +44,14 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let initialZoom = 4;
+    let initialZoom = 3;
     let initialCenter = [-98.5795, 39.8283];
     let fetchUrl = '/api/v1/churches';
-
-    const isMobile = window.innerWidth <= 500;
-    if (isMobile) {
-        initialZoom -= 1;
-    }
 
     {{if .}}
         {{if eq .Type "church"}}
             initialCenter = [{{.Church.Longitude}}, {{.Church.Latitude}}];
-            initialZoom = isMobile ? 11 : 12;
+            initialZoom = 11;
             document.getElementById('sidebar-title').innerText = "Church Info";
         {{else if eq .Type "saint"}}
             fetchUrl = '/api/v1/churches?saint={{.Saint.Slug}}';
