@@ -76,7 +76,7 @@ type SaintWithType struct {
 
 func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
-	w.Header().Set("Vary", "Accept-Encoding")
+	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
 	var data any
 	var err error
 
@@ -236,7 +236,10 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	w.Header().Set("HX-Push-Url", fmt.Sprintf("/churches/%s", slug))
+	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
+
 	if r.Header.Get("HX-Request") != "" {
+		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
 		ts, err := a.Templates.Get("church-detail")
 		if err != nil {
 			http.Error(w, "church-detail template not found", http.StatusInternalServerError)
@@ -248,7 +251,6 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 		}
 	} else {
 		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
-		w.Header().Set("Vary", "Accept-Encoding")
 		if err := a.Templates.Render(w, "index", data); err != nil {
 			http.Error(w, "failed to render template", http.StatusInternalServerError)
 			log.Printf("Error rendering template: %v", err)
