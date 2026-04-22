@@ -15,14 +15,13 @@
 <div class="info-section">
     {{if .Saint.Description.Valid}}
     <div class="info-item">
-        <label>Life and Miracles</label>
+        <label>Description</label>
         <p class="description-text">{{.Saint.Description.String}}</p>
     </div>
     {{end}}
 
     {{if .Saint.LivesUrl.Valid}}
     <div class="info-item">
-        <label>Primary Source</label>
         <a href="{{.Saint.LivesUrl.String}}" target="_blank" rel="noopener noreferrer" class="external-link">
             Read more about their life
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px; vertical-align: middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>

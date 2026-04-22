@@ -44,20 +44,55 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let initialZoom = 3;
+    const CHURCH_ZOOM = 14;
+    let initialZoom = window.innerWidth <= 500 ? 3 : 4;
     let initialCenter = [-98.5795, 39.8283];
     let fetchUrl = '/api/v1/churches';
 
     {{if .}}
         {{if eq .Type "church"}}
             initialCenter = [{{.Church.Longitude}}, {{.Church.Latitude}}];
-            initialZoom = 11;
+            initialZoom = CHURCH_ZOOM;
             document.getElementById('sidebar-title').innerText = "Church Info";
         {{else if eq .Type "saint"}}
+            {{if .ReferringChurch}}
+                initialCenter = [{{.ReferringChurch.Longitude}}, {{.ReferringChurch.Latitude}}];
+                initialZoom = CHURCH_ZOOM;
+            {{end}}
             fetchUrl = '/api/v1/churches?saint={{.Saint.Slug}}';
             document.getElementById('sidebar-title').innerText = "Saint Info";
         {{end}}
     {{end}}
+
+    // Helper to center on a coordinate with sidebar padding
+    function focusOnCoordinate(coords, zoomLevel = CHURCH_ZOOM, animate = true) {
+        if (window.innerWidth <= 500) {
+            // On mobile, center the pin in the top 40% of the screen 
+            // to keep it visible above the 50vh sidebar
+            const resolution = view.getResolutionForZoom(zoomLevel);
+            const offset = (window.innerHeight * 0.2) * resolution; // Offset by 20% of screen height
+            const center = [coords[0], coords[1] - offset];
+            if (animate) {
+                view.animate({
+                    center: center,
+                    zoom: zoomLevel,
+                    duration: 500
+                });
+            } else {
+                view.setCenter(center);
+                view.setZoom(zoomLevel);
+            }
+        } else {
+            // On desktop, use fit with padding to account for the sidebar
+            // We use a tiny extent around the point
+            const point = new ol.geom.Point(coords);
+            view.fit(point, {
+                padding: [100, 500, 100, 100],
+                duration: animate ? 500 : 0,
+                maxZoom: zoomLevel
+            });
+        }
+    }
 
     const view = new ol.View({
         center: ol.proj.fromLonLat(initialCenter),
@@ -70,19 +105,6 @@ document.addEventListener('DOMContentLoaded', function() {
         source: new ol.source.OSM()
     });
 
-    // Apply a filter to make it look modern and minimalist
-    // osmLayer.on('prerender', (event) => {
-    //     const ctx = event.context;
-    //     ctx.save();
-    //     ctx.filter = 'grayscale(75%) contrast(1.1) brightness(1.1)';
-    // });
-
-    // osmLayer.on('prerender', (event) => {
-    //     const ctx = event.context;
-    //     ctx.save();
-    //     ctx.filter = 'contrast(1.1) brightness(1.1)';
-    // });
-
     osmLayer.on('postrender', (event) => {
         const ctx = event.context;
         ctx.restore();
@@ -93,6 +115,14 @@ document.addEventListener('DOMContentLoaded', function() {
         layers: [ osmLayer ],
         view: view
     });
+
+    {{if .}}
+        {{if eq .Type "church"}}
+            // After map is initialized, focus on the church immediately without animation
+            const initialCoords = ol.proj.fromLonLat([{{.Church.Longitude}}, {{.Church.Latitude}}]);
+            focusOnCoordinate(initialCoords, CHURCH_ZOOM, false);
+        {{end}}
+    {{end}}
 
     const tooltipElement = document.getElementById('tooltip');
     const tooltipOverlay = new ol.Overlay({
@@ -163,13 +193,16 @@ document.addEventListener('DOMContentLoaded', function() {
             vectorSource.addFeatures(features);
             
             {{if eq .Type "saint"}}
-            if (features.length > 0) {
+            if (features.length > 1) {
                 const extent = vectorSource.getExtent();
                 map.getView().fit(extent, { 
                     padding: [100, 500, 100, 100], 
-                    duration: 1000,
-                    maxZoom: 12 
+                    duration: 0, 
+                    maxZoom: CHURCH_ZOOM 
                 });
+            } else if (features.length === 1) {
+                const coords = features[0].getGeometry().getCoordinates();
+                focusOnCoordinate(coords, CHURCH_ZOOM, false);
             }
             {{end}}
         })
@@ -206,25 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Pan and zoom to clicked church
             const coords = feature.getGeometry().getCoordinates();
-            const zoom = 14;
-            
-            if (window.innerWidth <= 500) {
-                // On mobile, center the pin in the top 40% of the screen 
-                // to keep it visible above the 50vh sidebar
-                const resolution = view.getResolutionForZoom(zoom);
-                const offset = (window.innerHeight * 0.2) * resolution; // Offset by 20% of screen height
-                view.animate({
-                    center: [coords[0], coords[1] - offset],
-                    zoom: zoom,
-                    duration: 500
-                });
-            } else {
-                view.animate({ 
-                    center: coords, 
-                    zoom: zoom,
-                    duration: 500 
-                });
-            }
+            focusOnCoordinate(coords, CHURCH_ZOOM);
         }
     });
 
