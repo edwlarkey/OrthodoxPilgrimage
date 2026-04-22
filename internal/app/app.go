@@ -32,6 +32,17 @@ func (a *Application) Routes() http.Handler {
 	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "sitemap.xml")
 	})
+	mux.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		if strings.HasSuffix(r.Host, ".fly.dev") {
+			fmt.Fprintln(w, "User-agent: *")
+			fmt.Fprintln(w, "Disallow: /")
+			return
+		}
+		fmt.Fprintln(w, "User-agent: *")
+		fmt.Fprintln(w, "Allow: /")
+		fmt.Fprintln(w, "Sitemap: https://orthodoxpilgrimage.com/sitemap.xml")
+	})
 
 	// Static files with caching headers for Cloudflare
 	staticHandler := http.FileServer(http.FS(ui.StaticFS))
@@ -40,7 +51,16 @@ func (a *Application) Routes() http.Handler {
 		staticHandler.ServeHTTP(w, r)
 	}))
 
-	return mux
+	return a.flyDevRobotsMiddleware(mux)
+}
+
+func (a *Application) flyDevRobotsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.Host, ".fly.dev") {
+			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 type churchJSON struct {

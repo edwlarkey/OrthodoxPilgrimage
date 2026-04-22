@@ -53,7 +53,7 @@ tidy:
 
 ## audit: format code, vet code, run linters, and test
 .PHONY: audit
-audit:
+audit: validate
 	@echo 'Formatting code...'
 	go fmt ./...
 	@echo 'Vetting code...'
@@ -63,6 +63,12 @@ audit:
 	# go test includes some go vet checks by default. turn them off because
 	# we just ran go vet above
 	go test -race -vet=off ./...
+
+## validate: validate data/data.json
+.PHONY: validate
+validate:
+	@echo 'Validating data.json...'
+	go test -v ./internal/app/ -run TestValidateDataJSON
 
 ## test: run tests and provide coverage information
 .PHONY: test
@@ -102,3 +108,13 @@ build.docker:
 	@echo 'Building $(APP_NAME) for all supported architectures...'
 	$(MAKE) build.arch GOARCH=amd64
 	$(MAKE) build.arch GOARCH=arm64
+
+# =========================================================================== #
+# DEPLOYMENT
+# =========================================================================== #
+
+## deploy: deploy the application to fly.io
+.PHONY: deploy
+deploy:
+	@echo 'Deploying to fly.io...'
+	fly deploy

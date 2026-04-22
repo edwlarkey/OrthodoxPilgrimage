@@ -58,13 +58,84 @@
       "name": "Saint Joachim",
       "slug": "st-joachim",
       "feast_day": "September 9",
-      "description": "Mother of the Theotokos (Virgin Mary) and grandmother of Jesus Christ. Wife of St. Joachim.",
+      "description": "Father of the Theotokos (Virgin Mary) and grandfather of Jesus Christ. Husband of St. Anna.",
       "image_url": "",
       "lives_url": "",
-      "updated_at": "2026-04-20"
+      "updated_at": "2026-04-21"
+    },
+    {
+      "name": "Saint Olga of Alaska",
+      "slug": "st-olga-of-alaska",
+      "feast_day": "October 27",
+      "description": "Wonderworker, Matushka of All Alaska",
+      "image_url": "",
+      "lives_url": "",
+      "updated_at": "2026-04-21"
+    },
+    {
+      "name": "Saint Raphael of Brooklyn",
+      "slug": "st-raphael-of-brooklyn",
+      "feast_day": "First Saturday in November, February 27",
+      "description": "First Orthodox bishop consecrated in North America (1904). Founded St. Nicholas Cathedral in Brooklyn.",
+      "image_url": "",
+      "lives_url": "",
+      "updated_at": "2026-04-21"
+    },
+    {
+      "name": "Saint Sebastian of Jackson",
+      "slug": "st-sebastian-of-jackson",
+      "feast_day": "November 30",
+      "description": "Founded the first Serbian Orthodox church in North America.",
+      "image_url": "",
+      "lives_url": "https://www.stsavajackson.org/st-sebastian-of-jackson/",
+      "updated_at": "2026-04-21"
+    },
+    {
+      "name": "Saint Joseph the Hesychast",
+      "slug": "st-joseph-the-hesychast",
+      "feast_day": "August 16",
+      "description": "A Greek Orthodox elder and ascetic on Mount Athos who reposed in 1959.",
+      "image_url": "",
+      "lives_url": "https://stanthonysmonastery.org/pages/st-joseph-the-hesychast",
+      "updated_at": "2026-04-21"
+    },
+    {
+      "name": "The Most Holy Theotokos",
+      "slug": "the-most-holy-theotokos",
+      "feast_day": "Dormition, Annunciation, Nativity of the Theotokos",
+      "description": "The Mother of God.",
+      "image_url": "",
+      "lives_url": "",
+      "updated_at": "2026-04-21"
     }
   ],
   "churches": [
+    {
+      "name": "Holy Theotokos Iveron Russian Orthodox Church",
+      "slug": "holy-theotokos-iveron-church-kailua",
+      "type": "Church",
+      "address_text": "201 N. Kainalu Drive",
+      "city": "Kailua",
+      "state_province": "HI",
+      "country_code": "US",
+      "latitude": 21.401735,
+      "longitude": -157.742233,
+      "jurisdiction": "Russian Orthodox Church Outside Russia (ROCOR)",
+      "website": "https://www.orthodoxhawaii.org",
+      "phone": "",
+      "description": "Home of the miraculous 'Hawaiian' Myrrh-streaming Iveron Icon of the Holy Theotokos.",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "the-most-holy-theotokos",
+          "description": "The 'Hawaiian' Myrrh-streaming Iveron Icon"
+        }
+      ],
+      "sources": [
+        "https://www.orthodoxhawaii.org/icons"
+      ],
+      "updated_at": "2026-04-21"
+    },
     {
       "name": "Holy Virgin Cathedral Joy of All Who Sorrow",
       "slug": "holy-virgin-cathedral-san-francisco",
@@ -92,6 +163,58 @@
       "updated_at": "2026-04-20"
     },
     {
+      "name": "St. Anthony's Greek Orthodox Monastery",
+      "slug": "st-anthony-monastery-florence",
+      "type": "Monastery",
+      "address_text": "4784 North Saint Joseph's Way",
+      "city": "Florence",
+      "state_province": "AZ",
+      "country_code": "US",
+      "latitude": 32.921388,
+      "longitude": -111.260715,
+      "jurisdiction": "Greek Orthodox Archdiocese of America",
+      "website": "https://stanthonysmonastery.org/",
+      "phone": "",
+      "description": "Founded in 1995 by Elder Ephraim. A prominent pilgrimage site known for its lush gardens and Athonite monastic tradition.",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-joseph-the-hesychast",
+          "description": "Holy Skull"
+        }
+      ],
+      "sources": [
+        "https://stanthonysmonastery.org/"
+      ],
+      "updated_at": "2026-04-21"
+    },
+    {
+      "name": "Saint Sava Serbian Orthodox Church",
+      "slug": "st-sava-serbian-orthodox-church-jackson",
+      "type": "Church",
+      "address_text": "724 N Main St",
+      "city": "Jackson",
+      "state_province": "CA",
+      "country_code": "US",
+      "latitude": 38.355833,
+      "longitude": -120.775278,
+      "jurisdiction": "Serbian Orthodox Church",
+      "website": "https://www.stsavajackson.org/",
+      "phone": "(209) 223-2700",
+      "description": "The first Serbian Orthodox Church in America, built in 1894.",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-sebastian-of-jackson",
+          "description": "Full relics"
+        }
+      ],
+      "sources": [
+        "https://www.stsavajackson.org/"
+      ],
+      "updated_at": "2026-04-21"
+    },
+    {
       "name": "Saint Sava Monastery",
       "slug": "saint-sava-monastery-libertyville",
       "type": "Monastery",
@@ -104,7 +227,7 @@
       "jurisdiction": "Serbian Orthodox Church",
       "website": "https://stsavamonastery.org/",
       "phone": "(847) 362-2913",
-      "description": "Oldest Serbian Orthodox monastery in America. Houses the incorrupt relics of St. Mardarije of Libertyville.",
+      "description": "Oldest Serbian Orthodox monastery in America.",
       "image_url": "",
       "relics": [
         {
@@ -130,12 +253,12 @@
       "jurisdiction": "Orthodox Church in America",
       "website": "https://sttikhonsmonastery.org/",
       "phone": "(570) 937-4067",
-      "description": "First Orthodox monastery in North America, founded in 1905. Houses the full relics of St. Alexis Toth.",
+      "description": "First Orthodox monastery in North America, founded in 1905.",
       "image_url": "",
       "relics": [
         {
           "saint_slug": "st-alexis-toth",
-          "description": "Full skeleton relics"
+          "description": "Full relics"
         }
       ],
       "sources": [
@@ -205,7 +328,7 @@
       "country_code": "US",
       "latitude": 42.36442,
       "longitude": -83.26717,
-      "jurisdiction": "Russian Orthodox Church Outside Russia (ROCOR)",
+      "jurisdiction": "The Patriarchal Parishes in the USA (Moscow Patriarchate)",
       "website": "https://www.stinnocentchurch.com/",
       "phone": "(734) 743-1542",
       "description": "Has a shrine dedicated to St. John of Shanghai and San Francisco with a portion of his relics.",
@@ -251,6 +374,59 @@
         "https://www.saintanna.org/the-holy-relics-of-saints-joachim-and-anna"
       ],
       "updated_at": "2026-04-20"
+    },
+    {
+      "name": "St. Nicholas Church",
+      "slug": "st-neckolas-church-kwethluk",
+      "type": "Church",
+      "address_text": "",
+      "city": "Kwethluk",
+      "state_province": "AK",
+      "country_code": "US",
+      "latitude": 60.811944,
+      "longitude": -161.4375,
+      "jurisdiction": "Orthodox Church in America",
+      "website": "",
+      "phone": "",
+      "description": "Built in 1935",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-olga-of-alaska",
+          "description": "Relics"
+        }
+      ],
+      "sources": [
+        "https://odosa.org/news/matushkaolgauncoveringvideoarticle"
+      ],
+      "updated_at": "2026-04-21"
+    },
+    {
+      "name": "Antiochian Village",
+      "slug": "antiochian-village-bolivar",
+      "type": "Shrine",
+      "address_text": "1405 Antiochian Village Dr",
+      "city": "Bolivar",
+      "state_province": "PA",
+      "country_code": "US",
+      "latitude": 40.302971,
+      "longitude": -79.150083,
+      "jurisdiction": "Antiochian Orthodox Christian Archdiocese of North America",
+      "website": "https://www.antiochianvillage.org",
+      "phone": "",
+      "description": "Christian conference and retreat center located on 300 acres in the beautiful Laurel Highlands of southwestern Pennsylvania",
+      "image_url": "",
+      "relics": [
+        {
+          "saint_slug": "st-raphael-of-brooklyn",
+          "description": "Relics housed in St. Ignatius Church"
+        }
+      ],
+      "sources": [
+        "https://www.antiochian.org/regulararticle/2114",
+        "https://www.theoym.org/post/the-translation-of-the-relics-of-saint-raphael-of-brooklyn"
+      ],
+      "updated_at": "2026-04-21"
     }
   ]
 }
