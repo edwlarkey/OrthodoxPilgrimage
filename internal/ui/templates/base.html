@@ -4,8 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orthodox Pilgrimage</title>
+    <title>{{if .Metadata.Title}}{{.Metadata.Title}}{{else}}Orthodox Pilgrimage{{end}}</title>
     
+    {{if .Metadata.Description}}<meta name="description" content="{{.Metadata.Description}}">{{end}}
+    {{if .Metadata.Canonical}}<link rel="canonical" href="{{.Metadata.Canonical}}">{{end}}
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{{if .Metadata.OGType}}{{.Metadata.OGType}}{{else}}website{{end}}">
+    <meta property="og:url" content="{{if .Metadata.Canonical}}{{.Metadata.Canonical}}{{else}}https://orthodoxpilgrimage.com/{{end}}">
+    <meta property="og:title" content="{{if .Metadata.Title}}{{.Metadata.Title}}{{else}}Orthodox Pilgrimage{{end}}">
+    {{if .Metadata.Description}}<meta property="og:description" content="{{.Metadata.Description}}">{{end}}
+    <meta property="og:image" content="{{if .Metadata.OGImage}}{{.Metadata.OGImage}}{{else}}https://orthodoxpilgrimage.com/static/og-image.jpg{{end}}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{if .Metadata.Canonical}}{{.Metadata.Canonical}}{{else}}https://orthodoxpilgrimage.com/{{end}}">
+    <meta property="twitter:title" content="{{if .Metadata.Title}}{{.Metadata.Title}}{{else}}Orthodox Pilgrimage{{end}}">
+    {{if .Metadata.Description}}<meta property="twitter:description" content="{{.Metadata.Description}}">{{end}}
+    <meta property="twitter:image" content="{{if .Metadata.OGImage}}{{.Metadata.OGImage}}{{else}}https://orthodoxpilgrimage.com/static/og-image.jpg{{end}}">
+
+    {{if .Metadata.StructuredData}}{{.Metadata.StructuredData}}{{end}}
+
     <!-- Modern Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,8 +32,8 @@
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.0.0/ol.css">
     <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/ol@v9.0.0/dist/ol.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v9.0.0/dist/ol.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
 </head>
 <body>
     <header class="site-header" id="site-header">
@@ -36,8 +55,9 @@
             </div>
 
             <ul class="header-links">
-                <!-- Future links will be added here -->
-                <li><a href="/">Home</a></li>
+                <li><a href="/">Map</a></li>
+                <li><a href="/churches/">Churches</a></li>
+                <li><a href="/saints/">Saints</a></li>
             </ul>
 
             <div class="contact-info">
@@ -58,7 +78,7 @@
     </div>
 
     <div class="app-container">
-        {{template "content" .}}
+        {{template "content" .Content}}
     </div>
 
     <script>

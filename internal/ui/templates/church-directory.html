@@ -1,0 +1,25 @@
+{{define "church-directory"}}
+<div class="detail-header">
+    <h1 class="title">Churches & Monasteries</h1>
+    <p class="subtitle">A guide to holy sites across North America</p>
+</div>
+
+<div class="info-section">
+    <div class="all-locations">
+        <ul class="church-list">
+            {{range .Churches}}
+            <li>
+                <a href="/churches/{{.Slug}}">
+                    <span class="church-name">{{.Name}}</span>
+                    <span class="church-loc">{{.City}}, {{.StateProvince}}</span>
+                </a>
+            </li>
+            {{end}}
+        </ul>
+    </div>
+</div>
+
+<div class="saint-footer">
+    <a href="/" class="clear-btn">Back to Map</a>
+</div>
+{{end}}

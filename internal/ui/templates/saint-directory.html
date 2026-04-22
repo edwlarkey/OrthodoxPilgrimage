@@ -1,0 +1,27 @@
+{{define "saint-directory"}}
+<div class="detail-header">
+    <h1 class="title">Orthodox Saints</h1>
+    <p class="subtitle">Holy relics available for veneration</p>
+</div>
+
+<div class="info-section">
+    <div class="all-locations">
+        <ul class="church-list">
+            {{range .Saints}}
+            <li>
+                <a href="/{{.Slug}}">
+                    <span class="church-name">{{.Name}}</span>
+                    {{if .FeastDay.Valid}}
+                    <span class="church-loc">Feast: {{.FeastDay.String}}</span>
+                    {{end}}
+                </a>
+            </li>
+            {{end}}
+        </ul>
+    </div>
+</div>
+
+<div class="saint-footer">
+    <a href="/" class="clear-btn">Back to Map</a>
+</div>
+{{end}}

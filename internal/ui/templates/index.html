@@ -24,6 +24,14 @@
                 <div class="saint-detail" id="saint-{{.Saint.ID}}">
                     {{template "saint-detail" .}}
                 </div>
+            {{else if eq .Type "church-directory"}}
+                <div class="directory-list">
+                    {{template "church-directory" .}}
+                </div>
+            {{else if eq .Type "saint-directory"}}
+                <div class="directory-list">
+                    {{template "saint-directory" .}}
+                </div>
             {{end}}
         {{else}}
             <div class="loading">Select a location on the map to begin your pilgrimage.</div>

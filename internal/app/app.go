@@ -26,9 +26,10 @@ func (a *Application) SeedDatabase(ctx context.Context) error {
 func (a *Application) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", a.homeHandler)
+	mux.HandleFunc("/churches/", a.churchDetailHandler)
+	mux.HandleFunc("/saints/", a.saintsDirectoryHandler)
 	mux.HandleFunc("/api/v1/churches", a.listChurchesHandler)
 	mux.HandleFunc("/api/v1/search", a.searchHandler)
-	mux.HandleFunc("/churches/", a.churchDetailHandler)
 	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "sitemap.xml")
 	})
@@ -99,6 +100,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
 	var data any
 	var err error
+	var metadata PageMetadata
 
 	if r.URL.Path != "/" {
 		path := r.URL.Path
@@ -114,6 +116,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 					Relics:  relics,
 					Sources: sources,
 				}
+				metadata = a.getChurchMetadata(church, relics)
 			} else {
 				err = churchErr
 			}
@@ -138,6 +141,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 				data = sData
+				metadata = a.getSaintMetadata(saint)
 			} else {
 				err = saintErr
 			}
@@ -152,8 +156,16 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error fetching data for path %s: %v", path, err)
 			return
 		}
+	} else {
+		metadata = a.getBaseMetadata(r.URL.Path)
 	}
-	if err := a.Templates.Render(w, "index", data); err != nil {
+
+	pageData := PageData{
+		Metadata: metadata,
+		Content:  data,
+	}
+
+	if err := a.Templates.Render(w, "index", pageData); err != nil {
 		http.Error(w, "failed to render template", http.StatusInternalServerError)
 		log.Printf("Error rendering template: %v", err)
 	}
@@ -223,7 +235,12 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 
 func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	// Expecting /churches/{slug}
+	// Expecting /churches/ or /churches/{slug}
+	if path == "/churches" || path == "/churches/" {
+		a.churchesDirectoryHandler(w, r)
+		return
+	}
+
 	if len(path) < 11 {
 		http.NotFound(w, r)
 		return
@@ -231,7 +248,7 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 
 	slug := path[10:]
 	if slug == "" {
-		http.NotFound(w, r)
+		a.churchesDirectoryHandler(w, r)
 		return
 	}
 
@@ -258,8 +275,11 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 	w.Header().Set("HX-Push-Url", fmt.Sprintf("/churches/%s", slug))
 	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
 
+	metadata := a.getChurchMetadata(church, relics)
+
 	if r.Header.Get("HX-Request") != "" {
 		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
+		w.Header().Set("HX-Title", metadata.Title)
 		ts, err := a.Templates.Get("church-detail")
 		if err != nil {
 			http.Error(w, "church-detail template not found", http.StatusInternalServerError)
@@ -271,7 +291,11 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 		}
 	} else {
 		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
-		if err := a.Templates.Render(w, "index", data); err != nil {
+		pageData := PageData{
+			Metadata: metadata,
+			Content:  data,
+		}
+		if err := a.Templates.Render(w, "index", pageData); err != nil {
 			http.Error(w, "failed to render template", http.StatusInternalServerError)
 			log.Printf("Error rendering template: %v", err)
 		}
@@ -321,5 +345,59 @@ func (a *Application) searchHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(results); err != nil {
 		http.Error(w, "Failed to encode search results", http.StatusInternalServerError)
 		log.Printf("Error encoding search results: %v", err)
+	}
+}
+
+func (a *Application) churchesDirectoryHandler(w http.ResponseWriter, r *http.Request) {
+	churches, err := a.DB.ListChurches(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Type     string
+		Churches []sqlcdb.Church
+	}{
+		Type:     "church-directory",
+		Churches: churches,
+	}
+
+	metadata := a.getChurchesDirectoryMetadata()
+	pageData := PageData{
+		Metadata: metadata,
+		Content:  data,
+	}
+
+	w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
+	if err := a.Templates.Render(w, "index", pageData); err != nil {
+		http.Error(w, "failed to render template", http.StatusInternalServerError)
+	}
+}
+
+func (a *Application) saintsDirectoryHandler(w http.ResponseWriter, r *http.Request) {
+	saints, err := a.DB.ListSaints(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to retrieve saints", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Type   string
+		Saints []sqlcdb.Saint
+	}{
+		Type:   "saint-directory",
+		Saints: saints,
+	}
+
+	metadata := a.getSaintsDirectoryMetadata()
+	pageData := PageData{
+		Metadata: metadata,
+		Content:  data,
+	}
+
+	w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
+	if err := a.Templates.Render(w, "index", pageData); err != nil {
+		http.Error(w, "failed to render template", http.StatusInternalServerError)
 	}
 }
