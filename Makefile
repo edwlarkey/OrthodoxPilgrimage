@@ -115,6 +115,6 @@ build.docker:
 
 ## deploy: deploy the application to fly.io
 .PHONY: deploy
-deploy:
+deploy: test
 	@echo 'Deploying to fly.io...'
 	fly deploy

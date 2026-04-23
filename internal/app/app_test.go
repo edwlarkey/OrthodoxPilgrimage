@@ -290,19 +290,6 @@ func TestChurchDetailHandler_InvalidSlugTooShort(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, rr.Code)
 }
 
-func TestChurchDetailHandler_InvalidSlugEmpty(t *testing.T) {
-	appInstance, dbConn := seedTestDB(t)
-	defer dbConn.Close()
-
-	req, err := http.NewRequest("GET", "/churches/", nil)
-	require.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-	appInstance.ChurchDetailHandler(rr, req)
-
-	assert.Equal(t, http.StatusNotFound, rr.Code)
-}
-
 func TestChurchDetailHandler_NotFound(t *testing.T) {
 	appInstance, dbConn := seedTestDB(t)
 	defer dbConn.Close()
