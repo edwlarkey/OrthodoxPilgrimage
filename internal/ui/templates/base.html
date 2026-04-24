@@ -25,6 +25,13 @@
 
     {{if .Metadata.StructuredData}}{{.Metadata.StructuredData}}{{end}}
 
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="manifest" href="/static/site.webmanifest">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
     <!-- Modern Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,14 +60,6 @@
             </button>
         </div>
 
-        {{if .Content}}
-        <div class="header-action">
-            <a href="/" class="reset-search-btn">
-                ← Reset Map
-            </a>
-        </div>
-        {{end}}
-        
         <div class="header-expandable">
             <div class="about-section">
                 <p>Welcome to Orthodox Pilgrimage, a dedicated guide to locating and venerating the relics of Orthodox Saints across North America and beyond.</p>
@@ -68,18 +67,13 @@
             </div>
 
             <ul class="header-links">
-                <li><a href="/">Map</a></li>
-                <li><a href="/churches/">All Churches</a></li>
-                <li><a href="/saints/">All Saints</a></li>
+                <li><a href="/" hx-get="/" hx-target="#church-details" hx-push-url="true">Map</a></li>
+                <li><a href="/churches/" hx-get="/churches/" hx-target="#church-details" hx-push-url="true">All Churches</a></li>
+                <li><a href="/saints/" hx-get="/saints/" hx-target="#church-details" hx-push-url="true">All Saints</a></li>
             </ul>
 
             <div class="contact-info">
                 Help us keep this map accurate. If you have corrections or new information, please reach out at <a href="mailto:info@orthodoxpilgrimage.com">info@orthodoxpilgrimage.com</a>.
-            </div>
-
-            <div class="license-info">
-                This project is open source under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank">AGPL-3.0 License</a>.
-                View the source on <a href="https://github.com/edwlarkey/orthodoxpilgrimage" target="_blank">GitHub</a>.
             </div>
         </div>
     </header>
@@ -130,8 +124,11 @@
                                 item.className = 'search-result-item';
                                 item.innerHTML = `<span class="search-result-name">${result.name}</span>`;
                                 
-                                // Use HTMX to load the saint detail without a full page reload if possible
-                                // But for now, simple link is fine as it triggers the app's routing
+                                // Use HTMX to load the saint detail without a full page reload
+                                item.setAttribute('hx-get', `/${result.slug}`);
+                                item.setAttribute('hx-target', '#church-details');
+                                item.setAttribute('hx-push-url', 'true');
+                                htmx.process(item);
                                 
                                 searchResults.appendChild(item);
                             });

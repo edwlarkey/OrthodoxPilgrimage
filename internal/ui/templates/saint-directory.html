@@ -1,4 +1,25 @@
 {{define "saint-directory"}}
+<div class="sidebar-header">
+    <h2 id="sidebar-title">All Saints</h2>
+    <div class="sidebar-actions">
+        <a href="/" 
+           hx-get="/"
+           hx-target="#church-details"
+           hx-push-url="true"
+           class="reset-search-btn-sidebar"
+           title="Reset Map">
+            ← Reset Map
+        </a>
+        <button class="minimize-btn" onclick="minimizeSidebar(event)" aria-label="Minimize" title="Minimize">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
+        </button>
+        <button class="close-btn" onclick="toggleSidebar()" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+</div>
+
+<div class="directory-list">
 <div class="detail-header">
     <h1 class="title">Orthodox Saints</h1>
     <p class="subtitle">Holy relics available for veneration</p>
@@ -9,7 +30,10 @@
         <ul class="church-list">
             {{range .Saints}}
             <li>
-                <a href="/{{.Slug}}">
+                <a href="/{{.Slug}}"
+                   hx-get="/{{.Slug}}"
+                   hx-target="#church-details"
+                   hx-push-url="true">
                     <span class="church-name">{{.Name}}</span>
                     {{if .FeastDay.Valid}}
                     <span class="church-loc">Feast: {{.FeastDay.String}}</span>
@@ -22,6 +46,11 @@
 </div>
 
 <div class="saint-footer">
-    <a href="/" class="clear-btn">Back to Map</a>
+    <a href="/" 
+       hx-get="/"
+       hx-target="#church-details"
+       hx-push-url="true"
+       class="clear-btn">Back to Map</a>
+</div>
 </div>
 {{end}}

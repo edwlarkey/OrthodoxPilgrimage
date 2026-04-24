@@ -3,46 +3,53 @@
 <div id="tooltip" class="ol-tooltip"></div>
 
 <div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
-    <div class="sidebar-header">
-        <h2 id="sidebar-title">Details</h2>
-        <div class="sidebar-actions">
-            <button class="minimize-btn" onclick="minimizeSidebar(event)" aria-label="Minimize" title="Minimize">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
-            </button>
-            <button class="close-btn" onclick="toggleSidebar()" aria-label="Close">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-        </div>
-    </div>
     <div class="sidebar-content" id="church-details">
         {{if .}}
             {{if eq .Type "church"}}
-                <div class="church-detail" id="church-{{.Church.ID}}">
-                    {{template "church-detail" .}}
-                </div>
+                {{template "church-detail" .}}
             {{else if eq .Type "saint"}}
-                <div class="saint-detail" id="saint-{{.Saint.ID}}">
-                    {{template "saint-detail" .}}
-                </div>
+                {{template "saint-detail" .}}
             {{else if eq .Type "church-directory"}}
-                <div class="directory-list">
-                    {{template "church-directory" .}}
-                </div>
+                {{template "church-directory" .}}
             {{else if eq .Type "saint-directory"}}
-                <div class="directory-list">
-                    {{template "saint-directory" .}}
-                </div>
+                {{template "saint-directory" .}}
             {{end}}
         {{else}}
+            <div class="sidebar-header">
+                <h2 id="sidebar-title">Details</h2>
+                <div class="sidebar-actions">
+                    <button class="minimize-btn" onclick="minimizeSidebar(event)" aria-label="Minimize" title="Minimize">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
+                    </button>
+                    <button class="close-btn" onclick="toggleSidebar()" aria-label="Close">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
             <div class="loading">Select a location on the map to begin your pilgrimage.</div>
         {{end}}
     </div>
 </div>
 
 <div class="map-controls-overlay">
-    <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle">
+    <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle" {{if .}}style="display: none;"{{end}}>
         Church Info
     </button>
+    <div class="site-info-overlay">
+        <button class="info-toggle" onclick="toggleInfo(event)" aria-label="Project Information">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        </button>
+        <div class="info-content" id="info-content">
+            <div class="info-section-content">
+                <h3>About the Project</h3>
+                <p>Help us keep this map accurate. If you have corrections or new information, please reach out at <a href="mailto:info@orthodoxpilgrimage.com">info@orthodoxpilgrimage.com</a>.</p>
+                <div class="license-info">
+                    Open source under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank">AGPL-3.0 License</a>.
+                    View on <a href="https://github.com/edwlarkey/orthodoxpilgrimage" target="_blank">GitHub</a>.
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -64,6 +71,10 @@ document.addEventListener('DOMContentLoaded', function() {
             {{end}}
             fetchUrl = '/api/v1/churches?saint={{.Saint.Slug}}';
             document.getElementById('sidebar-title').innerText = "Saint Info";
+        {{else if eq .Type "church-directory"}}
+            document.getElementById('sidebar-title').innerText = "All Churches";
+        {{else if eq .Type "saint-directory"}}
+            document.getElementById('sidebar-title').innerText = "All Saints";
         {{end}}
     {{end}}
 
@@ -103,14 +114,9 @@ document.addEventListener('DOMContentLoaded', function() {
         constrainResolution: true,
         smoothExtentConstraint: true
     });
-    
+
     const osmLayer = new ol.layer.Tile({ 
         source: new ol.source.OSM()
-    });
-
-    osmLayer.on('postrender', (event) => {
-        const ctx = event.context;
-        ctx.restore();
     });
 
     const map = new ol.Map({
@@ -118,14 +124,6 @@ document.addEventListener('DOMContentLoaded', function() {
         layers: [ osmLayer ],
         view: view
     });
-
-    {{if .}}
-        {{if eq .Type "church"}}
-            // After map is initialized, focus on the church immediately without animation
-            const initialCoords = ol.proj.fromLonLat([{{.Church.Longitude}}, {{.Church.Latitude}}]);
-            focusOnCoordinate(initialCoords, CHURCH_ZOOM, false);
-        {{end}}
-    {{end}}
 
     const tooltipElement = document.getElementById('tooltip');
     const tooltipOverlay = new ol.Overlay({
@@ -144,13 +142,60 @@ document.addEventListener('DOMContentLoaded', function() {
             scale: 1,
         }),
     });
-    
+
     const vectorSource = new ol.source.Vector();
     const vectorLayer = new ol.layer.Vector({
         source: vectorSource,
         style: iconStyle,
     });
     map.addLayer(vectorLayer);
+
+    function loadChurches(url, focusAfterLoad = false) {
+        return fetch(url)
+            .then(response => response.json())
+            .then(churches => {
+                vectorSource.clear();
+                if (churches.length === 0) return;
+                const features = [];
+                churches.forEach(church => {
+                    if (church.latitude && church.longitude) {
+                        const feature = new ol.Feature({
+                            geometry: new ol.geom.Point(ol.proj.fromLonLat([church.longitude, church.latitude])),
+                            churchSlug: church.slug,
+                            churchName: church.name,
+                            lat: church.latitude,
+                            lng: church.longitude
+                        });
+                        features.push(feature);
+                    }
+                });
+                vectorSource.addFeatures(features);
+
+                if (focusAfterLoad) {
+                    if (features.length > 1) {
+                        const extent = vectorSource.getExtent();
+                        view.fit(extent, { 
+                            padding: [100, 500, 100, 100], 
+                            duration: 500, 
+                            maxZoom: CHURCH_ZOOM 
+                        });
+                    } else if (features.length === 1) {
+                        const coords = features[0].getGeometry().getCoordinates();
+                        focusOnCoordinate(coords, CHURCH_ZOOM);
+                    }
+                }
+                return features;
+            })
+            .catch(error => console.error('Error loading church data:', error));
+    }
+
+    // Initial load
+    loadChurches(fetchUrl, {{if eq .Type "saint"}}true{{else}}false{{end}}).then(features => {
+        {{if eq .Type "church"}}
+            const initialCoords = ol.proj.fromLonLat([{{.Church.Longitude}}, {{.Church.Latitude}}]);
+            focusOnCoordinate(initialCoords, CHURCH_ZOOM, false);
+        {{end}}
+    });
 
     window.toggleSidebar = function() {
         const sidebar = document.getElementById('sidebar');
@@ -160,6 +205,21 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.toggle('sidebar-open', !isHidden);
     }
 
+    window.toggleInfo = function(e) {
+        if (e) e.stopPropagation();
+        const content = document.getElementById('info-content');
+        content.classList.toggle('visible');
+    }
+
+    // Close info overlay when clicking elsewhere
+    document.addEventListener('click', function(e) {
+        const content = document.getElementById('info-content');
+        const toggle = document.querySelector('.info-toggle');
+        if (content && content.classList.contains('visible') && !content.contains(e.target) && !toggle.contains(e.target)) {
+            content.classList.remove('visible');
+        }
+    });
+
     window.minimizeSidebar = function(e) {
         if (e) e.stopPropagation();
         if (window.innerWidth > 500) return;
@@ -167,7 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebar.classList.toggle('minimized');
     }
 
-    // Header click to toggle minimize on mobile
     document.querySelector('.sidebar-header').addEventListener('click', function(e) {
         if (window.innerWidth <= 500 && !e.target.closest('button')) {
             minimizeSidebar();
@@ -178,39 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.add('sidebar-open');
     {{end}}
 
-    fetch(fetchUrl)
-        .then(response => response.json())
-        .then(churches => {
-            if (churches.length === 0) return;
-            const features = [];
-            churches.forEach(church => {
-                if (church.latitude && church.longitude) {
-                    const feature = new ol.Feature({
-                        geometry: new ol.geom.Point(ol.proj.fromLonLat([church.longitude, church.latitude])),
-                        churchSlug: church.slug,
-                        churchName: church.name
-                    });
-                    features.push(feature);
-                }
-            });
-            vectorSource.addFeatures(features);
-            
-            {{if eq .Type "saint"}}
-            if (features.length > 1) {
-                const extent = vectorSource.getExtent();
-                map.getView().fit(extent, { 
-                    padding: [100, 500, 100, 100], 
-                    duration: 0, 
-                    maxZoom: CHURCH_ZOOM 
-                });
-            } else if (features.length === 1) {
-                const coords = features[0].getGeometry().getCoordinates();
-                focusOnCoordinate(coords, CHURCH_ZOOM, false);
-            }
-            {{end}}
-        })
-        .catch(error => console.error('Error loading church data:', error));
-
     map.on('pointermove', function (e) {
         if (e.dragging) {
             tooltipElement.style.display = 'none';
@@ -218,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const pixel = map.getEventPixel(e.originalEvent);
         const feature = map.forEachFeatureAtPixel(pixel, f => f);
-        
+
         if (feature) {
             tooltipElement.style.display = 'block';
             tooltipOverlay.setPosition(e.coordinate);
@@ -229,18 +255,16 @@ document.addEventListener('DOMContentLoaded', function() {
             map.getTargetElement().style.cursor = '';
         }
     });
-    
+
     map.on('click', function (event) {
         const feature = map.forEachFeatureAtPixel(event.pixel, f => f);
         if (feature) {
             const slug = feature.get('churchSlug');
-            document.getElementById('sidebar-title').innerText = "Church Info";
             htmx.ajax('GET', '/churches/' + slug, {
                 target: '#church-details',
                 swap: 'innerHTML'
             });
-            
-            // Pan and zoom to clicked church
+
             const coords = feature.getGeometry().getCoordinates();
             focusOnCoordinate(coords, CHURCH_ZOOM);
         }
@@ -249,9 +273,57 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.addEventListener('htmx:afterSwap', function(event) {
         if (event.detail.target.id === 'church-details') {
             const sidebar = document.getElementById('sidebar');
-            if (sidebar.classList.contains('hidden')) {
+            // Don't reopen if we just loaded the "loading/home" state
+            if (sidebar.classList.contains('hidden') && !event.detail.target.querySelector('.loading')) {
                 toggleSidebar();
             }
+        }
+    });
+
+    // Custom events for map interaction via HTMX
+    document.body.addEventListener('churchSelected', function(evt) {
+        const data = evt.detail;
+        document.getElementById('sidebar-title').innerText = "Church Info";
+
+        // Find feature in source or reload all if not found
+        const features = vectorSource.getFeatures();
+        const feature = features.find(f => f.get('churchSlug') === data.slug);
+
+        if (feature) {
+            focusOnCoordinate(feature.getGeometry().getCoordinates(), CHURCH_ZOOM);
+        } else {
+            // Might happen if we were in saint view and clicked a church not in that view
+            loadChurches('/api/v1/churches').then(() => {
+                focusOnCoordinate(ol.proj.fromLonLat([data.lng, data.lat]), CHURCH_ZOOM);
+            });
+        }
+    });
+
+    document.body.addEventListener('saintSelected', function(evt) {
+        const data = evt.detail;
+        document.getElementById('sidebar-title').innerText = "Saint Info";
+        loadChurches('/api/v1/churches?saint=' + data.slug, true);
+    });
+
+    document.body.addEventListener('directorySelected', function(evt) {
+        const data = evt.detail;
+        document.getElementById('sidebar-title').innerText = data.title || "Directory";
+        loadChurches('/api/v1/churches', false);
+        
+        // Recenter and zoom out to initial state
+        view.animate({
+            center: ol.proj.fromLonLat([-98.5795, 39.8283]),
+            zoom: window.innerWidth <= 500 ? 3 : 4,
+            duration: 500
+        });
+
+        if (data.closeSidebar) {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar.classList.contains('hidden')) {
+                toggleSidebar();
+            }
+            // Force hide the toggle button when resetting to the empty state
+            document.getElementById('sidebar-toggle').style.display = 'none';
         }
     });
 });

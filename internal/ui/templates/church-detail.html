@@ -1,4 +1,25 @@
 {{define "church-detail"}}
+<div class="sidebar-header">
+    <h2 id="sidebar-title">Church Info</h2>
+    <div class="sidebar-actions">
+        <a href="/" 
+           hx-get="/"
+           hx-target="#church-details"
+           hx-push-url="true"
+           class="reset-search-btn-sidebar"
+           title="Reset Map">
+            ← Reset Map
+        </a>
+        <button class="minimize-btn" onclick="minimizeSidebar(event)" aria-label="Minimize" title="Minimize">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
+        </button>
+        <button class="close-btn" onclick="toggleSidebar()" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+</div>
+
+<div class="church-detail" id="church-{{.Church.ID}}">
 {{with .Church}}
 <div class="detail-header">
     <h1 class="title">{{.Name}}</h1>
@@ -49,7 +70,11 @@
         <div class="relic-pills">
         {{$churchSlug := .Church.Slug}}
         {{range .Relics}}
-            <a href="/{{.Slug}}?from={{$churchSlug}}" class="relic-pill">
+            <a href="/{{.Slug}}?from={{$churchSlug}}" 
+               hx-get="/{{.Slug}}?from={{$churchSlug}}"
+               hx-target="#church-details"
+               hx-push-url="true"
+               class="relic-pill">
                 <span class="saint-name">{{.Name}}</span>
                 {{if .RelicDescription.Valid}}
                     <span class="relic-type">{{.RelicDescription.String}}</span>
@@ -80,5 +105,5 @@
     </div>
 </div>
 {{end}}
-
+</div>
 {{end}}

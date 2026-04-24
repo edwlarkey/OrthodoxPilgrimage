@@ -1,4 +1,25 @@
 {{define "saint-detail"}}
+<div class="sidebar-header">
+    <h2 id="sidebar-title">Saint Info</h2>
+    <div class="sidebar-actions">
+        <a href="/" 
+           hx-get="/"
+           hx-target="#church-details"
+           hx-push-url="true"
+           class="reset-search-btn-sidebar"
+           title="Reset Map">
+            ← Reset Map
+        </a>
+        <button class="minimize-btn" onclick="minimizeSidebar(event)" aria-label="Minimize" title="Minimize">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
+        </button>
+        <button class="close-btn" onclick="toggleSidebar()" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+</div>
+
+<div class="saint-detail" id="saint-{{.Saint.ID}}">
 <div class="detail-header">
     <h1 class="title">{{.Saint.Name}}</h1>
     {{if .Saint.FeastDay.Valid}}
@@ -33,7 +54,11 @@
 <div class="saint-footer">
     <p><em>The map now shows all churches housing the relics of {{.Saint.Name}}.</em></p>
     {{if .ReferringChurch}}
-        <a href="/churches/{{.ReferringChurch.Slug}}" class="back-to-church-btn">
+        <a href="/churches/{{.ReferringChurch.Slug}}" 
+           hx-get="/churches/{{.ReferringChurch.Slug}}"
+           hx-target="#church-details"
+           hx-push-url="true"
+           class="back-to-church-btn">
             &larr; Back to {{.ReferringChurch.Name}}
         </a>
     {{end}}
@@ -44,7 +69,10 @@
         <ul class="church-list">
             {{range .Churches}}
             <li>
-                <a href="/churches/{{.Slug}}">
+                <a href="/churches/{{.Slug}}"
+                   hx-get="/churches/{{.Slug}}"
+                   hx-target="#church-details"
+                   hx-push-url="true">
                     <span class="church-name">{{.Name}}</span>
                     <span class="church-loc">{{.City}}, {{.StateProvince}}</span>
                 </a>
@@ -54,7 +82,11 @@
     </div>
     {{end}}
     
-    <a href="/" class="clear-btn">Show all churches</a>
+    <a href="/" 
+       hx-get="/"
+       hx-target="#church-details"
+       hx-push-url="true"
+       class="clear-btn">Show all churches</a>
 </div>
-
+</div>
 {{end}}

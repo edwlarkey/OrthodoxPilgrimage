@@ -33,6 +33,22 @@ func (a *Application) Routes() http.Handler {
 	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "sitemap.xml")
 	})
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=2592000")
+		r.URL.Path = "/static/favicon.ico"
+		http.FileServer(http.FS(ui.StaticFS)).ServeHTTP(w, r)
+	})
+	mux.HandleFunc("/apple-touch-icon.png", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=2592000")
+		r.URL.Path = "/static/apple-touch-icon.png"
+		http.FileServer(http.FS(ui.StaticFS)).ServeHTTP(w, r)
+	})
+	mux.HandleFunc("/site.webmanifest", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/manifest+json")
+		w.Header().Set("Cache-Control", "public, max-age=2592000")
+		r.URL.Path = "/static/site.webmanifest"
+		http.FileServer(http.FS(ui.StaticFS)).ServeHTTP(w, r)
+	})
 	mux.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		if strings.HasSuffix(r.Host, ".fly.dev") {
@@ -165,6 +181,68 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 		Content:  data,
 	}
 
+	if r.Header.Get("HX-Request") != "" {
+		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
+		w.Header().Set("HX-Title", metadata.Title)
+
+		// Set trigger headers for map interaction
+		if data != nil {
+			if s, ok := data.(SaintWithType); ok {
+				trigger := map[string]any{
+					"saintSelected": map[string]string{
+						"slug": s.Saint.Slug,
+					},
+				}
+				triggerJSON, _ := json.Marshal(trigger)
+				w.Header().Set("HX-Trigger", string(triggerJSON))
+
+				ts, err := a.Templates.Get("saint-detail")
+				if err != nil {
+					http.Error(w, "saint-detail template not found", http.StatusInternalServerError)
+					return
+				}
+				err = ts.ExecuteTemplate(w, "saint-detail", s)
+				if err != nil {
+					log.Printf("Error rendering saint detail: %v", err)
+				}
+				return
+			} else if c, ok := data.(ChurchWithRelics); ok {
+				trigger := map[string]any{
+					"churchSelected": map[string]any{
+						"slug": c.Church.Slug,
+						"lat":  c.Church.Latitude,
+						"lng":  c.Church.Longitude,
+					},
+				}
+				triggerJSON, _ := json.Marshal(trigger)
+				w.Header().Set("HX-Trigger", string(triggerJSON))
+
+				ts, err := a.Templates.Get("church-detail")
+				if err != nil {
+					http.Error(w, "church-detail template not found", http.StatusInternalServerError)
+					return
+				}
+				err = ts.ExecuteTemplate(w, "church-detail", c)
+				if err != nil {
+					log.Printf("Error rendering church detail: %v", err)
+				}
+				return
+			}
+		} else if r.URL.Path == "/" {
+			// Handle Map Reset / Home via HTMX
+			trigger := map[string]any{
+				"directorySelected": map[string]any{
+					"title":        "Details",
+					"closeSidebar": true,
+				},
+			}
+			triggerJSON, _ := json.Marshal(trigger)
+			w.Header().Set("HX-Trigger", string(triggerJSON))
+			fmt.Fprint(w, `<div class="loading">Select a location on the map to begin your pilgrimage.</div>`)
+			return
+		}
+	}
+
 	if err := a.Templates.Render(w, "index", pageData); err != nil {
 		http.Error(w, "failed to render template", http.StatusInternalServerError)
 		log.Printf("Error rendering template: %v", err)
@@ -280,6 +358,17 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 	if r.Header.Get("HX-Request") != "" {
 		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
 		w.Header().Set("HX-Title", metadata.Title)
+
+		trigger := map[string]any{
+			"churchSelected": map[string]any{
+				"slug": church.Slug,
+				"lat":  church.Latitude,
+				"lng":  church.Longitude,
+			},
+		}
+		triggerJSON, _ := json.Marshal(trigger)
+		w.Header().Set("HX-Trigger", string(triggerJSON))
+
 		ts, err := a.Templates.Get("church-detail")
 		if err != nil {
 			http.Error(w, "church-detail template not found", http.StatusInternalServerError)
@@ -364,6 +453,33 @@ func (a *Application) churchesDirectoryHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	metadata := a.getChurchesDirectoryMetadata()
+	w.Header().Set("HX-Push-Url", "/churches/")
+	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
+
+	if r.Header.Get("HX-Request") != "" {
+		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
+		w.Header().Set("HX-Title", metadata.Title)
+
+		trigger := map[string]any{
+			"directorySelected": map[string]string{
+				"title": "All Churches",
+			},
+		}
+		triggerJSON, _ := json.Marshal(trigger)
+		w.Header().Set("HX-Trigger", string(triggerJSON))
+
+		ts, err := a.Templates.Get("church-directory")
+		if err != nil {
+			http.Error(w, "church-directory template not found", http.StatusInternalServerError)
+			return
+		}
+		err = ts.ExecuteTemplate(w, "church-directory", data)
+		if err != nil {
+			log.Printf("Error rendering church directory: %v", err)
+		}
+		return
+	}
+
 	pageData := PageData{
 		Metadata: metadata,
 		Content:  data,
@@ -391,6 +507,33 @@ func (a *Application) saintsDirectoryHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	metadata := a.getSaintsDirectoryMetadata()
+	w.Header().Set("HX-Push-Url", "/saints/")
+	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
+
+	if r.Header.Get("HX-Request") != "" {
+		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
+		w.Header().Set("HX-Title", metadata.Title)
+
+		trigger := map[string]any{
+			"directorySelected": map[string]string{
+				"title": "All Saints",
+			},
+		}
+		triggerJSON, _ := json.Marshal(trigger)
+		w.Header().Set("HX-Trigger", string(triggerJSON))
+
+		ts, err := a.Templates.Get("saint-directory")
+		if err != nil {
+			http.Error(w, "saint-directory template not found", http.StatusInternalServerError)
+			return
+		}
+		err = ts.ExecuteTemplate(w, "saint-directory", data)
+		if err != nil {
+			log.Printf("Error rendering saint directory: %v", err)
+		}
+		return
+	}
+
 	pageData := PageData{
 		Metadata: metadata,
 		Content:  data,
