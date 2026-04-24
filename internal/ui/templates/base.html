@@ -28,7 +28,7 @@
     <!-- Modern Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.0.0/ol.css">
     <link rel="stylesheet" href="/static/style.css">
@@ -38,7 +38,12 @@
 <body>
     <header class="site-header" id="site-header">
         <div class="site-header-top">
-            <h1 class="site-title"><a href="/">Orthodox Pilgrimage</a></h1>
+            <h1 class="site-title">
+                <a href="/">
+                    <img src="/static/logo.svg" alt="Orthodox Pilgrimage Logo" class="site-logo">
+                    <span>Orthodox<br>Pilgrimage</span>
+                </a>
+            </h1>
             <button class="menu-toggle" onclick="toggleHeader()" aria-label="Toggle menu">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -47,6 +52,14 @@
                 </svg>
             </button>
         </div>
+
+        {{if .Content}}
+        <div class="header-action">
+            <a href="/" class="reset-search-btn">
+                ← Reset Map
+            </a>
+        </div>
+        {{end}}
         
         <div class="header-expandable">
             <div class="about-section">
