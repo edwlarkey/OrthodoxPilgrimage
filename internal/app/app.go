@@ -86,6 +86,8 @@ type churchJSON struct {
 	Slug        string         `json:"slug"`
 	AddressText string         `json:"addressText"`
 	City        string         `json:"city"`
+	PostalCode  sql.NullString `json:"postalCode"`
+	CountryCode string         `json:"countryCode"`
 	Latitude    float64        `json:"latitude"`
 	Longitude   float64        `json:"longitude"`
 	Website     sql.NullString `json:"website"`
@@ -296,6 +298,8 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 			Slug:        c.Slug,
 			AddressText: c.AddressText,
 			City:        c.City,
+			PostalCode:  c.PostalCode,
+			CountryCode: c.CountryCode,
 			Latitude:    c.Latitude,
 			Longitude:   c.Longitude,
 			Website:     c.Website,

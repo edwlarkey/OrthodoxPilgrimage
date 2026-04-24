@@ -38,6 +38,7 @@ type ChurchData struct {
 	AddressText   string      `json:"address_text"`
 	City          string      `json:"city"`
 	StateProvince string      `json:"state_province"`
+	PostalCode    string      `json:"postal_code"`
 	CountryCode   string      `json:"country_code"`
 	Latitude      float64     `json:"latitude"`
 	Longitude     float64     `json:"longitude"`
@@ -140,6 +141,7 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 			AddressText:   c.AddressText,
 			City:          c.City,
 			StateProvince: c.StateProvince,
+			PostalCode:    sql.NullString{String: c.PostalCode, Valid: c.PostalCode != ""},
 			CountryCode:   c.CountryCode,
 			Latitude:      c.Latitude,
 			Longitude:     c.Longitude,

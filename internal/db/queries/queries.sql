@@ -36,6 +36,7 @@ INSERT INTO churches (
     address_text,
     city,
     state_province,
+    postal_code,
     country_code,
     latitude,
     longitude,
@@ -46,7 +47,7 @@ INSERT INTO churches (
     image_url,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 RETURNING *;
 

@@ -38,7 +38,7 @@
     <div class="info-item">
         <label>Address</label>
         <p>{{.AddressText}}</p>
-        <p>{{.City}}, {{.StateProvince}} {{.CountryCode}}</p>
+        <p>{{.City}}, {{.StateProvince}}{{if .PostalCode.Valid}} {{.PostalCode.String}}{{end}} {{.CountryCode}}</p>
     </div>
     
     {{if .Website.Valid}}

@@ -34,6 +34,7 @@ const testSeedData = `{
       "address_text": "123 Main St",
       "city": "New York",
       "state_province": "NY",
+      "postal_code": "10001",
       "country_code": "US",
       "latitude": 40.7128,
       "longitude": -74.0060,
@@ -55,6 +56,7 @@ const testSeedData = `{
       "address_text": "1121 N Leavitt St",
       "city": "Chicago",
       "state_province": "IL",
+      "postal_code": "60622",
       "country_code": "US",
       "latitude": 41.9022,
       "longitude": -87.6818

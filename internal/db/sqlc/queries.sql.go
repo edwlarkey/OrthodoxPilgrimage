@@ -40,6 +40,7 @@ INSERT INTO churches (
     address_text,
     city,
     state_province,
+    postal_code,
     country_code,
     latitude,
     longitude,
@@ -50,9 +51,9 @@ INSERT INTO churches (
     image_url,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
-RETURNING id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at
+RETURNING id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at, postal_code
 `
 
 type CreateChurchParams struct {
@@ -62,6 +63,7 @@ type CreateChurchParams struct {
 	AddressText   string         `json:"address_text"`
 	City          string         `json:"city"`
 	StateProvince string         `json:"state_province"`
+	PostalCode    sql.NullString `json:"postal_code"`
 	CountryCode   string         `json:"country_code"`
 	Latitude      float64        `json:"latitude"`
 	Longitude     float64        `json:"longitude"`
@@ -81,6 +83,7 @@ func (q *Queries) CreateChurch(ctx context.Context, arg CreateChurchParams) (Chu
 		arg.AddressText,
 		arg.City,
 		arg.StateProvince,
+		arg.PostalCode,
 		arg.CountryCode,
 		arg.Latitude,
 		arg.Longitude,
@@ -109,6 +112,7 @@ func (q *Queries) CreateChurch(ctx context.Context, arg CreateChurchParams) (Chu
 		&i.Description,
 		&i.ImageUrl,
 		&i.UpdatedAt,
+		&i.PostalCode,
 	)
 	return i, err
 }
@@ -234,7 +238,7 @@ func (q *Queries) DeleteAllSources(ctx context.Context) error {
 }
 
 const getChurch = `-- name: GetChurch :one
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at, postal_code FROM churches
 WHERE id = ?
 `
 
@@ -258,12 +262,13 @@ func (q *Queries) GetChurch(ctx context.Context, id int64) (Church, error) {
 		&i.Description,
 		&i.ImageUrl,
 		&i.UpdatedAt,
+		&i.PostalCode,
 	)
 	return i, err
 }
 
 const getChurchBySlug = `-- name: GetChurchBySlug :one
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at, postal_code FROM churches
 WHERE slug = ?
 `
 
@@ -287,6 +292,7 @@ func (q *Queries) GetChurchBySlug(ctx context.Context, slug string) (Church, err
 		&i.Description,
 		&i.ImageUrl,
 		&i.UpdatedAt,
+		&i.PostalCode,
 	)
 	return i, err
 }
@@ -313,7 +319,7 @@ func (q *Queries) GetSaintBySlug(ctx context.Context, slug string) (Saint, error
 }
 
 const listChurches = `-- name: ListChurches :many
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at, postal_code FROM churches
 ORDER BY name
 `
 
@@ -343,6 +349,7 @@ func (q *Queries) ListChurches(ctx context.Context) ([]Church, error) {
 			&i.Description,
 			&i.ImageUrl,
 			&i.UpdatedAt,
+			&i.PostalCode,
 		); err != nil {
 			return nil, err
 		}
@@ -358,7 +365,7 @@ func (q *Queries) ListChurches(ctx context.Context) ([]Church, error) {
 }
 
 const listChurchesBySaintSlug = `-- name: ListChurchesBySaintSlug :many
-SELECT c.id, c.name, c.slug, c.type, c.address_text, c.city, c.state_province, c.country_code, c.latitude, c.longitude, c.jurisdiction, c.website, c.phone, c.description, c.image_url, c.updated_at FROM churches c
+SELECT c.id, c.name, c.slug, c.type, c.address_text, c.city, c.state_province, c.country_code, c.latitude, c.longitude, c.jurisdiction, c.website, c.phone, c.description, c.image_url, c.updated_at, c.postal_code FROM churches c
 JOIN relics r ON c.id = r.church_id
 JOIN saints s ON r.saint_id = s.id
 WHERE s.slug = ?
@@ -391,6 +398,7 @@ func (q *Queries) ListChurchesBySaintSlug(ctx context.Context, slug string) ([]C
 			&i.Description,
 			&i.ImageUrl,
 			&i.UpdatedAt,
+			&i.PostalCode,
 		); err != nil {
 			return nil, err
 		}
@@ -406,7 +414,7 @@ func (q *Queries) ListChurchesBySaintSlug(ctx context.Context, slug string) ([]C
 }
 
 const listChurchesInBounds = `-- name: ListChurchesInBounds :many
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, image_url, updated_at, postal_code FROM churches
 WHERE latitude >= ? AND latitude <= ?
   AND longitude >= ? AND longitude <= ?
 ORDER BY name
@@ -450,6 +458,7 @@ func (q *Queries) ListChurchesInBounds(ctx context.Context, arg ListChurchesInBo
 			&i.Description,
 			&i.ImageUrl,
 			&i.UpdatedAt,
+			&i.PostalCode,
 		); err != nil {
 			return nil, err
 		}

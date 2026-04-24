@@ -25,6 +25,7 @@ type Church struct {
 	Description   sql.NullString `json:"description"`
 	ImageUrl      sql.NullString `json:"image_url"`
 	UpdatedAt     sql.NullTime   `json:"updated_at"`
+	PostalCode    sql.NullString `json:"postal_code"`
 }
 
 type ChurchSource struct {
