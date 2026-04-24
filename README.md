@@ -2,6 +2,8 @@
 
 Orthodox Pilgrimage is a modern web application designed to help the faithful locate and venerate the relics of Orthodox Saints across North America and beyond. It provides an interactive, mobile-friendly map to discover holy sites, monasteries, and cathedrals that house these sacred treasures.
 
+![Orthodox Pilgrimage Screenshot](screenshots/demo-screenshot.jpg)
+
 ## 🚀 Features
 
 - **Interactive Map**: Powered by OpenLayers, providing a fluid experience for discovering churches.
