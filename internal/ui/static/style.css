@@ -147,6 +147,18 @@ h1.site-title a {
     text-decoration: none;
 }
 
+.license-info {
+    font-size: 0.75rem;
+    color: #95a5a6;
+    margin-top: 15px;
+    line-height: 1.4;
+}
+
+.license-info a {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
 /* Search */
 .search-container {
     position: absolute;

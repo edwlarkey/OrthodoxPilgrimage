@@ -9,6 +9,11 @@ colors:
   glass-border: "rgba(255, 255, 255, 0.4)"
   shadow: "rgba(83, 12, 56, 0.15)"
 typography:
+  brand:
+    fontFamily: "Antic Didone, serif"
+    fontSize: 25px
+    fontWeight: 400
+    lineHeight: 1
   headline:
     fontFamily: "Inter, sans-serif"
     fontSize: 19px
@@ -53,8 +58,9 @@ The palette is rooted in sophisticated slates and a vibrant plum accent.
 
 ## Typography
 
-The system exclusively uses the **Inter** sans-serif typeface family for maximum clarity and a modern digital feel.
+The system uses a combination of **Antic Didone** for branding and **Inter** for all functional interface elements.
 
+- **Brand:** Set in Antic Didone (Regular). Provides a classical, liturgical feel to the main title.
 - **Headlines:** Set in Inter (Extra Bold). Compact and high-impact.
 - **Body:** Inter (Regular) at 14px. Clean and optimized for digital readability.
 - **Labels:** Inter (Bold) with slight letter spacing for metadata and navigation.
@@ -72,6 +78,9 @@ Depth is conveyed through **translucency** and **soft shadows**. Shadows use a h
 Containers and buttons use generous rounded corners (12px - 20px) to evoke a friendly, modern, and accessible interface. Small components like tags and interactive labels use `overflow-wrap` to prevent layout breaking from long strings or URLs.
 
 ## Components
+
+### Logo & Branding
+The site logo is featured prominently in the header with a height of 44px, paired with the site title in Antic Didone. The title uses a tight line-height and stacked layout on smaller screens.
 
 ### Buttons
 Primary actions use solid Plum backgrounds with white text and rounded "pill" or semi-pill shapes. All interactive elements inherit the system font stack (`Inter`) for consistent weight and clarity.
