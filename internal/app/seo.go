@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
+	"log/slog"
 	"strings"
 
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
@@ -141,7 +141,7 @@ func (a *Application) generateChurchJSONLD(c sqlcdb.Church, relics []sqlcdb.List
 
 	b, err := json.Marshal(data)
 	if err != nil {
-		log.Printf("Error marshaling church JSON-LD: %v", err)
+		slog.Error("Error marshaling JSON-LD", "error", err)
 		return ""
 	}
 
@@ -167,7 +167,7 @@ func (a *Application) generateSaintJSONLD(s sqlcdb.Saint) template.HTML {
 
 	b, err := json.Marshal(data)
 	if err != nil {
-		log.Printf("Error marshaling saint JSON-LD: %v", err)
+		slog.Error("Error marshaling JSON-LD", "error", err)
 		return ""
 	}
 

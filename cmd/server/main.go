@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/app"
 	internaldb "github.com/edwlarkey/orthodoxpilgrimage/internal/db"
@@ -13,39 +14,54 @@ import (
 )
 
 func main() {
+	logFormat := flag.String("log-format", "text", "log format: text or json")
 	flag.Parse()
+
+	var handler slog.Handler
+	switch *logFormat {
+	case "json":
+		handler = slog.NewJSONHandler(os.Stdout, nil)
+	default:
+		handler = slog.NewTextHandler(os.Stdout, nil)
+	}
+	slog.SetDefault(slog.New(handler))
 
 	dsn := "orthodox_pilgrimage.db?_busy_timeout=5000"
 	dbConn, err := internaldb.New(dsn)
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 	defer dbConn.Close()
-	log.Println("Database connection successful")
+	slog.Info("Database connection successful")
 
 	if err := internaldb.MigrateUp(dbConn); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
+		slog.Error("failed to run migrations", "error", err)
+		os.Exit(1)
 	}
-	log.Println("Database migrations successful")
+	slog.Info("Database migrations successful")
 
 	queries := sqlcdb.New(dbConn)
 
 	// Seed database on every startup from data.json (source of truth)
-	log.Println("Syncing database with data/data.json...")
+	slog.Info("Syncing database with data/data.json...")
 	if err := app.SeedDatabase(context.Background(), queries); err != nil {
-		log.Fatalf("failed to seed database: %v", err)
+		slog.Error("failed to seed database", "error", err)
+		os.Exit(1)
 	}
-	log.Println("Database synced successfully")
+	slog.Info("Database synced successfully")
 
-	log.Println("Generating sitemap.xml...")
+	slog.Info("Generating sitemap.xml...")
 	if err := app.GenerateSitemap(context.Background(), queries, "https://orthodoxpilgrimage.com"); err != nil {
-		log.Fatalf("failed to generate sitemap: %v", err)
+		slog.Error("failed to generate sitemap", "error", err)
+		os.Exit(1)
 	}
-	log.Println("Sitemap generated successfully")
+	slog.Info("Sitemap generated successfully")
 
 	tmplMgr, err := ui.NewTemplateManager()
 	if err != nil {
-		log.Fatalf("failed to create template manager: %v", err)
+		slog.Error("failed to create template manager", "error", err)
+		os.Exit(1)
 	}
 
 	application := &app.Application{
@@ -53,9 +69,10 @@ func main() {
 		Templates: tmplMgr,
 	}
 
-	log.Println("Starting server on :8080")
+	slog.Info("Starting server on :8080")
 	err = http.ListenAndServe(":8080", application.Routes())
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("server failed", "error", err)
+		os.Exit(1)
 	}
 }

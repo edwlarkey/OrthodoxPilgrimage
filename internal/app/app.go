@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -68,7 +68,7 @@ func (a *Application) Routes() http.Handler {
 		staticHandler.ServeHTTP(w, r)
 	}))
 
-	return a.flyDevRobotsMiddleware(mux)
+	return a.LoggingMiddleware(a.flyDevRobotsMiddleware(mux))
 }
 
 func (a *Application) flyDevRobotsMiddleware(next http.Handler) http.Handler {
@@ -171,7 +171,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			log.Printf("Error fetching data for path %s: %v", path, err)
+			slog.Error("Error fetching data", "path", path, "error", err)
 			return
 		}
 	} else {
@@ -205,7 +205,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				err = ts.ExecuteTemplate(w, "saint-detail", s)
 				if err != nil {
-					log.Printf("Error rendering saint detail: %v", err)
+					slog.Error("Error rendering saint detail", "error", err)
 				}
 				return
 			} else if c, ok := data.(ChurchWithRelics); ok {
@@ -226,7 +226,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				err = ts.ExecuteTemplate(w, "church-detail", c)
 				if err != nil {
-					log.Printf("Error rendering church detail: %v", err)
+					slog.Error("Error rendering church detail", "error", err)
 				}
 				return
 			}
@@ -247,7 +247,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := a.Templates.Render(w, "index", pageData); err != nil {
 		http.Error(w, "failed to render template", http.StatusInternalServerError)
-		log.Printf("Error rendering template: %v", err)
+		slog.Error("Error rendering template", "error", err)
 	}
 }
 
@@ -286,7 +286,7 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
-		log.Printf("Error retrieving churches: %v", err)
+		slog.Error("Error retrieving churches", "error", err)
 		return
 	}
 
@@ -311,7 +311,7 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Cache-Control", "public, max-age=86400")
 	if err := json.NewEncoder(w).Encode(churchesJSON); err != nil {
 		http.Error(w, "Failed to encode churches to JSON", http.StatusInternalServerError)
-		log.Printf("Error encoding churches: %v", err)
+		slog.Error("Error encoding churches", "error", err)
 	}
 }
 
@@ -341,7 +341,7 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 		http.Error(w, "Failed to retrieve church", http.StatusInternalServerError)
-		log.Printf("Error retrieving church %s: %v", slug, err)
+		slog.Error("Error retrieving church", "slug", slug, "error", err)
 		return
 	}
 
@@ -390,7 +390,7 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 		}
 		if err := a.Templates.Render(w, "index", pageData); err != nil {
 			http.Error(w, "failed to render template", http.StatusInternalServerError)
-			log.Printf("Error rendering template: %v", err)
+			slog.Error("Error rendering template", "error", err)
 		}
 	}
 }
@@ -413,7 +413,7 @@ func (a *Application) searchHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode([]searchResult{}); err != nil {
 			http.Error(w, "Failed to encode search results", http.StatusInternalServerError)
-			log.Printf("Error encoding search results: %v", err)
+			slog.Error("Error encoding search results", "error", err)
 		}
 		return
 	}
@@ -437,7 +437,7 @@ func (a *Application) searchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=60, s-maxage=3600")
 	if err := json.NewEncoder(w).Encode(results); err != nil {
 		http.Error(w, "Failed to encode search results", http.StatusInternalServerError)
-		log.Printf("Error encoding search results: %v", err)
+		slog.Error("Error encoding search results", "error", err)
 	}
 }
 
@@ -479,7 +479,7 @@ func (a *Application) churchesDirectoryHandler(w http.ResponseWriter, r *http.Re
 		}
 		err = ts.ExecuteTemplate(w, "church-directory", data)
 		if err != nil {
-			log.Printf("Error rendering church directory: %v", err)
+			slog.Error("Error rendering church directory", "error", err)
 		}
 		return
 	}
@@ -533,7 +533,7 @@ func (a *Application) saintsDirectoryHandler(w http.ResponseWriter, r *http.Requ
 		}
 		err = ts.ExecuteTemplate(w, "saint-directory", data)
 		if err != nil {
-			log.Printf("Error rendering saint directory: %v", err)
+			slog.Error("Error rendering saint directory", "error", err)
 		}
 		return
 	}
