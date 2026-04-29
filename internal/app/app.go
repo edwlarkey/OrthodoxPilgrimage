@@ -186,6 +186,13 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "" {
 		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
 		w.Header().Set("HX-Title", metadata.Title)
+		q := r.URL.Query()
+		q.Del("hx")
+		pushURL := r.URL.Path
+		if len(q) > 0 {
+			pushURL += "?" + q.Encode()
+		}
+		w.Header().Set("HX-Push-Url", pushURL)
 
 		// Set trigger headers for map interaction
 		if data != nil {
@@ -245,6 +252,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
 	if err := a.Templates.Render(w, "index", pageData); err != nil {
 		http.Error(w, "failed to render template", http.StatusInternalServerError)
 		slog.Error("Error rendering template", "error", err)
@@ -354,7 +362,13 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 		Sources: sources,
 	}
 
-	w.Header().Set("HX-Push-Url", fmt.Sprintf("/churches/%s", slug))
+	q := r.URL.Query()
+	q.Del("hx")
+	pushURL := path
+	if len(q) > 0 {
+		pushURL += "?" + q.Encode()
+	}
+	w.Header().Set("HX-Push-Url", pushURL)
 	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
 
 	metadata := a.getChurchMetadata(church, relics)
@@ -457,7 +471,13 @@ func (a *Application) churchesDirectoryHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	metadata := a.getChurchesDirectoryMetadata()
-	w.Header().Set("HX-Push-Url", "/churches/")
+	q := r.URL.Query()
+	q.Del("hx")
+	pushURL := "/churches/"
+	if len(q) > 0 {
+		pushURL += "?" + q.Encode()
+	}
+	w.Header().Set("HX-Push-Url", pushURL)
 	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
 
 	if r.Header.Get("HX-Request") != "" {
@@ -511,7 +531,13 @@ func (a *Application) saintsDirectoryHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	metadata := a.getSaintsDirectoryMetadata()
-	w.Header().Set("HX-Push-Url", "/saints/")
+	q := r.URL.Query()
+	q.Del("hx")
+	pushURL := "/saints/"
+	if len(q) > 0 {
+		pushURL += "?" + q.Encode()
+	}
+	w.Header().Set("HX-Push-Url", pushURL)
 	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
 
 	if r.Header.Get("HX-Request") != "" {

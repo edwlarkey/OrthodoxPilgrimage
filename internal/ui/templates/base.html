@@ -94,6 +94,17 @@
     </div>
 
     <script>
+        // HTMX Configuration
+        document.addEventListener("DOMContentLoaded", function() {
+            htmx.config.historyRestoreAsHxRequest = false;
+            htmx.config.historyCacheSize = 0;
+        });
+
+        // Ensure HTMX requests are unique for Cloudflare caching
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            evt.detail.parameters['hx'] = '1';
+        });
+
         function toggleHeader() {
             const header = document.getElementById('site-header');
             header.classList.toggle('expanded');
