@@ -49,14 +49,15 @@ func (a *Application) LoggingMiddleware(next http.Handler) http.Handler {
 
 		ip := getRealIP(r)
 
-		slog.Info("request",
+		repl := strings.NewReplacer("\n", "", "\r", "")
+		slog.Info("request", // nolint:gosec // G706: input is manually sanitized to remove newlines and prevent log injection
 			"method", r.Method,
-			"path", r.URL.Path,
+			"path", repl.Replace(r.URL.Path),
 			"ip", ip,
 			"status", rw.status,
 			"size", rw.written,
 			"duration", time.Since(start),
-			"user_agent", r.UserAgent(),
+			"user_agent", repl.Replace(r.UserAgent()),
 		)
 	})
 }

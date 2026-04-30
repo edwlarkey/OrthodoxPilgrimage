@@ -27,6 +27,18 @@ internal/ui/         # Template management, embedded assets
 
 ## Key Conventions
 
+### Agent Mandate: Mandatory Validation
+
+**After making any code changes, agents MUST run `make audit`.** 
+
+This ensures that:
+1.  **Code Quality:** `go fmt` and `go vet` are satisfied.
+2.  **Linter Compliance:** `golangci-lint` (including `errcheck`, `gosec`, etc.) passes with the project's specific `.golangci.yml` configuration.
+3.  **Stability:** All tests, including those with the race detector, pass.
+4.  **Data Integrity:** The `data.json` source of truth remains valid.
+
+No change is considered complete until `make audit` has passed successfully.
+
 ### Go
 
 - **Module imports:** Use the full module path `github.com/edwlarkey/orthodoxpilgrimage` for all internal imports.

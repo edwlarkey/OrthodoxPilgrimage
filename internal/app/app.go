@@ -171,7 +171,7 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			slog.Error("Error fetching data", "path", path, "error", err)
+			slog.Error("Error fetching data", "path", strings.NewReplacer("\n", "", "\r", "").Replace(path), "error", err) // nolint:gosec // G706: input is manually sanitized to remove newlines and prevent log injection
 			return
 		}
 	} else {
@@ -349,7 +349,7 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 		http.Error(w, "Failed to retrieve church", http.StatusInternalServerError)
-		slog.Error("Error retrieving church", "slug", slug, "error", err)
+		slog.Error("Error retrieving church", "slug", strings.NewReplacer("\n", "", "\r", "").Replace(slug), "error", err) // nolint:gosec // G706: input is manually sanitized to remove newlines and prevent log injection
 		return
 	}
 

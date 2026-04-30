@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/app"
 	internaldb "github.com/edwlarkey/orthodoxpilgrimage/internal/db"
@@ -32,7 +33,11 @@ func main() {
 		slog.Error("failed to connect to database", "error", err)
 		os.Exit(1)
 	}
-	defer dbConn.Close()
+	defer func() {
+		if err := dbConn.Close(); err != nil {
+			slog.Error("failed to close database connection", "error", err)
+		}
+	}()
 	slog.Info("Database connection successful")
 
 	if err := internaldb.MigrateUp(dbConn); err != nil {
@@ -69,9 +74,16 @@ func main() {
 		Templates: tmplMgr,
 	}
 
+	srv := &http.Server{
+		Addr:         ":8080",
+		Handler:      application.Routes(),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
 	slog.Info("Starting server on :8080")
-	err = http.ListenAndServe(":8080", application.Routes())
-	if err != nil {
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("server failed", "error", err)
 		os.Exit(1)
 	}

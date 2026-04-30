@@ -145,7 +145,7 @@ func (a *Application) generateChurchJSONLD(c sqlcdb.Church, relics []sqlcdb.List
 		return ""
 	}
 
-	return template.HTML(fmt.Sprintf("<script type=\"application/ld+json\">\n%s\n</script>", string(b)))
+	return template.HTML(fmt.Sprintf("<script type=\"application/ld+json\">\n%s\n</script>", string(b))) // nolint:gosec // G203: b is produced by json.Marshal which is safe for HTML embedding
 }
 
 func (a *Application) generateSaintJSONLD(s sqlcdb.Saint) template.HTML {
@@ -171,7 +171,7 @@ func (a *Application) generateSaintJSONLD(s sqlcdb.Saint) template.HTML {
 		return ""
 	}
 
-	return template.HTML(fmt.Sprintf("<script type=\"application/ld+json\">\n%s\n</script>", string(b)))
+	return template.HTML(fmt.Sprintf("<script type=\"application/ld+json\">\n%s\n</script>", string(b))) // nolint:gosec // G203: b is produced by json.Marshal which is safe for HTML embedding
 }
 
 func (a *Application) getChurchesDirectoryMetadata() PageMetadata {

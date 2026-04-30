@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"time"
 
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
@@ -58,11 +59,16 @@ type RelicData struct {
 }
 
 func SeedDatabase(ctx context.Context, queries *sqlcdb.Queries) error {
+	start := time.Now()
 	data, err := dataFile.ReadFile("data/data.json")
 	if err != nil {
 		return fmt.Errorf("failed to read embedded data file: %w", err)
 	}
-	return SeedFromReader(ctx, queries, bytes.NewReader(data))
+	err = SeedFromReader(ctx, queries, bytes.NewReader(data))
+	if err == nil {
+		slog.Info("Database seeding complete", "duration", time.Since(start))
+	}
+	return err
 }
 
 func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) error {
