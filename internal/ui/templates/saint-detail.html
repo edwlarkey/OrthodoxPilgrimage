@@ -27,9 +27,16 @@
     {{end}}
 </div>
 
-{{if .Saint.ImageUrl.Valid}}
-<div class="image-container">
-    <img src="{{.Saint.ImageUrl.String}}" alt="Orthodox Icon of {{.Saint.Name}}" onerror="this.parentElement.style.display='none'">
+{{if .Images}}
+<div class="image-gallery">
+    {{range .Images}}
+    <div class="image-container{{if .IsPrimary.Bool}} primary{{end}}">
+        <img src="{{.Url}}" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}{$.Saint.Name}}{{end}}" onerror="this.parentElement.style.display='none'">
+        {{if .Source.Valid}}
+            <span class="image-source">Source: {{.Source.String}}</span>
+        {{end}}
+    </div>
+    {{end}}
 </div>
 {{end}}
 

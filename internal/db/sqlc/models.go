@@ -23,7 +23,6 @@ type Church struct {
 	Website       sql.NullString `json:"website"`
 	Phone         sql.NullString `json:"phone"`
 	Description   sql.NullString `json:"description"`
-	ImageUrl      sql.NullString `json:"image_url"`
 	UpdatedAt     sql.NullTime   `json:"updated_at"`
 	PostalCode    sql.NullString `json:"postal_code"`
 }
@@ -32,6 +31,19 @@ type ChurchSource struct {
 	ID       int64  `json:"id"`
 	ChurchID int64  `json:"church_id"`
 	Source   string `json:"source"`
+}
+
+type Image struct {
+	ID            int64          `json:"id"`
+	ChurchID      sql.NullInt64  `json:"church_id"`
+	SaintID       sql.NullInt64  `json:"saint_id"`
+	RelicChurchID sql.NullInt64  `json:"relic_church_id"`
+	RelicSaintID  sql.NullInt64  `json:"relic_saint_id"`
+	Url           string         `json:"url"`
+	AltText       sql.NullString `json:"alt_text"`
+	Source        sql.NullString `json:"source"`
+	IsPrimary     sql.NullBool   `json:"is_primary"`
+	SortOrder     sql.NullInt64  `json:"sort_order"`
 }
 
 type Relic struct {
@@ -46,7 +58,6 @@ type Saint struct {
 	Slug        string         `json:"slug"`
 	FeastDay    sql.NullString `json:"feast_day"`
 	Description sql.NullString `json:"description"`
-	ImageUrl    sql.NullString `json:"image_url"`
 	LivesUrl    sql.NullString `json:"lives_url"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }

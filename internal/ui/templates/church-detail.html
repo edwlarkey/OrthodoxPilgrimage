@@ -20,21 +20,28 @@
 </div>
 
 <div class="church-detail" id="church-{{.Church.ID}}">
-{{with .Church}}
 <div class="detail-header">
-    <h1 class="title">{{.Name}}</h1>
-    {{if .Jurisdiction.Valid}}
-        <p class="subtitle">{{.Jurisdiction.String}}</p>
+    <h1 class="title">{{.Church.Name}}</h1>
+    {{if .Church.Jurisdiction.Valid}}
+        <p class="subtitle">{{.Church.Jurisdiction.String}}</p>
     {{end}}
 </div>
 
-{{if .ImageUrl.Valid}}
-<div class="image-container">
-    <img src="{{.ImageUrl.String}}" alt="Orthodox Church: {{.Name}} in {{.City}}, {{.StateProvince}}" onerror="this.parentElement.style.display='none'">
+{{if .Images}}
+<div class="image-gallery">
+    {{range .Images}}
+    <div class="image-container{{if .IsPrimary.Bool}} primary{{end}}">
+        <img src="{{.Url}}" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}{$.Church.Name}}{{end}}" onerror="this.parentElement.style.display='none'">
+        {{if .Source.Valid}}
+            <span class="image-source">Source: {{.Source.String}}</span>
+        {{end}}
+    </div>
+    {{end}}
 </div>
 {{end}}
 
 <div class="info-section">
+    {{with .Church}}
     <div class="info-item">
         <label>Address</label>
         <p>{{.AddressText}}</p>
@@ -61,25 +68,36 @@
         <p class="description-text">{{.Description.String}}</p>
     </div>
     {{end}}
+    {{end}}
 </div>
-{{end}}
 
 <div class="relics-section">
     <h3>Relics</h3>
     {{if .Relics}}
-        <div class="relic-pills">
+        <div class="relic-list">
         {{$churchSlug := .Church.Slug}}
         {{range .Relics}}
-            <a href="/{{.Slug}}?from={{$churchSlug}}" 
-               hx-get="/{{.Slug}}?from={{$churchSlug}}"
-               hx-target="#church-details"
-               hx-push-url="true"
-               class="relic-pill">
-                <span class="saint-name">{{.Name}}</span>
-                {{if .RelicDescription.Valid}}
-                    <span class="relic-type">{{.RelicDescription.String}}</span>
+            <div class="relic-item">
+                <a href="/{{.Relic.Slug}}?from={{$churchSlug}}" 
+                   hx-get="/{{.Relic.Slug}}?from={{$churchSlug}}"
+                   hx-target="#church-details"
+                   hx-push-url="true"
+                   class="relic-pill">
+                    <span class="saint-name">{{.Relic.Name}}</span>
+                    {{if .Relic.RelicDescription.Valid}}
+                        <span class="relic-type">{{.Relic.RelicDescription.String}}</span>
+                    {{end}}
+                </a>
+                {{if .Images}}
+                <div class="relic-images">
+                    {{range .Images}}
+                    <div class="relic-image-container">
+                        <img src="{{.Url}}" loading="lazy" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic of {{.Relic.Name}}{{end}}" title="{{if .AltText.Valid}}{{.AltText.String}}{{end}}">
+                    </div>
+                    {{end}}
+                </div>
                 {{end}}
-            </a>
+            </div>
         {{end}}
         </div>
     {{else}}

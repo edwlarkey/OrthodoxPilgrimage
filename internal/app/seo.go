@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -54,8 +56,15 @@ func (a *Application) getChurchMetadata(c sqlcdb.Church, relics []sqlcdb.ListRel
 	canonical := fmt.Sprintf("https://orthodoxpilgrimage.com/churches/%s", c.Slug)
 
 	ogImage := "https://orthodoxpilgrimage.com/static/og-image.jpg"
-	if c.ImageUrl.Valid {
-		ogImage = c.ImageUrl.String
+	images, _ := a.DB.ListImagesForChurch(context.Background(), sql.NullInt64{Int64: c.ID, Valid: true})
+	for _, img := range images {
+		if img.IsPrimary.Bool {
+			ogImage = img.Url
+			break
+		}
+	}
+	if ogImage == "https://orthodoxpilgrimage.com/static/og-image.jpg" && len(images) > 0 {
+		ogImage = images[0].Url
 	}
 
 	return PageMetadata{
@@ -75,8 +84,15 @@ func (a *Application) getSaintMetadata(s sqlcdb.Saint) PageMetadata {
 	canonical := fmt.Sprintf("https://orthodoxpilgrimage.com/%s", s.Slug)
 
 	ogImage := "https://orthodoxpilgrimage.com/static/og-image.jpg"
-	if s.ImageUrl.Valid {
-		ogImage = s.ImageUrl.String
+	images, _ := a.DB.ListImagesForSaint(context.Background(), sql.NullInt64{Int64: s.ID, Valid: true})
+	for _, img := range images {
+		if img.IsPrimary.Bool {
+			ogImage = img.Url
+			break
+		}
+	}
+	if ogImage == "https://orthodoxpilgrimage.com/static/og-image.jpg" && len(images) > 0 {
+		ogImage = images[0].Url
 	}
 
 	return PageMetadata{

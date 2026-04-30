@@ -502,8 +502,83 @@ h1.site-title a {
 .title { font-size: 1.6rem; font-weight: 800; margin: 0 0 0.4rem 0; line-height: 1.2; }
 .subtitle { font-size: 0.9rem; color: #7f8c8d; margin: 0; font-style: italic; }
 
-.image-container { margin: 1rem -20px; }
-.image-container img { width: 100%; height: 200px; object-fit: cover; }
+/* Image Gallery & Relic Photos */
+.image-gallery {
+    margin: 1rem -20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.image-container {
+    position: relative;
+    width: 100%;
+}
+
+.image-container img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    display: block;
+}
+
+.image-container.primary img {
+    height: 300px;
+}
+
+.image-source {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-top-left-radius: 6px;
+}
+
+.relic-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.relic-item {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.relic-images {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    scrollbar-width: thin;
+}
+
+.relic-image-container {
+    flex: 0 0 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.relic-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.relic-image-container img:hover {
+    transform: scale(1.1);
+}
 
 .info-section { margin-bottom: 2rem; }
 .info-item { margin-bottom: 1.2rem; }

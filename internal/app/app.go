@@ -102,13 +102,20 @@ type searchResult struct {
 type ChurchWithRelics struct {
 	Type    string
 	Church  sqlcdb.Church
-	Relics  []sqlcdb.ListRelicsForChurchRow
+	Images  []sqlcdb.Image
+	Relics  []RelicWithImages
 	Sources []string
+}
+
+type RelicWithImages struct {
+	Relic  sqlcdb.ListRelicsForChurchRow
+	Images []sqlcdb.Image
 }
 
 type SaintWithType struct {
 	Type            string
 	Saint           sqlcdb.Saint
+	Images          []sqlcdb.Image
 	ReferringChurch *sqlcdb.Church
 	Churches        []sqlcdb.Church
 }
@@ -126,15 +133,30 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 			slug := path[10:]
 			church, churchErr := a.DB.GetChurchBySlug(r.Context(), slug)
 			if churchErr == nil {
-				relics, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
+				relicRows, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
 				sources, _ := a.DB.ListSourcesForChurch(r.Context(), church.ID)
+				images, _ := a.DB.ListImagesForChurch(r.Context(), sql.NullInt64{Int64: church.ID, Valid: true})
+
+				relics := make([]RelicWithImages, len(relicRows))
+				for i, rRow := range relicRows {
+					rImages, _ := a.DB.ListImagesForRelic(r.Context(), sqlcdb.ListImagesForRelicParams{
+						RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true},
+						RelicSaintID:  sql.NullInt64{Int64: rRow.ID, Valid: true},
+					})
+					relics[i] = RelicWithImages{
+						Relic:  rRow,
+						Images: rImages,
+					}
+				}
+
 				data = ChurchWithRelics{
 					Type:    "church",
 					Church:  church,
+					Images:  images,
 					Relics:  relics,
 					Sources: sources,
 				}
-				metadata = a.getChurchMetadata(church, relics)
+				metadata = a.getChurchMetadata(church, relicRows)
 			} else {
 				err = churchErr
 			}
@@ -145,10 +167,12 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 			if saintErr == nil {
 				// Fetch all churches for this saint
 				churches, _ := a.DB.ListChurchesBySaintSlug(r.Context(), slug)
+				images, _ := a.DB.ListImagesForSaint(r.Context(), sql.NullInt64{Int64: saint.ID, Valid: true})
 
 				sData := SaintWithType{
 					Type:     "saint",
 					Saint:    saint,
+					Images:   images,
 					Churches: churches,
 				}
 				// Optional: link back to referring church
@@ -353,11 +377,26 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	relics, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
+	relicRows, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
 	sources, _ := a.DB.ListSourcesForChurch(r.Context(), church.ID)
+	images, _ := a.DB.ListImagesForChurch(r.Context(), sql.NullInt64{Int64: church.ID, Valid: true})
+
+	relics := make([]RelicWithImages, len(relicRows))
+	for i, rRow := range relicRows {
+		rImages, _ := a.DB.ListImagesForRelic(r.Context(), sqlcdb.ListImagesForRelicParams{
+			RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true},
+			RelicSaintID:  sql.NullInt64{Int64: rRow.ID, Valid: true},
+		})
+		relics[i] = RelicWithImages{
+			Relic:  rRow,
+			Images: rImages,
+		}
+	}
+
 	data := ChurchWithRelics{
 		Type:    "church",
 		Church:  church,
+		Images:  images,
 		Relics:  relics,
 		Sources: sources,
 	}
@@ -371,7 +410,7 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 	w.Header().Set("HX-Push-Url", pushURL)
 	w.Header().Set("Vary", "Accept-Encoding, HX-Request")
 
-	metadata := a.getChurchMetadata(church, relics)
+	metadata := a.getChurchMetadata(church, relicRows)
 
 	if r.Header.Get("HX-Request") != "" {
 		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")

@@ -6,6 +6,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 type Querier interface {
@@ -13,9 +14,11 @@ type Querier interface {
 	CountSaints(ctx context.Context) (int64, error)
 	CreateChurch(ctx context.Context, arg CreateChurchParams) (Church, error)
 	CreateChurchSource(ctx context.Context, arg CreateChurchSourceParams) error
+	CreateImage(ctx context.Context, arg CreateImageParams) error
 	CreateRelic(ctx context.Context, arg CreateRelicParams) error
 	CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint, error)
 	DeleteAllChurches(ctx context.Context) error
+	DeleteAllImages(ctx context.Context) error
 	DeleteAllRelics(ctx context.Context) error
 	DeleteAllSaints(ctx context.Context) error
 	DeleteAllSources(ctx context.Context) error
@@ -25,6 +28,9 @@ type Querier interface {
 	ListChurches(ctx context.Context) ([]Church, error)
 	ListChurchesBySaintSlug(ctx context.Context, slug string) ([]Church, error)
 	ListChurchesInBounds(ctx context.Context, arg ListChurchesInBoundsParams) ([]Church, error)
+	ListImagesForChurch(ctx context.Context, churchID sql.NullInt64) ([]Image, error)
+	ListImagesForRelic(ctx context.Context, arg ListImagesForRelicParams) ([]Image, error)
+	ListImagesForSaint(ctx context.Context, saintID sql.NullInt64) ([]Image, error)
 	ListRelicsForChurch(ctx context.Context, churchID int64) ([]ListRelicsForChurchRow, error)
 	ListSaints(ctx context.Context) ([]Saint, error)
 	ListSourcesForChurch(ctx context.Context, churchID int64) ([]string, error)

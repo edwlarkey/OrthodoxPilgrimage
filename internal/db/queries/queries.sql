@@ -44,10 +44,9 @@ INSERT INTO churches (
     website,
     phone,
     description,
-    image_url,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 RETURNING *;
 
@@ -57,11 +56,10 @@ INSERT INTO saints (
     slug,
     feast_day,
     description,
-    image_url,
     lives_url,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?
 )
 RETURNING *;
 
@@ -83,6 +81,39 @@ SELECT s.*, r.description as relic_description
 FROM saints s
 JOIN relics r ON s.id = r.saint_id
 WHERE r.church_id = ?;
+
+-- name: CreateImage :exec
+INSERT INTO images (
+    church_id,
+    saint_id,
+    relic_church_id,
+    relic_saint_id,
+    url,
+    alt_text,
+    source,
+    is_primary,
+    sort_order
+) VALUES (
+    ?, ?, ?, ?, ?, ?, ?, ?, ?
+);
+
+-- name: ListImagesForChurch :many
+SELECT * FROM images
+WHERE church_id = ?
+ORDER BY sort_order, id;
+
+-- name: ListImagesForSaint :many
+SELECT * FROM images
+WHERE saint_id = ?
+ORDER BY sort_order, id;
+
+-- name: ListImagesForRelic :many
+SELECT * FROM images
+WHERE relic_church_id = ? AND relic_saint_id = ?
+ORDER BY sort_order, id;
+
+-- name: DeleteAllImages :exec
+DELETE FROM images;
 
 -- name: CountChurches :one
 SELECT count(*) FROM churches;
