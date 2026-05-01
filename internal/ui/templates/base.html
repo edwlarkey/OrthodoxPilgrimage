@@ -93,6 +93,23 @@
         {{template "content" .Content}}
     </div>
 
+    <div id="lightbox-portal"></div>
+
+    <script>
+        // Teleport lightboxes to the root portal to escape sidebar stacking context
+        function teleportLightboxes() {
+            const portal = document.getElementById('lightbox-portal');
+            document.querySelectorAll('.lightbox-overlay').forEach(lb => {
+                if (lb.parentElement !== portal) {
+                    portal.appendChild(lb);
+                }
+            });
+        }
+        
+        document.addEventListener("DOMContentLoaded", teleportLightboxes);
+        document.body.addEventListener('htmx:afterOnLoad', teleportLightboxes);
+    </script>
+
     <script>
         // HTMX Configuration
         document.addEventListener("DOMContentLoaded", function() {

@@ -31,13 +31,61 @@
 <div class="image-gallery">
     {{range .Images}}
     <div class="image-container{{if .IsPrimary.Bool}} primary{{end}}">
-        <img src="{{.Url}}" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}{$.Church.Name}}{{end}}" onerror="this.parentElement.style.display='none'">
+        <a href="#img-{{.ID}}">
+            <img src="{{.Url}}" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}{$.Church.Name}}{{end}}" onerror="this.parentElement.style.display='none'">
+        </a>
         {{if .Source.Valid}}
             <span class="image-source">Source: {{.Source.String}}</span>
         {{end}}
     </div>
     {{end}}
 </div>
+
+{{range .Images}}
+<div class="lightbox-overlay" id="img-{{.ID}}">
+    <a href="#!" class="lightbox-close"></a>
+    <div class="lightbox-container">
+        <img src="{{.Url}}" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}{$.Church.Name}}{{end}}">
+        <div class="lightbox-caption">
+            <p>{{if .AltText.Valid}}{{.AltText.String}}{{else}}{$.Church.Name}}{{end}}</p>
+            {{if .Source.Valid}}<span class="image-source">Source: {{.Source.String}}</span>{{end}}
+        </div>
+        <a href="#!" class="lightbox-close-btn">&times;</a>
+    </div>
+</div>
+{{end}}
+
+{{range .Relics}}
+    {{range .Images}}
+    <div class="lightbox-overlay" id="img-{{.ID}}">
+        <a href="#!" class="lightbox-close"></a>
+        <div class="lightbox-container">
+            <img src="{{.Url}}" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic of {{.Relic.Name}}{{end}}">
+            <div class="lightbox-caption">
+                <p>{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic of {{.Relic.Name}}{{end}}</p>
+                {{if .Source.Valid}}<span class="image-source">Source: {{.Source.String}}</span>{{end}}
+            </div>
+            <a href="#!" class="lightbox-close-btn">&times;</a>
+        </div>
+    </div>
+    {{end}}
+{{end}}
+{{else if .Relics}}
+    {{range .Relics}}
+        {{range .Images}}
+        <div class="lightbox-overlay" id="img-{{.ID}}">
+            <a href="#!" class="lightbox-close"></a>
+            <div class="lightbox-container">
+                <img src="{{.Url}}" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic of {{.Relic.Name}}{{end}}">
+                <div class="lightbox-caption">
+                    <p>{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic of {{.Relic.Name}}{{end}}</p>
+                    {{if .Source.Valid}}<span class="image-source">Source: {{.Source.String}}</span>{{end}}
+                </div>
+                <a href="#!" class="lightbox-close-btn">&times;</a>
+            </div>
+        </div>
+        {{end}}
+    {{end}}
 {{end}}
 
 <div class="info-section">
@@ -92,7 +140,9 @@
                 <div class="relic-images">
                     {{range .Images}}
                     <div class="relic-image-container">
-                        <img src="{{.Url}}" loading="lazy" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic of {{.Relic.Name}}{{end}}" title="{{if .AltText.Valid}}{{.AltText.String}}{{end}}">
+                        <a href="#img-{{.ID}}">
+                            <img src="{{.Url}}" loading="lazy" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic of {{.Relic.Name}}{{end}}" title="{{if .AltText.Valid}}{{.AltText.String}}{{end}}">
+                        </a>
                     </div>
                     {{end}}
                 </div>
