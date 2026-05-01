@@ -1,0 +1,94 @@
+{{define "admin-saints-edit"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .IsNew}}New Saint{{else}}Edit {{.Saint.Name}}{{end}} - Admin</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+    <style>
+        body { background-color: #f8f9fa; display: flex; margin: 0; height: 100vh; font-family: 'Inter', sans-serif; overflow: hidden; }
+        .admin-sidebar { width: 280px; background: #2c3e50; color: white; display: flex; flex-direction: column; padding: 30px 20px; flex-shrink: 0; }
+        .admin-sidebar h2 { font-family: 'Antic Didone', serif; font-size: 1.5rem; margin-bottom: 40px; color: white; text-align: center; }
+        .nav-links { list-style: none; padding: 0; margin: 0; flex: 1; }
+        .nav-links li { margin-bottom: 10px; }
+        .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; padding: 12px 15px; border-radius: 10px; display: block; font-weight: 600; transition: all 0.2s; }
+        .nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,0.1); color: white; }
+        .admin-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .admin-topbar { background: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
+        .admin-content-area { flex: 1; padding: 40px; overflow-y: auto; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .logout-btn { color: #e74c3c; text-decoration: none; font-weight: 700; font-size: 0.9rem; }
+        
+        .form-card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #eee; max-width: 800px; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #95a5a6; margin-bottom: 10px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 15px; border: 1px solid #eee; border-radius: 12px; font-family: inherit; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #530c38; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .btn-save { background: #530c38; color: white; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
+        .btn-save:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-cancel { background: #f1f2f6; color: #7f8c8d; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 700; font-size: 1rem; text-decoration: none; display: inline-block; text-align: center; }
+        
+        .actions { margin-top: 40px; display: flex; gap: 15px; }
+    </style>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
+
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
+
+        <div class="admin-content-area">
+            <div class="form-card">
+                <h1 style="margin-top: 0; margin-bottom: 30px; font-weight: 800;">{{if .IsNew}}New Saint{{else}}Edit {{.Saint.Name}}{{end}}</h1>
+                
+                <form hx-post="{{if .IsNew}}/admin/saints/new{{else}}/admin/saints/edit/{{.Saint.Slug}}{{end}}" hx-push-url="false">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" value="{{if not .IsNew}}{{.Saint.Name}}{{end}}" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="slug">Slug (leave empty to auto-generate)</label>
+                            <input type="text" id="slug" name="slug" value="{{if not .IsNew}}{{.Saint.Slug}}{{end}}" placeholder="e.g. st-nicholas">
+                        </div>
+                        <div class="form-group">
+                            <label for="feast_day">Feast Day</label>
+                            <input type="text" id="feast_day" name="feast_day" value="{{if and (not .IsNew) .Saint.FeastDay.Valid}}{{.Saint.FeastDay.String}}{{end}}" placeholder="e.g. December 6">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="5">{{if and (not .IsNew) .Saint.Description.Valid}}{{.Saint.Description.String}}{{end}}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lives_url">Lives URL</label>
+                        <input type="url" id="lives_url" name="lives_url" value="{{if and (not .IsNew) .Saint.LivesUrl.Valid}}{{.Saint.LivesUrl.String}}{{end}}" placeholder="https://...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            <option value="published" {{if or .IsNew (eq .Saint.Status "published")}}selected{{end}}>Published</option>
+                            <option value="draft" {{if and (not .IsNew) (eq .Saint.Status "draft")}}selected{{end}}>Draft</option>
+                        </select>
+                    </div>
+
+                    <div class="actions">
+                        <button type="submit" class="btn-save">Save Saint</button>
+                        <a href="/admin/saints" class="btn-cancel">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+{{end}}

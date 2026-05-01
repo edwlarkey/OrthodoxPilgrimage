@@ -1,0 +1,70 @@
+{{define "admin-content"}}
+<div class="dashboard-header">
+    <h1 style="margin: 0; font-size: 1.8rem; font-weight: 800;">Dashboard</h1>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Total Churches</span>
+        <div class="stat-value">{{.ChurchCount}}</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Total Saints</span>
+        <div class="stat-value">{{.SaintCount}}</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Relics Recorded</span>
+        <div class="stat-value">{{.RelicCount}}</div>
+    </div>
+</div>
+
+<section class="recent-activity">
+    <h2 style="font-size: 1.2rem; margin-bottom: 20px;">System Status</h2>
+    <div class="stat-card">
+        <p>Welcome to the administrative portal. Use the sidebar to manage site content.</p>
+        <p style="color: #95a5a6; font-size: 0.9rem;">MFA is <strong>Enabled</strong> for your account.</p>
+        
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <button class="reset-search-btn" style="width: auto;" onclick="showToast('Sample success message!')">Test Toast</button>
+            <button class="reset-search-btn" style="width: auto;" 
+                    hx-get="/admin/dashboard" 
+                    hx-target="#admin-modal-content"
+                    hx-swap="innerHTML">Test Modal</button>
+        </div>
+    </div>
+</section>
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+        margin-top: 30px;
+    }
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border: 1px solid #eee;
+    }
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #95a5a6;
+        font-weight: 700;
+        margin-bottom: 10px;
+        display: block;
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #530c38;
+    }
+    .dashboard-header {
+        margin-bottom: 30px;
+    }
+</style>
+{{end}}

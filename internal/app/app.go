@@ -10,13 +10,17 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alexedwards/scs/v2"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 )
 
 type Application struct {
-	DB        *sqlcdb.Queries
-	Templates *ui.TemplateManager
+	DB             *sqlcdb.Queries
+	DBConn         *sql.DB
+	Templates      *ui.TemplateManager
+	SessionManager *scs.SessionManager
+	DevMode        bool
 }
 
 func (a *Application) SeedDatabase(ctx context.Context) error {
@@ -25,11 +29,40 @@ func (a *Application) SeedDatabase(ctx context.Context) error {
 
 func (a *Application) Routes() http.Handler {
 	mux := http.NewServeMux()
+	
+	// Public routes
 	mux.HandleFunc("/", a.homeHandler)
 	mux.HandleFunc("/churches/", a.churchDetailHandler)
 	mux.HandleFunc("/saints/", a.saintsDirectoryHandler)
 	mux.HandleFunc("/api/v1/churches", a.listChurchesHandler)
 	mux.HandleFunc("/api/v1/search", a.searchHandler)
+
+	// Admin routes
+	mux.HandleFunc("/admin/login", a.adminLoginHandler)
+	mux.HandleFunc("/admin/setup", a.adminSetupHandler)
+	mux.HandleFunc("/admin/logout", a.adminLogoutHandler)
+	mux.HandleFunc("/admin/mfa", a.adminMfaHandler)
+	
+	// Protected admin routes
+	adminMux := http.NewServeMux()
+	adminMux.HandleFunc("/admin/dashboard", a.adminDashboardHandler)
+	adminMux.HandleFunc("/admin/saints", a.adminSaintsListHandler)
+	adminMux.HandleFunc("/admin/saints/new", a.adminSaintEditHandler)
+	adminMux.HandleFunc("/admin/saints/edit/", a.adminSaintEditHandler)
+	adminMux.HandleFunc("/admin/saints/delete/", a.adminSaintDeleteHandler)
+	
+	adminMux.HandleFunc("/admin/churches", a.adminChurchesListHandler)
+	adminMux.HandleFunc("/admin/churches/new", a.adminChurchEditHandler)
+	adminMux.HandleFunc("/admin/churches/edit/", a.adminChurchEditHandler)
+	adminMux.HandleFunc("/admin/churches/delete/", a.adminChurchDeleteHandler)
+	
+	adminMux.HandleFunc("/admin/relics", a.adminRelicsListHandler)
+	adminMux.HandleFunc("/admin/relics/new", a.adminRelicEditHandler)
+	adminMux.HandleFunc("/admin/relics/delete", a.adminRelicDeleteHandler)
+	adminMux.HandleFunc("/admin/audit-logs", a.adminAuditLogsHandler)
+	
+	mux.Handle("/admin/", a.AdminAuthMiddleware(adminMux))
+
 	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "sitemap.xml")
 	})
@@ -68,7 +101,7 @@ func (a *Application) Routes() http.Handler {
 		staticHandler.ServeHTTP(w, r)
 	}))
 
-	return a.LoggingMiddleware(a.flyDevRobotsMiddleware(mux))
+	return a.LoggingMiddleware(a.flyDevRobotsMiddleware(a.SessionManager.LoadAndSave(mux)))
 }
 
 func (a *Application) flyDevRobotsMiddleware(next http.Handler) http.Handler {
@@ -79,6 +112,29 @@ func (a *Application) flyDevRobotsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func (a *Application) AdminAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Public admin routes that don't need auth
+		if r.URL.Path == "/admin/login" || r.URL.Path == "/admin/setup" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if !a.SessionManager.Exists(r.Context(), "admin_id") {
+			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+			return
+		}
+
+		// Check for MFA pending
+		if !a.DevMode && a.SessionManager.GetBool(r.Context(), "mfa_pending") && r.URL.Path != "/admin/mfa" {
+			http.Redirect(w, r, "/admin/mfa", http.StatusSeeOther)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+		})
+		}
 
 type churchJSON struct {
 	ID          int64          `json:"id"`
