@@ -12,6 +12,8 @@ import (
 type Querier interface {
 	CountChurches(ctx context.Context) (int64, error)
 	CountSaints(ctx context.Context) (int64, error)
+	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
+	CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) error
 	CreateChurch(ctx context.Context, arg CreateChurchParams) (Church, error)
 	CreateChurchSource(ctx context.Context, arg CreateChurchSourceParams) error
 	CreateImage(ctx context.Context, arg CreateImageParams) error
@@ -22,19 +24,32 @@ type Querier interface {
 	DeleteAllRelics(ctx context.Context) error
 	DeleteAllSaints(ctx context.Context) error
 	DeleteAllSources(ctx context.Context) error
+	DeleteChurch(ctx context.Context, id int64) error
+	DeleteRelic(ctx context.Context, arg DeleteRelicParams) error
+	DeleteSaint(ctx context.Context, id int64) error
+	GetAdmin(ctx context.Context, id int64) (Admin, error)
+	GetAdminByUsername(ctx context.Context, username string) (Admin, error)
 	GetChurch(ctx context.Context, id int64) (Church, error)
 	GetChurchBySlug(ctx context.Context, slug string) (Church, error)
 	GetSaintBySlug(ctx context.Context, slug string) (Saint, error)
+	ListAllRelics(ctx context.Context) ([]ListAllRelicsRow, error)
+	ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]ListAuditLogsRow, error)
 	ListChurches(ctx context.Context) ([]Church, error)
 	ListChurchesBySaintSlug(ctx context.Context, slug string) ([]Church, error)
+	ListChurchesByStatus(ctx context.Context, status string) ([]Church, error)
 	ListChurchesInBounds(ctx context.Context, arg ListChurchesInBoundsParams) ([]Church, error)
 	ListImagesForChurch(ctx context.Context, churchID sql.NullInt64) ([]Image, error)
 	ListImagesForRelic(ctx context.Context, arg ListImagesForRelicParams) ([]Image, error)
 	ListImagesForSaint(ctx context.Context, saintID sql.NullInt64) ([]Image, error)
 	ListRelicsForChurch(ctx context.Context, churchID int64) ([]ListRelicsForChurchRow, error)
 	ListSaints(ctx context.Context) ([]Saint, error)
+	ListSaintsByStatus(ctx context.Context, status string) ([]Saint, error)
 	ListSourcesForChurch(ctx context.Context, churchID int64) ([]string, error)
 	SearchSaints(ctx context.Context, name string) ([]Saint, error)
+	UpdateAdminLastLogin(ctx context.Context, id int64) error
+	UpdateAdminMFA(ctx context.Context, arg UpdateAdminMFAParams) error
+	UpdateChurch(ctx context.Context, arg UpdateChurchParams) (Church, error)
+	UpdateSaint(ctx context.Context, arg UpdateSaintParams) (Saint, error)
 }
 
 var _ Querier = (*Queries)(nil)

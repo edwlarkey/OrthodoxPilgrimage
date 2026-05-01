@@ -32,6 +32,69 @@ func (q *Queries) CountSaints(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const createAdmin = `-- name: CreateAdmin :one
+INSERT INTO admins (
+    username,
+    password_hash,
+    mfa_secret
+) VALUES (
+    ?, ?, ?
+)
+RETURNING id, username, password_hash, mfa_secret, mfa_enabled, last_login_at, created_at
+`
+
+type CreateAdminParams struct {
+	Username     string         `json:"username"`
+	PasswordHash string         `json:"password_hash"`
+	MfaSecret    sql.NullString `json:"mfa_secret"`
+}
+
+func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error) {
+	row := q.db.QueryRowContext(ctx, createAdmin, arg.Username, arg.PasswordHash, arg.MfaSecret)
+	var i Admin
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.MfaSecret,
+		&i.MfaEnabled,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createAuditLog = `-- name: CreateAuditLog :exec
+INSERT INTO audit_logs (
+    admin_id,
+    action,
+    entity_type,
+    entity_id,
+    changes
+) VALUES (
+    ?, ?, ?, ?, ?
+)
+`
+
+type CreateAuditLogParams struct {
+	AdminID    sql.NullInt64  `json:"admin_id"`
+	Action     string         `json:"action"`
+	EntityType string         `json:"entity_type"`
+	EntityID   int64          `json:"entity_id"`
+	Changes    sql.NullString `json:"changes"`
+}
+
+func (q *Queries) CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) error {
+	_, err := q.db.ExecContext(ctx, createAuditLog,
+		arg.AdminID,
+		arg.Action,
+		arg.EntityType,
+		arg.EntityID,
+		arg.Changes,
+	)
+	return err
+}
+
 const createChurch = `-- name: CreateChurch :one
 INSERT INTO churches (
     name,
@@ -48,11 +111,12 @@ INSERT INTO churches (
     website,
     phone,
     description,
+    status,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
-RETURNING id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code
+RETURNING id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code, status
 `
 
 type CreateChurchParams struct {
@@ -70,6 +134,7 @@ type CreateChurchParams struct {
 	Website       sql.NullString `json:"website"`
 	Phone         sql.NullString `json:"phone"`
 	Description   sql.NullString `json:"description"`
+	Status        string         `json:"status"`
 	UpdatedAt     sql.NullTime   `json:"updated_at"`
 }
 
@@ -89,6 +154,7 @@ func (q *Queries) CreateChurch(ctx context.Context, arg CreateChurchParams) (Chu
 		arg.Website,
 		arg.Phone,
 		arg.Description,
+		arg.Status,
 		arg.UpdatedAt,
 	)
 	var i Church
@@ -109,6 +175,7 @@ func (q *Queries) CreateChurch(ctx context.Context, arg CreateChurchParams) (Chu
 		&i.Description,
 		&i.UpdatedAt,
 		&i.PostalCode,
+		&i.Status,
 	)
 	return i, err
 }
@@ -198,11 +265,12 @@ INSERT INTO saints (
     feast_day,
     description,
     lives_url,
+    status,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?
 )
-RETURNING id, name, slug, feast_day, description, lives_url, updated_at
+RETURNING id, name, slug, feast_day, description, lives_url, updated_at, status
 `
 
 type CreateSaintParams struct {
@@ -211,6 +279,7 @@ type CreateSaintParams struct {
 	FeastDay    sql.NullString `json:"feast_day"`
 	Description sql.NullString `json:"description"`
 	LivesUrl    sql.NullString `json:"lives_url"`
+	Status      string         `json:"status"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }
 
@@ -221,6 +290,7 @@ func (q *Queries) CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint
 		arg.FeastDay,
 		arg.Description,
 		arg.LivesUrl,
+		arg.Status,
 		arg.UpdatedAt,
 	)
 	var i Saint
@@ -232,6 +302,7 @@ func (q *Queries) CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint
 		&i.Description,
 		&i.LivesUrl,
 		&i.UpdatedAt,
+		&i.Status,
 	)
 	return i, err
 }
@@ -281,8 +352,80 @@ func (q *Queries) DeleteAllSources(ctx context.Context) error {
 	return err
 }
 
+const deleteChurch = `-- name: DeleteChurch :exec
+DELETE FROM churches WHERE id = ?
+`
+
+func (q *Queries) DeleteChurch(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteChurch, id)
+	return err
+}
+
+const deleteRelic = `-- name: DeleteRelic :exec
+DELETE FROM relics WHERE church_id = ? AND saint_id = ?
+`
+
+type DeleteRelicParams struct {
+	ChurchID int64 `json:"church_id"`
+	SaintID  int64 `json:"saint_id"`
+}
+
+func (q *Queries) DeleteRelic(ctx context.Context, arg DeleteRelicParams) error {
+	_, err := q.db.ExecContext(ctx, deleteRelic, arg.ChurchID, arg.SaintID)
+	return err
+}
+
+const deleteSaint = `-- name: DeleteSaint :exec
+DELETE FROM saints WHERE id = ?
+`
+
+func (q *Queries) DeleteSaint(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteSaint, id)
+	return err
+}
+
+const getAdmin = `-- name: GetAdmin :one
+SELECT id, username, password_hash, mfa_secret, mfa_enabled, last_login_at, created_at FROM admins
+WHERE id = ?
+`
+
+func (q *Queries) GetAdmin(ctx context.Context, id int64) (Admin, error) {
+	row := q.db.QueryRowContext(ctx, getAdmin, id)
+	var i Admin
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.MfaSecret,
+		&i.MfaEnabled,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getAdminByUsername = `-- name: GetAdminByUsername :one
+SELECT id, username, password_hash, mfa_secret, mfa_enabled, last_login_at, created_at FROM admins
+WHERE username = ?
+`
+
+func (q *Queries) GetAdminByUsername(ctx context.Context, username string) (Admin, error) {
+	row := q.db.QueryRowContext(ctx, getAdminByUsername, username)
+	var i Admin
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.MfaSecret,
+		&i.MfaEnabled,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getChurch = `-- name: GetChurch :one
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code, status FROM churches
 WHERE id = ?
 `
 
@@ -306,12 +449,13 @@ func (q *Queries) GetChurch(ctx context.Context, id int64) (Church, error) {
 		&i.Description,
 		&i.UpdatedAt,
 		&i.PostalCode,
+		&i.Status,
 	)
 	return i, err
 }
 
 const getChurchBySlug = `-- name: GetChurchBySlug :one
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code, status FROM churches
 WHERE slug = ?
 `
 
@@ -335,12 +479,13 @@ func (q *Queries) GetChurchBySlug(ctx context.Context, slug string) (Church, err
 		&i.Description,
 		&i.UpdatedAt,
 		&i.PostalCode,
+		&i.Status,
 	)
 	return i, err
 }
 
 const getSaintBySlug = `-- name: GetSaintBySlug :one
-SELECT id, name, slug, feast_day, description, lives_url, updated_at FROM saints
+SELECT id, name, slug, feast_day, description, lives_url, updated_at, status FROM saints
 WHERE slug = ?
 `
 
@@ -355,12 +500,114 @@ func (q *Queries) GetSaintBySlug(ctx context.Context, slug string) (Saint, error
 		&i.Description,
 		&i.LivesUrl,
 		&i.UpdatedAt,
+		&i.Status,
 	)
 	return i, err
 }
 
+const listAllRelics = `-- name: ListAllRelics :many
+SELECT r.church_id, r.saint_id, r.description, s.name as saint_name, c.name as church_name
+FROM relics r
+JOIN saints s ON r.saint_id = s.id
+JOIN churches c ON r.church_id = c.id
+ORDER BY c.name, s.name
+`
+
+type ListAllRelicsRow struct {
+	ChurchID    int64          `json:"church_id"`
+	SaintID     int64          `json:"saint_id"`
+	Description sql.NullString `json:"description"`
+	SaintName   string         `json:"saint_name"`
+	ChurchName  string         `json:"church_name"`
+}
+
+func (q *Queries) ListAllRelics(ctx context.Context) ([]ListAllRelicsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAllRelics)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAllRelicsRow
+	for rows.Next() {
+		var i ListAllRelicsRow
+		if err := rows.Scan(
+			&i.ChurchID,
+			&i.SaintID,
+			&i.Description,
+			&i.SaintName,
+			&i.ChurchName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAuditLogs = `-- name: ListAuditLogs :many
+SELECT al.id, al.admin_id, al."action", al.entity_type, al.entity_id, al.changes, al.created_at, a.username as admin_username
+FROM audit_logs al
+LEFT JOIN admins a ON al.admin_id = a.id
+ORDER BY al.created_at DESC
+LIMIT ? OFFSET ?
+`
+
+type ListAuditLogsParams struct {
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+}
+
+type ListAuditLogsRow struct {
+	ID            int64          `json:"id"`
+	AdminID       sql.NullInt64  `json:"admin_id"`
+	Action        string         `json:"action"`
+	EntityType    string         `json:"entity_type"`
+	EntityID      int64          `json:"entity_id"`
+	Changes       sql.NullString `json:"changes"`
+	CreatedAt     sql.NullTime   `json:"created_at"`
+	AdminUsername sql.NullString `json:"admin_username"`
+}
+
+func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]ListAuditLogsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAuditLogs, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAuditLogsRow
+	for rows.Next() {
+		var i ListAuditLogsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdminID,
+			&i.Action,
+			&i.EntityType,
+			&i.EntityID,
+			&i.Changes,
+			&i.CreatedAt,
+			&i.AdminUsername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listChurches = `-- name: ListChurches :many
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code, status FROM churches
 ORDER BY name
 `
 
@@ -390,6 +637,7 @@ func (q *Queries) ListChurches(ctx context.Context) ([]Church, error) {
 			&i.Description,
 			&i.UpdatedAt,
 			&i.PostalCode,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -405,10 +653,10 @@ func (q *Queries) ListChurches(ctx context.Context) ([]Church, error) {
 }
 
 const listChurchesBySaintSlug = `-- name: ListChurchesBySaintSlug :many
-SELECT c.id, c.name, c.slug, c.type, c.address_text, c.city, c.state_province, c.country_code, c.latitude, c.longitude, c.jurisdiction, c.website, c.phone, c.description, c.updated_at, c.postal_code FROM churches c
+SELECT c.id, c.name, c.slug, c.type, c.address_text, c.city, c.state_province, c.country_code, c.latitude, c.longitude, c.jurisdiction, c.website, c.phone, c.description, c.updated_at, c.postal_code, c.status FROM churches c
 JOIN relics r ON c.id = r.church_id
 JOIN saints s ON r.saint_id = s.id
-WHERE s.slug = ?
+WHERE s.slug = ? AND c.status = 'published'
 ORDER BY c.name
 `
 
@@ -438,6 +686,54 @@ func (q *Queries) ListChurchesBySaintSlug(ctx context.Context, slug string) ([]C
 			&i.Description,
 			&i.UpdatedAt,
 			&i.PostalCode,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listChurchesByStatus = `-- name: ListChurchesByStatus :many
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code, status FROM churches
+WHERE status = ?
+ORDER BY name
+`
+
+func (q *Queries) ListChurchesByStatus(ctx context.Context, status string) ([]Church, error) {
+	rows, err := q.db.QueryContext(ctx, listChurchesByStatus, status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Church
+	for rows.Next() {
+		var i Church
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Type,
+			&i.AddressText,
+			&i.City,
+			&i.StateProvince,
+			&i.CountryCode,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Jurisdiction,
+			&i.Website,
+			&i.Phone,
+			&i.Description,
+			&i.UpdatedAt,
+			&i.PostalCode,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -453,9 +749,10 @@ func (q *Queries) ListChurchesBySaintSlug(ctx context.Context, slug string) ([]C
 }
 
 const listChurchesInBounds = `-- name: ListChurchesInBounds :many
-SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code FROM churches
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code, status FROM churches
 WHERE latitude >= ? AND latitude <= ?
   AND longitude >= ? AND longitude <= ?
+  AND status = 'published'
 ORDER BY name
 `
 
@@ -497,6 +794,7 @@ func (q *Queries) ListChurchesInBounds(ctx context.Context, arg ListChurchesInBo
 			&i.Description,
 			&i.UpdatedAt,
 			&i.PostalCode,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -637,7 +935,7 @@ func (q *Queries) ListImagesForSaint(ctx context.Context, saintID sql.NullInt64)
 }
 
 const listRelicsForChurch = `-- name: ListRelicsForChurch :many
-SELECT s.id, s.name, s.slug, s.feast_day, s.description, s.lives_url, s.updated_at, r.description as relic_description
+SELECT s.id, s.name, s.slug, s.feast_day, s.description, s.lives_url, s.updated_at, s.status, r.description as relic_description
 FROM saints s
 JOIN relics r ON s.id = r.saint_id
 WHERE r.church_id = ?
@@ -651,6 +949,7 @@ type ListRelicsForChurchRow struct {
 	Description      sql.NullString `json:"description"`
 	LivesUrl         sql.NullString `json:"lives_url"`
 	UpdatedAt        sql.NullTime   `json:"updated_at"`
+	Status           string         `json:"status"`
 	RelicDescription sql.NullString `json:"relic_description"`
 }
 
@@ -671,6 +970,7 @@ func (q *Queries) ListRelicsForChurch(ctx context.Context, churchID int64) ([]Li
 			&i.Description,
 			&i.LivesUrl,
 			&i.UpdatedAt,
+			&i.Status,
 			&i.RelicDescription,
 		); err != nil {
 			return nil, err
@@ -687,7 +987,7 @@ func (q *Queries) ListRelicsForChurch(ctx context.Context, churchID int64) ([]Li
 }
 
 const listSaints = `-- name: ListSaints :many
-SELECT id, name, slug, feast_day, description, lives_url, updated_at FROM saints
+SELECT id, name, slug, feast_day, description, lives_url, updated_at, status FROM saints
 ORDER BY name
 `
 
@@ -708,6 +1008,45 @@ func (q *Queries) ListSaints(ctx context.Context) ([]Saint, error) {
 			&i.Description,
 			&i.LivesUrl,
 			&i.UpdatedAt,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSaintsByStatus = `-- name: ListSaintsByStatus :many
+SELECT id, name, slug, feast_day, description, lives_url, updated_at, status FROM saints
+WHERE status = ?
+ORDER BY name
+`
+
+func (q *Queries) ListSaintsByStatus(ctx context.Context, status string) ([]Saint, error) {
+	rows, err := q.db.QueryContext(ctx, listSaintsByStatus, status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Saint
+	for rows.Next() {
+		var i Saint
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.FeastDay,
+			&i.Description,
+			&i.LivesUrl,
+			&i.UpdatedAt,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -750,7 +1089,7 @@ func (q *Queries) ListSourcesForChurch(ctx context.Context, churchID int64) ([]s
 }
 
 const searchSaints = `-- name: SearchSaints :many
-SELECT id, name, slug, feast_day, description, lives_url, updated_at FROM saints
+SELECT id, name, slug, feast_day, description, lives_url, updated_at, status FROM saints
 WHERE name LIKE ?
 ORDER BY name
 LIMIT 10
@@ -773,6 +1112,7 @@ func (q *Queries) SearchSaints(ctx context.Context, name string) ([]Saint, error
 			&i.Description,
 			&i.LivesUrl,
 			&i.UpdatedAt,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -785,4 +1125,162 @@ func (q *Queries) SearchSaints(ctx context.Context, name string) ([]Saint, error
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateAdminLastLogin = `-- name: UpdateAdminLastLogin :exec
+UPDATE admins
+SET last_login_at = CURRENT_TIMESTAMP
+WHERE id = ?
+`
+
+func (q *Queries) UpdateAdminLastLogin(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, updateAdminLastLogin, id)
+	return err
+}
+
+const updateAdminMFA = `-- name: UpdateAdminMFA :exec
+UPDATE admins
+SET mfa_secret = ?, mfa_enabled = ?
+WHERE id = ?
+`
+
+type UpdateAdminMFAParams struct {
+	MfaSecret  sql.NullString `json:"mfa_secret"`
+	MfaEnabled sql.NullBool   `json:"mfa_enabled"`
+	ID         int64          `json:"id"`
+}
+
+func (q *Queries) UpdateAdminMFA(ctx context.Context, arg UpdateAdminMFAParams) error {
+	_, err := q.db.ExecContext(ctx, updateAdminMFA, arg.MfaSecret, arg.MfaEnabled, arg.ID)
+	return err
+}
+
+const updateChurch = `-- name: UpdateChurch :one
+UPDATE churches
+SET name = ?,
+    slug = ?,
+    type = ?,
+    address_text = ?,
+    city = ?,
+    state_province = ?,
+    postal_code = ?,
+    country_code = ?,
+    latitude = ?,
+    longitude = ?,
+    jurisdiction = ?,
+    website = ?,
+    phone = ?,
+    description = ?,
+    status = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code, status
+`
+
+type UpdateChurchParams struct {
+	Name          string         `json:"name"`
+	Slug          string         `json:"slug"`
+	Type          sql.NullString `json:"type"`
+	AddressText   string         `json:"address_text"`
+	City          string         `json:"city"`
+	StateProvince string         `json:"state_province"`
+	PostalCode    sql.NullString `json:"postal_code"`
+	CountryCode   string         `json:"country_code"`
+	Latitude      float64        `json:"latitude"`
+	Longitude     float64        `json:"longitude"`
+	Jurisdiction  sql.NullString `json:"jurisdiction"`
+	Website       sql.NullString `json:"website"`
+	Phone         sql.NullString `json:"phone"`
+	Description   sql.NullString `json:"description"`
+	Status        string         `json:"status"`
+	ID            int64          `json:"id"`
+}
+
+func (q *Queries) UpdateChurch(ctx context.Context, arg UpdateChurchParams) (Church, error) {
+	row := q.db.QueryRowContext(ctx, updateChurch,
+		arg.Name,
+		arg.Slug,
+		arg.Type,
+		arg.AddressText,
+		arg.City,
+		arg.StateProvince,
+		arg.PostalCode,
+		arg.CountryCode,
+		arg.Latitude,
+		arg.Longitude,
+		arg.Jurisdiction,
+		arg.Website,
+		arg.Phone,
+		arg.Description,
+		arg.Status,
+		arg.ID,
+	)
+	var i Church
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Type,
+		&i.AddressText,
+		&i.City,
+		&i.StateProvince,
+		&i.CountryCode,
+		&i.Latitude,
+		&i.Longitude,
+		&i.Jurisdiction,
+		&i.Website,
+		&i.Phone,
+		&i.Description,
+		&i.UpdatedAt,
+		&i.PostalCode,
+		&i.Status,
+	)
+	return i, err
+}
+
+const updateSaint = `-- name: UpdateSaint :one
+UPDATE saints
+SET name = ?,
+    slug = ?,
+    feast_day = ?,
+    description = ?,
+    lives_url = ?,
+    status = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING id, name, slug, feast_day, description, lives_url, updated_at, status
+`
+
+type UpdateSaintParams struct {
+	Name        string         `json:"name"`
+	Slug        string         `json:"slug"`
+	FeastDay    sql.NullString `json:"feast_day"`
+	Description sql.NullString `json:"description"`
+	LivesUrl    sql.NullString `json:"lives_url"`
+	Status      string         `json:"status"`
+	ID          int64          `json:"id"`
+}
+
+func (q *Queries) UpdateSaint(ctx context.Context, arg UpdateSaintParams) (Saint, error) {
+	row := q.db.QueryRowContext(ctx, updateSaint,
+		arg.Name,
+		arg.Slug,
+		arg.FeastDay,
+		arg.Description,
+		arg.LivesUrl,
+		arg.Status,
+		arg.ID,
+	)
+	var i Saint
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.FeastDay,
+		&i.Description,
+		&i.LivesUrl,
+		&i.UpdatedAt,
+		&i.Status,
+	)
+	return i, err
 }

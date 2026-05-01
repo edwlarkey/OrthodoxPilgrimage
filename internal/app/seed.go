@@ -132,6 +132,7 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 				String: s.LivesURL,
 				Valid:  s.LivesURL != "",
 			},
+			Status:    "published",
 			UpdatedAt: updatedAt,
 		})
 		if err != nil {
@@ -183,6 +184,7 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 			Website:       sql.NullString{String: c.Website, Valid: c.Website != ""},
 			Phone:         sql.NullString{String: c.Phone, Valid: c.Phone != ""},
 			Description:   sql.NullString{String: c.Description, Valid: c.Description != ""},
+			Status:        "published",
 			UpdatedAt:     updatedAt,
 		})
 		if err != nil {

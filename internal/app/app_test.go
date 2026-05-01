@@ -9,7 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/db"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/db/sessionstore"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 	"github.com/stretchr/testify/assert"
@@ -75,13 +77,18 @@ func seedTestDB(t *testing.T) (*Application, *sql.DB) {
 	tmplMgr, err := ui.NewTemplateManager()
 	require.NoError(t, err)
 
+	sessionManager := scs.New()
+	sessionManager.Store = sessionstore.New(dbConn)
+
 	queries := sqlcdb.New(dbConn)
 	err = SeedFromReader(context.Background(), queries, strings.NewReader(testSeedData))
 	require.NoError(t, err)
 
 	appInstance := &Application{
-		DB:        queries,
-		Templates: tmplMgr,
+		DB:             queries,
+		DBConn:         dbConn,
+		Templates:      tmplMgr,
+		SessionManager: sessionManager,
 	}
 	return appInstance, dbConn
 }

@@ -8,14 +8,17 @@ import (
 	"os"
 	"time"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/app"
 	internaldb "github.com/edwlarkey/orthodoxpilgrimage/internal/db"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/db/sessionstore"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 )
 
 func main() {
 	logFormat := flag.String("log-format", "text", "log format: text or json")
+	devMode := flag.Bool("dev", false, "enable development mode (bypasses MFA, etc)")
 	flag.Parse()
 
 	var handler slog.Handler
@@ -48,6 +51,14 @@ func main() {
 
 	queries := sqlcdb.New(dbConn)
 
+	// Initialize session manager
+	sessionManager := scs.New()
+	sessionManager.Store = sessionstore.New(dbConn)
+	sessionManager.Lifetime = 24 * time.Hour
+	sessionManager.Cookie.Persist = true
+	sessionManager.Cookie.SameSite = http.SameSiteLaxMode
+	sessionManager.Cookie.Secure = !*devMode // Only secure in non-dev (production)
+
 	// Seed database on every startup from data.json (source of truth)
 	slog.Info("Syncing database with data/data.json...")
 	if err := app.SeedDatabase(context.Background(), queries); err != nil {
@@ -70,8 +81,11 @@ func main() {
 	}
 
 	application := &app.Application{
-		DB:        queries,
-		Templates: tmplMgr,
+		DB:             queries,
+		DBConn:         dbConn,
+		Templates:      tmplMgr,
+		SessionManager: sessionManager,
+		DevMode:        *devMode,
 	}
 
 	srv := &http.Server{

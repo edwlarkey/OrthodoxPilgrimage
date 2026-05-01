@@ -1,0 +1,11 @@
+{{define "admin-topbar"}}
+<header class="admin-topbar">
+    <div>
+        <span style="color: #95a5a6; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">{{if .Title}}{{.Title}}{{else}}Management{{end}}</span>
+    </div>
+    <div class="user-info">
+        <span style="font-weight: 600; color: #7f8c8d;">Admin: {{.Username}}</span>
+        <a href="/admin/logout" class="logout-btn">Logout</a>
+    </div>
+</header>
+{{end}}

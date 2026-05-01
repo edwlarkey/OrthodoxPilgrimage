@@ -8,6 +8,26 @@ import (
 	"database/sql"
 )
 
+type Admin struct {
+	ID           int64          `json:"id"`
+	Username     string         `json:"username"`
+	PasswordHash string         `json:"password_hash"`
+	MfaSecret    sql.NullString `json:"mfa_secret"`
+	MfaEnabled   sql.NullBool   `json:"mfa_enabled"`
+	LastLoginAt  sql.NullTime   `json:"last_login_at"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+}
+
+type AuditLog struct {
+	ID         int64          `json:"id"`
+	AdminID    sql.NullInt64  `json:"admin_id"`
+	Action     string         `json:"action"`
+	EntityType string         `json:"entity_type"`
+	EntityID   int64          `json:"entity_id"`
+	Changes    sql.NullString `json:"changes"`
+	CreatedAt  sql.NullTime   `json:"created_at"`
+}
+
 type Church struct {
 	ID            int64          `json:"id"`
 	Name          string         `json:"name"`
@@ -25,6 +45,7 @@ type Church struct {
 	Description   sql.NullString `json:"description"`
 	UpdatedAt     sql.NullTime   `json:"updated_at"`
 	PostalCode    sql.NullString `json:"postal_code"`
+	Status        string         `json:"status"`
 }
 
 type ChurchSource struct {
@@ -60,4 +81,11 @@ type Saint struct {
 	Description sql.NullString `json:"description"`
 	LivesUrl    sql.NullString `json:"lives_url"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
+	Status      string         `json:"status"`
+}
+
+type Session struct {
+	Token  string  `json:"token"`
+	Data   []byte  `json:"data"`
+	Expiry float64 `json:"expiry"`
 }
