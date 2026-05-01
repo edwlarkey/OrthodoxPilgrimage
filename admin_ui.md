@@ -12,7 +12,8 @@ Access to the admin interface requires two-step verification. Social authenticat
     - **Enhanced:** WebAuthn support for hardware security keys (YubiKeys) and biometric Passkeys.
 - **Session Management:** Secure, HTTP-only, SameSite=Lax cookies with short TTLs and rolling renewal.
 
-### 1.2 Database Schema (New)
+### 1.2 Admin Schema
+A new `admins` table will track credentials and MFA status:
 ```sql
 CREATE TABLE admins (
     id BIGSERIAL PRIMARY KEY,
@@ -21,16 +22,6 @@ CREATE TABLE admins (
     mfa_secret TEXT,
     mfa_enabled BOOLEAN DEFAULT FALSE,
     last_login_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE audit_logs (
-    id BIGSERIAL PRIMARY KEY,
-    admin_id BIGINT REFERENCES admins(id),
-    action TEXT NOT NULL, -- CREATE, UPDATE, DELETE, PUBLISH
-    entity_type TEXT NOT NULL, -- church, saint, relic, image
-    entity_id BIGINT NOT NULL,
-    changes JSONB, -- Previous vs New state
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -51,6 +42,9 @@ The entire admin UI will utilize **HTMX** for high-performance partial updates, 
 - **Slug Management:** 
     - Auto-generated from names.
     - Real-time collision detection (e.g., if `st-nicholas` exists, suggest `st-nicholas-chicago`).
+
+### 2.3 Activity Logging
+Administrative actions (Create, Update, Delete) are logged using Go's `slog` library. This ensures a transparent record of changes in the application logs without the complexity of a database table.
 
 ---
 
@@ -87,7 +81,6 @@ High test coverage is a mandatory requirement for the admin interface.
 ### 5.1 Unit Tests
 - Password hashing and MFA token validation logic.
 - Slug generation and collision logic.
-- Audit log generation.
 
 ### 5.2 Integration Tests
 - Full CRUD cycles for Churches, Saints, and Relics.
@@ -114,7 +107,7 @@ High test coverage is a mandatory requirement for the admin interface.
 ## 7. Implementation Roadmap (TODOs)
 
 ### Phase 1: Authentication & Security Foundation
-- [x] Create migration for \`admins\` and \`audit_logs\` tables.
+- [x] Create migration for \`admins\` table.
 - [x] Implement \`Admin\` repository and database queries.
 - [x] Create the login page and session handling logic (secure cookies).
 - [x] Implement TOTP generation and verification logic.
@@ -126,7 +119,7 @@ High test coverage is a mandatory requirement for the admin interface.
 - [x] Design the base Admin layout (Sidebar, Main Content Area, Toasts).
 - [x] Create a "Dashboard" home page with basic stats (count of churches, saints, etc.).
 - [x] Set up the HTMX modal/dialog system for quick actions.
-- [x] Implement Audit Logging helper functions.
+- [x] Implement Activity Logging via \`slog\`.
 
 ### Phase 3: Entity Management (CRUD)
 - [x] **Saints Management:** List, Create, Edit, Delete (HTMX-powered).
@@ -147,7 +140,7 @@ High test coverage is a mandatory requirement for the admin interface.
 ### Phase 5: Image Pipeline & Tigris Integration
 - [ ] Set up Tigris S3 client and configuration.
 - [ ] Implement the multi-file upload handler.
-- [ ] Integrate ImageMagick (`magick`) for WebP conversion and optimization.
+- [ ] Integrate ImageMagick (\`magick\`) for WebP conversion and optimization.
 - [ ] Implement the image management gallery (set primary, delete, edit alt text).
 - [ ] **Tests:** Pipeline integration tests verifying WebP output and Tigris storage.
 
