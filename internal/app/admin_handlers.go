@@ -701,7 +701,11 @@ func (a *Application) adminRelicEditHandler(w http.ResponseWriter, r *http.Reque
 
 		a.logAudit(r.Context(), "CREATE", "relic", churchID, map[string]int64{"church_id": churchID, "saint_id": saintID})
 
-		w.Header().Set("HX-Location", "/admin/relics")
+		redirectUrl := r.Header.Get("HX-Current-URL")
+		if redirectUrl == "" {
+			redirectUrl = "/admin/relics"
+		}
+		w.Header().Set("HX-Location", redirectUrl)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
