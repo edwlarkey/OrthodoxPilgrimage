@@ -126,27 +126,29 @@
         {{$churchSlug := .Church.Slug}}
         {{range .Relics}}
             <div class="relic-item">
-                <a href="/{{.Relic.Slug}}?from={{$churchSlug}}" 
-                   hx-get="/{{.Relic.Slug}}?from={{$churchSlug}}"
-                   hx-target="#church-details"
-                   hx-push-url="true"
-                   class="relic-pill">
-                    <span class="saint-name">{{.Relic.Name}}</span>
-                    {{if .Relic.RelicDescription.Valid}}
-                        <span class="relic-type">{{.Relic.RelicDescription.String}}</span>
-                    {{end}}
-                </a>
-                {{if .Images}}
-                <div class="relic-images">
-                    {{range .Images}}
-                    <div class="relic-image-container">
-                        <a href="#img-{{.ID}}">
-                            <img src="{{.Url}}" loading="lazy" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic of {{.Relic.Name}}{{end}}" title="{{if .AltText.Valid}}{{.AltText.String}}{{end}}">
-                        </a>
+                <div class="relic-pill">
+                    <div class="relic-details">
+                        <a href="/{{.Relic.Slug}}?from={{$churchSlug}}" 
+                           hx-get="/{{.Relic.Slug}}?from={{$churchSlug}}"
+                           hx-target="#church-details"
+                           hx-push-url="true"
+                           class="saint-name">{{.Relic.Name}}</a>
+                        {{if .Relic.RelicDescription.Valid}}
+                            <span class="relic-type">{{.Relic.RelicDescription.String}}</span>
+                        {{end}}
+                    </div>
+                    {{if .Images}}
+                    <div class="relic-images">
+                        {{range .Images}}
+                        <div class="relic-image-container">
+                            <a href="#img-{{.ID}}">
+                                <img src="{{.Url}}" loading="lazy" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic of {{.Relic.Name}}{{end}}" title="{{if .AltText.Valid}}{{.AltText.String}}{{end}}">
+                            </a>
+                        </div>
+                        {{end}}
                     </div>
                     {{end}}
                 </div>
-                {{end}}
             </div>
         {{end}}
         </div>
