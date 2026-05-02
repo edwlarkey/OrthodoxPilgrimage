@@ -103,6 +103,65 @@
                     </form>
                 </div>
             </div>
+
+            {{if not .IsNew}}
+            <div class="card max-w-900 p-0 mt-40">
+                <div style="padding: 40px;">
+                    <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Relics at this Location</h2>
+                    
+                    <table class="data-table mb-40">
+                        <thead>
+                            <tr>
+                                <th>Saint</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .Relics}}
+                            <tr id="relic-{{$.Church.ID}}-{{.ID}}">
+                                <td class="text-bold">{{.Name}}</td>
+                                <td>{{if .RelicDescription.Valid}}{{.RelicDescription.String}}{{else}}-{{end}}</td>
+                                <td>
+                                    <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;"
+                                            hx-delete="/admin/relics/delete?church_id={{$.Church.ID}}&saint_id={{.ID}}" 
+                                            hx-confirm="Remove this relic from the church?"
+                                            hx-target="#relic-{{$.Church.ID}}-{{.ID}}"
+                                            hx-swap="outerHTML">Remove</button>
+                                </td>
+                            </tr>
+                            {{else}}
+                            <tr><td colspan="3" class="text-center text-muted">No relics recorded here.</td></tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+
+                    <h3 class="mb-0 mt-0 text-bold" style="font-size: 1.2rem; margin-bottom: 20px;">Add a Relic</h3>
+                    <form hx-post="/admin/relics/new" hx-push-url="false" style="background: #f8f9fa; padding: 25px; border-radius: 12px; border: 1px solid var(--border);">
+                        <input type="hidden" name="church_id" value="{{.Church.ID}}">
+                        
+                        <div class="form-row">
+                            <div class="form-group mb-0">
+                                <label for="saint_id">Saint</label>
+                                <select id="saint_id" name="saint_id" required>
+                                    <option value="">Select a saint...</option>
+                                    {{range .Saints}}
+                                    <option value="{{.ID}}">{{.Name}}</option>
+                                    {{end}}
+                                </select>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label for="relic_description">Description (optional)</label>
+                                <input type="text" id="relic_description" name="description" placeholder="e.g. Right hand, fragment">
+                            </div>
+                        </div>
+                        <div class="mt-20">
+                            <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Add Relic</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {{end}}
         </div>
     </main>
 </body>
