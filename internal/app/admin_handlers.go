@@ -495,10 +495,20 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	if r.Method == http.MethodGet {
+		var relics []sqlcdb.ListRelicsForChurchRow
+		var saints []sqlcdb.Saint
+
+		if !isNew {
+			relics, _ = a.DB.ListRelicsForChurch(r.Context(), church.ID)
+			saints, _ = a.DB.ListSaints(r.Context())
+		}
+
 		data := map[string]any{
 			"Username":  a.SessionManager.GetString(r.Context(), "username"),
 			"Church":    church,
 			"IsNew":     isNew,
+			"Relics":    relics,
+			"Saints":    saints,
 			"ActiveNav": "churches",
 			"Title":     "Edit Church",
 		}
