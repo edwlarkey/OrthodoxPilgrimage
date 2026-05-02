@@ -29,7 +29,7 @@ func (a *Application) SeedDatabase(ctx context.Context) error {
 
 func (a *Application) Routes() http.Handler {
 	mux := http.NewServeMux()
-	
+
 	// Public routes
 	mux.HandleFunc("/", a.homeHandler)
 	mux.HandleFunc("/churches/", a.churchDetailHandler)
@@ -42,7 +42,7 @@ func (a *Application) Routes() http.Handler {
 	mux.HandleFunc("/admin/setup", a.adminSetupHandler)
 	mux.HandleFunc("/admin/logout", a.adminLogoutHandler)
 	mux.HandleFunc("/admin/mfa", a.adminMfaHandler)
-	
+
 	// Protected admin routes
 	adminMux := http.NewServeMux()
 	adminMux.HandleFunc("/admin/dashboard", a.adminDashboardHandler)
@@ -50,17 +50,16 @@ func (a *Application) Routes() http.Handler {
 	adminMux.HandleFunc("/admin/saints/new", a.adminSaintEditHandler)
 	adminMux.HandleFunc("/admin/saints/edit/", a.adminSaintEditHandler)
 	adminMux.HandleFunc("/admin/saints/delete/", a.adminSaintDeleteHandler)
-	
+
 	adminMux.HandleFunc("/admin/churches", a.adminChurchesListHandler)
 	adminMux.HandleFunc("/admin/churches/new", a.adminChurchEditHandler)
 	adminMux.HandleFunc("/admin/churches/edit/", a.adminChurchEditHandler)
 	adminMux.HandleFunc("/admin/churches/delete/", a.adminChurchDeleteHandler)
-	
+
 	adminMux.HandleFunc("/admin/relics", a.adminRelicsListHandler)
 	adminMux.HandleFunc("/admin/relics/new", a.adminRelicEditHandler)
 	adminMux.HandleFunc("/admin/relics/delete", a.adminRelicDeleteHandler)
-	adminMux.HandleFunc("/admin/audit-logs", a.adminAuditLogsHandler)
-	
+
 	mux.Handle("/admin/", a.AdminAuthMiddleware(adminMux))
 
 	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
@@ -133,8 +132,8 @@ func (a *Application) AdminAuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
-		})
-		}
+	})
+}
 
 type churchJSON struct {
 	ID          int64          `json:"id"`

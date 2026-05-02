@@ -18,16 +18,6 @@ type Admin struct {
 	CreatedAt    sql.NullTime   `json:"created_at"`
 }
 
-type AuditLog struct {
-	ID         int64          `json:"id"`
-	AdminID    sql.NullInt64  `json:"admin_id"`
-	Action     string         `json:"action"`
-	EntityType string         `json:"entity_type"`
-	EntityID   int64          `json:"entity_id"`
-	Changes    sql.NullString `json:"changes"`
-	CreatedAt  sql.NullTime   `json:"created_at"`
-}
-
 type Church struct {
 	ID            int64          `json:"id"`
 	Name          string         `json:"name"`

@@ -30,20 +30,37 @@ func (a *Application) adminLoginHandler(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		ts, _ := a.Templates.Get("admin-login")
-		ts.ExecuteTemplate(w, "admin-login", nil)
+		ts, err := a.Templates.Get("admin-login")
+		if err != nil {
+			slog.Error("Template not found", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		err = ts.ExecuteTemplate(w, "admin-login", nil)
+		if err != nil {
+			slog.Error("Error rendering template", "error", err)
+		}
 		return
 	}
 
 	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 4096)
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
 		admin, err := a.DB.GetAdminByUsername(r.Context(), username)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				ts, _ := a.Templates.Get("admin-login")
-				ts.ExecuteTemplate(w, "admin-login", map[string]string{"Error": "Invalid username or password"})
+				ts, err := a.Templates.Get("admin-login")
+				if err != nil {
+					slog.Error("Template not found", "error", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return
+				}
+				err = ts.ExecuteTemplate(w, "admin-login", map[string]string{"Error": "Invalid username or password"})
+				if err != nil {
+					slog.Error("Error rendering template", "error", err)
+				}
 				return
 			}
 			slog.Error("Database error during login", "error", err)
@@ -53,8 +70,16 @@ func (a *Application) adminLoginHandler(w http.ResponseWriter, r *http.Request) 
 
 		err = bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte(password))
 		if err != nil {
-			ts, _ := a.Templates.Get("admin-login")
-			ts.ExecuteTemplate(w, "admin-login", map[string]string{"Error": "Invalid username or password"})
+			ts, err := a.Templates.Get("admin-login")
+			if err != nil {
+				slog.Error("Template not found", "error", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			err = ts.ExecuteTemplate(w, "admin-login", map[string]string{"Error": "Invalid username or password"})
+			if err != nil {
+				slog.Error("Error rendering template", "error", err)
+			}
 			return
 		}
 
@@ -80,12 +105,21 @@ func (a *Application) adminMfaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet {
-		ts, _ := a.Templates.Get("admin-mfa")
-		ts.ExecuteTemplate(w, "admin-mfa", nil)
+		ts, err := a.Templates.Get("admin-mfa")
+		if err != nil {
+			slog.Error("Template not found", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		err = ts.ExecuteTemplate(w, "admin-mfa", nil)
+		if err != nil {
+			slog.Error("Error rendering template", "error", err)
+		}
 		return
 	}
 
 	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 4096)
 		code := r.FormValue("code")
 		adminID := a.SessionManager.GetInt64(r.Context(), "admin_id")
 
@@ -102,8 +136,16 @@ func (a *Application) adminMfaHandler(w http.ResponseWriter, r *http.Request) {
 
 		valid := totp.Validate(code, admin.MfaSecret.String)
 		if !valid && !a.DevMode {
-			ts, _ := a.Templates.Get("admin-mfa")
-			ts.ExecuteTemplate(w, "admin-mfa", map[string]string{"Error": "Invalid verification code"})
+			ts, err := a.Templates.Get("admin-mfa")
+			if err != nil {
+				slog.Error("Template not found", "error", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			err = ts.ExecuteTemplate(w, "admin-mfa", map[string]string{"Error": "Invalid verification code"})
+			if err != nil {
+				slog.Error("Error rendering template", "error", err)
+			}
 			return
 		}
 
@@ -116,25 +158,30 @@ func (a *Application) adminMfaHandler(w http.ResponseWriter, r *http.Request) {
 func (a *Application) adminDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	churchCount, _ := a.DB.CountChurches(r.Context())
 	saintCount, _ := a.DB.CountSaints(r.Context())
-	
+
 	data := map[string]any{
 		"Username":    a.SessionManager.GetString(r.Context(), "username"),
 		"ChurchCount": churchCount,
 		"SaintCount":  saintCount,
-		"RelicCount":  0, 
+		"RelicCount":  0,
 		"ActiveNav":   "dashboard",
 		"Title":       "Dashboard",
 	}
 
-	ts, _ := a.Templates.Get("admin-dashboard")
-	err := ts.ExecuteTemplate(w, "admin-dashboard", data)
+	ts, err := a.Templates.Get("admin-dashboard")
+	if err != nil {
+		slog.Error("Template not found", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	err = ts.ExecuteTemplate(w, "admin-dashboard", data)
 	if err != nil {
 		slog.Error("Error rendering admin dashboard", "error", err)
 	}
 }
 
 func (a *Application) adminLogoutHandler(w http.ResponseWriter, r *http.Request) {
-	a.SessionManager.Destroy(r.Context())
+	_ = a.SessionManager.Destroy(r.Context())
 	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 }
 
@@ -152,15 +199,24 @@ func (a *Application) adminSetupHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if r.Method == http.MethodGet {
-		ts, _ := a.Templates.Get("admin-login")
-		ts.ExecuteTemplate(w, "admin-login", map[string]any{
+		ts, err := a.Templates.Get("admin-login")
+		if err != nil {
+			slog.Error("Template not found", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		err = ts.ExecuteTemplate(w, "admin-login", map[string]any{
 			"Setup": true,
 			"Title": "Create First Admin",
 		})
+		if err != nil {
+			slog.Error("Error rendering template", "error", err)
+		}
 		return
 	}
 
 	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 4096)
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
@@ -189,7 +245,7 @@ func (a *Application) adminSetupHandler(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		w.Write([]byte(fmt.Sprintf("Admin created! PLEASE SAVE YOUR MFA SECRET: %s\nThen go to /admin/login", key.Secret())))
+		fmt.Fprintf(w, "Admin created! PLEASE SAVE YOUR MFA SECRET: %s\nThen go to /admin/login", key.Secret())
 	}
 }
 
@@ -200,24 +256,21 @@ func (a *Application) logAudit(ctx context.Context, action, entityType string, e
 		return
 	}
 
-	var changesStr sql.NullString
+	var changesStr string
 	if changes != nil {
 		b, err := json.Marshal(changes)
 		if err == nil {
-			changesStr = sql.NullString{String: string(b), Valid: true}
+			changesStr = string(b)
 		}
 	}
 
-	err := a.DB.CreateAuditLog(ctx, sqlcdb.CreateAuditLogParams{
-		AdminID:    sql.NullInt64{Int64: adminID, Valid: true},
-		Action:     action,
-		EntityType: entityType,
-		EntityID:   entityID,
-		Changes:    changesStr,
-	})
-	if err != nil {
-		slog.Error("Failed to create audit log", "error", err)
-	}
+	slog.Info("Audit Log",
+		"admin_id", adminID,
+		"action", action,
+		"entity_type", entityType,
+		"entity_id", entityID,
+		"changes", changesStr,
+	)
 }
 
 func (a *Application) adminSaintsListHandler(w http.ResponseWriter, r *http.Request) {
@@ -235,7 +288,12 @@ func (a *Application) adminSaintsListHandler(w http.ResponseWriter, r *http.Requ
 		"Title":     "Saints Management",
 	}
 
-	ts, _ := a.Templates.Get("admin-saints-list")
+	ts, err := a.Templates.Get("admin-saints-list")
+	if err != nil {
+		slog.Error("Template not found", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	err = ts.ExecuteTemplate(w, "admin-saints-list", data)
 	if err != nil {
 		slog.Error("Error rendering saints list", "error", err)
@@ -274,12 +332,21 @@ func (a *Application) adminSaintEditHandler(w http.ResponseWriter, r *http.Reque
 			data["Title"] = "New Saint"
 		}
 
-		ts, _ := a.Templates.Get("admin-saints-edit")
+		ts, err := a.Templates.Get("admin-saints-edit")
+		if err != nil {
+			slog.Error("Template not found", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		err = ts.ExecuteTemplate(w, "admin-saints-edit", data)
+		if err != nil {
+			slog.Error("Error rendering saint edit", "error", err)
+		}
 		return
 	}
 
 	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 		name := r.FormValue("name")
 		slug := r.FormValue("slug")
 		feastDay := r.FormValue("feast_day")
@@ -387,7 +454,12 @@ func (a *Application) adminChurchesListHandler(w http.ResponseWriter, r *http.Re
 		"Title":     "Churches Management",
 	}
 
-	ts, _ := a.Templates.Get("admin-churches-list")
+	ts, err := a.Templates.Get("admin-churches-list")
+	if err != nil {
+		slog.Error("Template not found", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	err = ts.ExecuteTemplate(w, "admin-churches-list", data)
 	if err != nil {
 		slog.Error("Error rendering churches list", "error", err)
@@ -426,12 +498,21 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 			data["Title"] = "New Church"
 		}
 
-		ts, _ := a.Templates.Get("admin-churches-edit")
+		ts, err := a.Templates.Get("admin-churches-edit")
+		if err != nil {
+			slog.Error("Template not found", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		err = ts.ExecuteTemplate(w, "admin-churches-edit", data)
+		if err != nil {
+			slog.Error("Error rendering church edit", "error", err)
+		}
 		return
 	}
 
 	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 		name := r.FormValue("name")
 		slug := r.FormValue("slug")
 		addressText := r.FormValue("address_text")
@@ -554,7 +635,12 @@ func (a *Application) adminRelicsListHandler(w http.ResponseWriter, r *http.Requ
 		"Title":     "Relics Management",
 	}
 
-	ts, _ := a.Templates.Get("admin-relics-list")
+	ts, err := a.Templates.Get("admin-relics-list")
+	if err != nil {
+		slog.Error("Template not found", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	err = ts.ExecuteTemplate(w, "admin-relics-list", data)
 	if err != nil {
 		slog.Error("Error rendering relics list", "error", err)
@@ -574,8 +660,13 @@ func (a *Application) adminRelicEditHandler(w http.ResponseWriter, r *http.Reque
 			"Title":     "Add Relic",
 		}
 
-		ts, _ := a.Templates.Get("admin-relics-edit")
-		err := ts.ExecuteTemplate(w, "admin-relics-edit", data)
+		ts, err := a.Templates.Get("admin-relics-edit")
+		if err != nil {
+			slog.Error("Template not found", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		err = ts.ExecuteTemplate(w, "admin-relics-edit", data)
 		if err != nil {
 			slog.Error("Error rendering relic edit", "error", err)
 		}
@@ -583,6 +674,7 @@ func (a *Application) adminRelicEditHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 4096)
 		churchID, _ := strconv.ParseInt(r.FormValue("church_id"), 10, 64)
 		saintID, _ := strconv.ParseInt(r.FormValue("saint_id"), 10, 64)
 		description := r.FormValue("description")
@@ -633,29 +725,4 @@ func (a *Application) adminRelicDeleteHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	http.Redirect(w, r, "/admin/relics", http.StatusSeeOther)
-}
-
-func (a *Application) adminAuditLogsHandler(w http.ResponseWriter, r *http.Request) {
-	logs, err := a.DB.ListAuditLogs(r.Context(), sqlcdb.ListAuditLogsParams{
-		Limit:  100,
-		Offset: 0,
-	})
-	if err != nil {
-		slog.Error("Failed to list audit logs", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	data := map[string]any{
-		"Username":  a.SessionManager.GetString(r.Context(), "username"),
-		"Logs":      logs,
-		"ActiveNav": "audit-logs",
-		"Title":     "Audit Logs",
-	}
-
-	ts, _ := a.Templates.Get("admin-audit-logs")
-	err = ts.ExecuteTemplate(w, "admin-audit-logs", data)
-	if err != nil {
-		slog.Error("Error rendering audit logs", "error", err)
-	}
 }
