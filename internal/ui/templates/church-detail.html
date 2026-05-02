@@ -162,13 +162,13 @@
     <h3>Sources</h3>
     <div class="relic-pills">
     {{range .Sources}}
-        {{if or (hasPrefix . "http://") (hasPrefix . "https://") (hasPrefix . "www.")}}
-        <a href="{{.}}" target="_blank" rel="noopener noreferrer" class="relic-pill">
-            <span class="saint-name">{{.}}</span>
+        {{if or (hasPrefix .Source "http://") (hasPrefix .Source "https://") (hasPrefix .Source "www.")}}
+        <a href="{{.Source}}" target="_blank" rel="noopener noreferrer" class="relic-pill">
+            <span class="saint-name">{{.Source}}</span>
         </a>
         {{else}}
         <span class="relic-pill">
-            <span class="saint-name">{{.}}</span>
+            <span class="saint-name">{{.Source}}</span>
         </span>
         {{end}}
     {{end}}

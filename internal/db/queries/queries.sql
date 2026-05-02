@@ -163,6 +163,9 @@ SELECT * FROM images
 WHERE relic_church_id = ? AND relic_saint_id = ?
 ORDER BY sort_order, id;
 
+-- name: DeleteImage :exec
+DELETE FROM images WHERE id = ?;
+
 -- name: DeleteAllImages :exec
 DELETE FROM images;
 
@@ -197,7 +200,10 @@ DELETE FROM church_sources;
 INSERT INTO church_sources (church_id, source) VALUES (?, ?);
 
 -- name: ListSourcesForChurch :many
-SELECT source FROM church_sources WHERE church_id = ?;
+SELECT * FROM church_sources WHERE church_id = ?;
+
+-- name: DeleteChurchSource :exec
+DELETE FROM church_sources WHERE id = ?;
 
 -- name: GetAdminByUsername :one
 SELECT * FROM admins

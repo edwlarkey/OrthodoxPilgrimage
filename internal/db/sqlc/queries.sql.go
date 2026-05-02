@@ -341,6 +341,24 @@ func (q *Queries) DeleteChurch(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteChurchSource = `-- name: DeleteChurchSource :exec
+DELETE FROM church_sources WHERE id = ?
+`
+
+func (q *Queries) DeleteChurchSource(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteChurchSource, id)
+	return err
+}
+
+const deleteImage = `-- name: DeleteImage :exec
+DELETE FROM images WHERE id = ?
+`
+
+func (q *Queries) DeleteImage(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteImage, id)
+	return err
+}
+
 const deleteRelic = `-- name: DeleteRelic :exec
 DELETE FROM relics WHERE church_id = ? AND saint_id = ?
 `
@@ -1117,22 +1135,22 @@ func (q *Queries) ListSaintsByStatus(ctx context.Context, status string) ([]Sain
 }
 
 const listSourcesForChurch = `-- name: ListSourcesForChurch :many
-SELECT source FROM church_sources WHERE church_id = ?
+SELECT id, church_id, source FROM church_sources WHERE church_id = ?
 `
 
-func (q *Queries) ListSourcesForChurch(ctx context.Context, churchID int64) ([]string, error) {
+func (q *Queries) ListSourcesForChurch(ctx context.Context, churchID int64) ([]ChurchSource, error) {
 	rows, err := q.db.QueryContext(ctx, listSourcesForChurch, churchID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	var items []ChurchSource
 	for rows.Next() {
-		var source string
-		if err := rows.Scan(&source); err != nil {
+		var i ChurchSource
+		if err := rows.Scan(&i.ID, &i.ChurchID, &i.Source); err != nil {
 			return nil, err
 		}
-		items = append(items, source)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
