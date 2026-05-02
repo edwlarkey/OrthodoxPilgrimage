@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
@@ -103,6 +104,61 @@ func TestAdminAuthFlow(t *testing.T) {
 
 	assert.Equal(t, http.StatusSeeOther, rr.Code)
 	assert.Equal(t, "/admin/dashboard", rr.Header().Get("Location"))
+}
+
+func TestAdminChurchEditData(t *testing.T) {
+	app, dbConn := setupAdminTest(t)
+	defer dbConn.Close()
+
+	ctx := context.Background()
+	// Create a church
+	church, err := app.DB.CreateChurch(ctx, sqlcdb.CreateChurchParams{
+		Name:          "Test Church",
+		Slug:          "test-church",
+		Type:          sql.NullString{String: "church", Valid: true},
+		AddressText:   "123 Street",
+		City:          "City",
+		StateProvince: "ST",
+		CountryCode:   "US",
+		Latitude:      40.0,
+		Longitude:     -70.0,
+		Status:        "published",
+	})
+	require.NoError(t, err)
+
+	// Create a saint
+	saint, err := app.DB.CreateSaint(ctx, sqlcdb.CreateSaintParams{
+		Name:   "St. Nicholas",
+		Slug:   "st-nicholas",
+		Status: "published",
+	})
+	require.NoError(t, err)
+
+	// Create a relic
+	err = app.DB.CreateRelic(ctx, sqlcdb.CreateRelicParams{
+		ChurchID:    church.ID,
+		SaintID:     saint.ID,
+		Description: sql.NullString{String: "My relic", Valid: true},
+	})
+	require.NoError(t, err)
+
+	// Mock session
+	sessionHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		app.SessionManager.Put(r.Context(), "username", "testadmin")
+		app.SessionManager.Put(r.Context(), "admin_id", int64(1))
+		app.adminChurchEditHandler(w, r)
+	})
+
+	req := httptest.NewRequest("GET", "/admin/churches/edit/test-church", nil)
+	rr := httptest.NewRecorder()
+	app.SessionManager.LoadAndSave(sessionHandler).ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	// We can't easily check the map[string]any passed to ExecuteTemplate from here
+	// but we can check if the output contains the relic and saint names.
+	body := rr.Body.String()
+	assert.Contains(t, body, "St. Nicholas")
+	assert.Contains(t, body, "My relic")
 }
 
 func TestAdminAuthMiddleware(t *testing.T) {
