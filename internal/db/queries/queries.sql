@@ -236,3 +236,21 @@ ORDER BY c.name, s.name;
 
 -- name: DeleteRelic :exec
 DELETE FROM relics WHERE church_id = ? AND saint_id = ?;
+
+-- name: ListRecentChurches :many
+SELECT * FROM churches
+ORDER BY updated_at DESC NULLS LAST, id DESC
+LIMIT 5;
+
+-- name: ListRecentSaints :many
+SELECT * FROM saints
+ORDER BY updated_at DESC NULLS LAST, id DESC
+LIMIT 5;
+
+-- name: ListRecentRelics :many
+SELECT r.*, s.name as saint_name, c.name as church_name
+FROM relics r
+JOIN saints s ON r.saint_id = s.id
+JOIN churches c ON r.church_id = c.id
+ORDER BY c.updated_at DESC NULLS LAST
+LIMIT 5;

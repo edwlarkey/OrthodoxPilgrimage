@@ -858,6 +858,137 @@ func (q *Queries) ListImagesForSaint(ctx context.Context, saintID sql.NullInt64)
 	return items, nil
 }
 
+const listRecentChurches = `-- name: ListRecentChurches :many
+SELECT id, name, slug, type, address_text, city, state_province, country_code, latitude, longitude, jurisdiction, website, phone, description, updated_at, postal_code, status FROM churches
+ORDER BY updated_at DESC NULLS LAST, id DESC
+LIMIT 5
+`
+
+func (q *Queries) ListRecentChurches(ctx context.Context) ([]Church, error) {
+	rows, err := q.db.QueryContext(ctx, listRecentChurches)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Church
+	for rows.Next() {
+		var i Church
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Type,
+			&i.AddressText,
+			&i.City,
+			&i.StateProvince,
+			&i.CountryCode,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Jurisdiction,
+			&i.Website,
+			&i.Phone,
+			&i.Description,
+			&i.UpdatedAt,
+			&i.PostalCode,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecentRelics = `-- name: ListRecentRelics :many
+SELECT r.church_id, r.saint_id, r.description, s.name as saint_name, c.name as church_name
+FROM relics r
+JOIN saints s ON r.saint_id = s.id
+JOIN churches c ON r.church_id = c.id
+ORDER BY c.updated_at DESC NULLS LAST
+LIMIT 5
+`
+
+type ListRecentRelicsRow struct {
+	ChurchID    int64          `json:"church_id"`
+	SaintID     int64          `json:"saint_id"`
+	Description sql.NullString `json:"description"`
+	SaintName   string         `json:"saint_name"`
+	ChurchName  string         `json:"church_name"`
+}
+
+func (q *Queries) ListRecentRelics(ctx context.Context) ([]ListRecentRelicsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listRecentRelics)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRecentRelicsRow
+	for rows.Next() {
+		var i ListRecentRelicsRow
+		if err := rows.Scan(
+			&i.ChurchID,
+			&i.SaintID,
+			&i.Description,
+			&i.SaintName,
+			&i.ChurchName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecentSaints = `-- name: ListRecentSaints :many
+SELECT id, name, slug, feast_day, description, lives_url, updated_at, status FROM saints
+ORDER BY updated_at DESC NULLS LAST, id DESC
+LIMIT 5
+`
+
+func (q *Queries) ListRecentSaints(ctx context.Context) ([]Saint, error) {
+	rows, err := q.db.QueryContext(ctx, listRecentSaints)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Saint
+	for rows.Next() {
+		var i Saint
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.FeastDay,
+			&i.Description,
+			&i.LivesUrl,
+			&i.UpdatedAt,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRelicsForChurch = `-- name: ListRelicsForChurch :many
 SELECT s.id, s.name, s.slug, s.feast_day, s.description, s.lives_url, s.updated_at, s.status, r.description as relic_description
 FROM saints s

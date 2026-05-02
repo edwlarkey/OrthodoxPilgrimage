@@ -160,13 +160,20 @@ func (a *Application) adminDashboardHandler(w http.ResponseWriter, r *http.Reque
 	saintCount, _ := a.DB.CountSaints(r.Context())
 	relicCount, _ := a.DB.CountRelics(r.Context())
 
+	recentChurches, _ := a.DB.ListRecentChurches(r.Context())
+	recentSaints, _ := a.DB.ListRecentSaints(r.Context())
+	recentRelics, _ := a.DB.ListRecentRelics(r.Context())
+
 	data := map[string]any{
-		"Username":    a.SessionManager.GetString(r.Context(), "username"),
-		"ChurchCount": churchCount,
-		"SaintCount":  saintCount,
-		"RelicCount":  relicCount,
-		"ActiveNav":   "dashboard",
-		"Title":       "Dashboard",
+		"Username":       a.SessionManager.GetString(r.Context(), "username"),
+		"ChurchCount":    churchCount,
+		"SaintCount":     saintCount,
+		"RelicCount":     relicCount,
+		"RecentChurches": recentChurches,
+		"RecentSaints":   recentSaints,
+		"RecentRelics":   recentRelics,
+		"ActiveNav":      "dashboard",
+		"Title":          "Dashboard",
 	}
 
 	ts, err := a.Templates.Get("admin-dashboard")

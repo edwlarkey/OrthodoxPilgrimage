@@ -35,20 +35,91 @@
                 </div>
             </div>
 
-            <section class="mt-40">
-                <h2>System Status</h2>
-                <div class="card dashboard-welcome mt-20">
-                    <p>Welcome to the administrative portal. Use the sidebar to manage site content.</p>
-                    <p class="text-muted">MFA is <strong class="text-primary text-bold">Enabled</strong> for your account.</p>
-                    
-                    <div class="flex gap-10 mt-20">
-                        <button class="btn btn-secondary" onclick="showToast('Sample success message!', 'success')">Test Toast</button>
-                        <button class="btn btn-secondary" 
-                                hx-get="/admin/dashboard" 
-                                hx-target="#admin-modal-content"
-                                hx-swap="innerHTML">Test Modal</button>
+            <div class="form-row mt-40">
+                <section>
+                    <div class="flex justify-between items-center mb-20">
+                        <h2 class="mb-0" style="margin-top: 0; font-size: 1.2rem;">Recently Added Churches</h2>
+                        <a href="/admin/churches/new" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Add New</a>
                     </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .RecentChurches}}
+                            <tr>
+                                <td>
+                                    <a href="/admin/churches/edit/{{.Slug}}" class="text-primary text-bold" style="text-decoration: none;">{{.Name}}</a>
+                                </td>
+                                <td class="text-muted">{{.City}}, {{.StateProvince}}</td>
+                                <td><span class="status-pill status-{{.Status}}">{{.Status}}</span></td>
+                            </tr>
+                            {{else}}
+                            <tr><td colspan="3" class="text-center text-muted">No churches found.</td></tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </section>
+
+                <section>
+                    <div class="flex justify-between items-center mb-20">
+                        <h2 class="mb-0" style="margin-top: 0; font-size: 1.2rem;">Recently Added Saints</h2>
+                        <a href="/admin/saints/new" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Add New</a>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Feast Day</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .RecentSaints}}
+                            <tr>
+                                <td>
+                                    <a href="/admin/saints/edit/{{.Slug}}" class="text-primary text-bold" style="text-decoration: none;">{{.Name}}</a>
+                                </td>
+                                <td class="text-muted">{{if .FeastDay.Valid}}{{.FeastDay.String}}{{else}}-{{end}}</td>
+                                <td><span class="status-pill status-{{.Status}}">{{.Status}}</span></td>
+                            </tr>
+                            {{else}}
+                            <tr><td colspan="3" class="text-center text-muted">No saints found.</td></tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+
+            <section class="mt-40 mb-40">
+                <div class="flex justify-between items-center mb-20">
+                    <h2 class="mb-0" style="margin-top: 0; font-size: 1.2rem;">Recently Linked Relics</h2>
+                    <a href="/admin/relics/new" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Add New</a>
                 </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Church</th>
+                            <th>Saint</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .RecentRelics}}
+                        <tr>
+                            <td class="text-bold">{{.ChurchName}}</td>
+                            <td class="text-bold">{{.SaintName}}</td>
+                            <td class="text-muted">{{if .Description.Valid}}{{.Description.String}}{{else}}-{{end}}</td>
+                        </tr>
+                        {{else}}
+                        <tr><td colspan="3" class="text-center text-muted">No relics found.</td></tr>
+                        {{end}}
+                    </tbody>
+                </table>
             </section>
         </div>
     </main>
