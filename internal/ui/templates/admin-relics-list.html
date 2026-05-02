@@ -37,11 +37,13 @@
                         <td>{{.SaintName}}</td>
                         <td>{{if .Description.Valid}}{{.Description.String}}{{else}}-{{end}}</td>
                         <td>
-                            <button class="btn-action text-bold" style="color: var(--error); cursor: pointer; border: none; background: none; font-family: inherit; font-size: 0.85rem;"
-                                    hx-delete="/admin/relics/delete?church_id={{.ChurchID}}&saint_id={{.SaintID}}" 
-                                    hx-confirm="Are you sure you want to remove this relic link?"
-                                    hx-target="#relic-{{.ChurchID}}-{{.SaintID}}"
-                                    hx-swap="outerHTML">Delete</button>
+                            <div class="flex gap-10">
+                                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;"
+                                        hx-delete="/admin/relics/delete?church_id={{.ChurchID}}&saint_id={{.SaintID}}" 
+                                        hx-confirm="Are you sure you want to remove this relic link?"
+                                        hx-target="#relic-{{.ChurchID}}-{{.SaintID}}"
+                                        hx-swap="outerHTML">Delete</button>
+                            </div>
                         </td>
                     </tr>
                     {{end}}
