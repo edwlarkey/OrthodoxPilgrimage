@@ -172,6 +172,9 @@ SELECT count(*) FROM churches;
 -- name: CountSaints :one
 SELECT count(*) FROM saints;
 
+-- name: CountRelics :one
+SELECT count(*) FROM relics;
+
 -- name: SearchSaints :many
 SELECT * FROM saints
 WHERE name LIKE ?
