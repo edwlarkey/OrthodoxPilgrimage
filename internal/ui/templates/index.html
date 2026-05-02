@@ -78,34 +78,25 @@ document.addEventListener('DOMContentLoaded', function() {
         {{end}}
     {{end}}
 
+    function getMapPadding() {
+        if (window.innerWidth <= 500) {
+            // Mobile: Sidebar is at the bottom, 50vh. 
+            // We want the pin(s) in the top half.
+            return [60, 20, window.innerHeight * 0.5 + 20, 20];
+        } else {
+            // Desktop: Sidebar is on the right, ~380px wide.
+            return [100, 450, 100, 100];
+        }
+    }
+
     // Helper to center on a coordinate with sidebar padding
     function focusOnCoordinate(coords, zoomLevel = CHURCH_ZOOM, animate = true) {
-        if (window.innerWidth <= 500) {
-            // On mobile, center the pin in the top 40% of the screen 
-            // to keep it visible above the 50vh sidebar
-            const resolution = view.getResolutionForZoom(zoomLevel);
-            const offset = (window.innerHeight * 0.2) * resolution; // Offset by 20% of screen height
-            const center = [coords[0], coords[1] - offset];
-            if (animate) {
-                view.animate({
-                    center: center,
-                    zoom: zoomLevel,
-                    duration: 500
-                });
-            } else {
-                view.setCenter(center);
-                view.setZoom(zoomLevel);
-            }
-        } else {
-            // On desktop, use fit with padding to account for the sidebar
-            // We use a tiny extent around the point
-            const point = new ol.geom.Point(coords);
-            view.fit(point, {
-                padding: [100, 500, 100, 100],
-                duration: animate ? 500 : 0,
-                maxZoom: zoomLevel
-            });
-        }
+        const point = new ol.geom.Point(coords);
+        view.fit(point, {
+            padding: getMapPadding(),
+            duration: animate ? 500 : 0,
+            maxZoom: zoomLevel
+        });
     }
 
     const view = new ol.View({
@@ -150,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     map.addLayer(vectorLayer);
 
-    function loadChurches(url, focusAfterLoad = false) {
+    function loadChurches(url, focusAfterLoad = false, animate = true) {
         return fetch(url)
             .then(response => response.json())
             .then(churches => {
@@ -175,13 +166,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (features.length > 1) {
                         const extent = vectorSource.getExtent();
                         view.fit(extent, { 
-                            padding: [100, 500, 100, 100], 
-                            duration: 500, 
+                            padding: getMapPadding(), 
+                            duration: animate ? 500 : 0, 
                             maxZoom: CHURCH_ZOOM 
                         });
                     } else if (features.length === 1) {
                         const coords = features[0].getGeometry().getCoordinates();
-                        focusOnCoordinate(coords, CHURCH_ZOOM);
+                        focusOnCoordinate(coords, CHURCH_ZOOM, animate);
                     }
                 }
                 return features;
@@ -190,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initial load
-    loadChurches(fetchUrl, {{if eq .Type "saint"}}true{{else}}false{{end}}).then(features => {
+    loadChurches(fetchUrl, {{if eq .Type "saint"}}true{{else}}false{{end}}, false).then(features => {
         {{if eq .Type "church"}}
             const initialCoords = ol.proj.fromLonLat([{{.Church.Longitude}}, {{.Church.Latitude}}]);
             focusOnCoordinate(initialCoords, CHURCH_ZOOM, false);
