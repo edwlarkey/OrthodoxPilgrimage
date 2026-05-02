@@ -25,6 +25,8 @@ type Querier interface {
 	DeleteAllSaints(ctx context.Context) error
 	DeleteAllSources(ctx context.Context) error
 	DeleteChurch(ctx context.Context, id int64) error
+	DeleteChurchSource(ctx context.Context, id int64) error
+	DeleteImage(ctx context.Context, id int64) error
 	DeleteRelic(ctx context.Context, arg DeleteRelicParams) error
 	DeleteSaint(ctx context.Context, id int64) error
 	GetAdmin(ctx context.Context, id int64) (Admin, error)
@@ -46,7 +48,7 @@ type Querier interface {
 	ListRelicsForChurch(ctx context.Context, churchID int64) ([]ListRelicsForChurchRow, error)
 	ListSaints(ctx context.Context) ([]Saint, error)
 	ListSaintsByStatus(ctx context.Context, status string) ([]Saint, error)
-	ListSourcesForChurch(ctx context.Context, churchID int64) ([]string, error)
+	ListSourcesForChurch(ctx context.Context, churchID int64) ([]ChurchSource, error)
 	SearchSaints(ctx context.Context, name string) ([]Saint, error)
 	UpdateAdminLastLogin(ctx context.Context, id int64) error
 	UpdateAdminMFA(ctx context.Context, arg UpdateAdminMFAParams) error

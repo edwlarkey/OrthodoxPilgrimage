@@ -109,34 +109,59 @@
                 <div style="padding: 40px;">
                     <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Relics at this Location</h2>
                     
-                    <table class="data-table mb-40">
-                        <thead>
-                            <tr>
-                                <th>Saint</th>
-                                <th>Description</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{range .Relics}}
-                            <tr id="relic-{{$.Church.ID}}-{{.ID}}">
-                                <td class="text-bold">{{.Name}}</td>
-                                <td>{{if .RelicDescription.Valid}}{{.RelicDescription.String}}{{else}}-{{end}}</td>
-                                <td>
-                                    <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;"
-                                            hx-delete="/admin/relics/delete?church_id={{$.Church.ID}}&saint_id={{.ID}}" 
-                                            hx-confirm="Remove this relic from the church?"
-                                            hx-target="#relic-{{$.Church.ID}}-{{.ID}}"
-                                            hx-swap="outerHTML">Remove</button>
-                                </td>
-                            </tr>
-                            {{else}}
-                            <tr><td colspan="3" class="text-center text-muted">No relics recorded here.</td></tr>
-                            {{end}}
-                        </tbody>
-                    </table>
+                    {{range .Relics}}
+                    <div class="relic-admin-box" id="relic-{{$.Church.ID}}-{{.Relic.ID}}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="mt-0 mb-10 text-bold">{{.Relic.Name}}</h3>
+                                <p class="text-muted mb-20">{{if .Relic.RelicDescription.Valid}}{{.Relic.RelicDescription.String}}{{else}}No description{{end}}</p>
+                            </div>
+                            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;"
+                                    hx-delete="/admin/relics/delete?church_id={{$.Church.ID}}&saint_id={{.Relic.ID}}" 
+                                    hx-confirm="Remove this relic from the church?"
+                                    hx-target="#relic-{{$.Church.ID}}-{{.Relic.ID}}"
+                                    hx-swap="outerHTML">Remove Relic</button>
+                        </div>
 
-                    <h3 class="mb-0 mt-0 text-bold" style="font-size: 1.2rem; margin-bottom: 20px;">Add a Relic</h3>
+                        <div class="relic-images-admin">
+                            <h4 class="text-xs-caps text-muted mb-10">Relic Images</h4>
+                            <div class="flex gap-15 flex-wrap mb-20">
+                                {{range .Images}}
+                                <div class="image-thumb-admin">
+                                    <img src="{{.Url}}" alt="Relic Image">
+                                    <button class="btn-icon-delete"
+                                            hx-delete="/admin/relics/images/delete?id={{.ID}}"
+                                            hx-confirm="Delete this image?"
+                                            hx-swap="none">&times;</button>
+                                    {{if .Source.Valid}}
+                                    <div class="text-xxs text-muted mt-5 truncate" title="{{.Source.String}}">Src: {{.Source.String}}</div>
+                                    {{end}}
+                                </div>
+                                {{else}}
+                                <p class="text-muted text-small">No images for this relic.</p>
+                                {{end}}
+                            </div>
+
+                            <form hx-post="/admin/relics/images/add" hx-swap="none" class="flex gap-10 items-end">
+                                <input type="hidden" name="relic_church_id" value="{{$.Church.ID}}">
+                                <input type="hidden" name="relic_saint_id" value="{{.Relic.ID}}">
+                                <div class="form-group mb-0 flex-1">
+                                    <label class="text-xxs">Image URL</label>
+                                    <input type="url" name="url" placeholder="https://..." required style="padding: 6px; font-size: 0.8rem;">
+                                </div>
+                                <div class="form-group mb-0 flex-1">
+                                    <label class="text-xxs">Source</label>
+                                    <input type="text" name="source" placeholder="Source name" style="padding: 6px; font-size: 0.8rem;">
+                                </div>
+                                <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Add Image</button>
+                            </form>
+                        </div>
+                    </div>
+                    {{else}}
+                    <p class="text-center text-muted mb-40">No relics recorded here.</p>
+                    {{end}}
+
+                    <h3 class="mb-0 mt-40 text-bold" style="font-size: 1.2rem; margin-bottom: 20px;">Add a Relic</h3>
                     <form hx-post="/admin/relics/new" hx-push-url="false" style="background: #f8f9fa; padding: 25px; border-radius: 12px; border: 1px solid var(--border);">
                         <input type="hidden" name="church_id" value="{{.Church.ID}}">
                         
@@ -158,6 +183,35 @@
                         <div class="mt-20">
                             <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Add Relic</button>
                         </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card max-w-900 p-0 mt-40">
+                <div style="padding: 40px;">
+                    <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Information Sources</h2>
+                    
+                    <div class="flex gap-10 flex-wrap mb-20">
+                        {{range .Sources}}
+                        <div class="source-pill-admin">
+                            <span class="saint-name">{{.Source}}</span>
+                            <button class="btn-icon-delete"
+                                    hx-delete="/admin/churches/sources/delete?id={{.ID}}"
+                                    hx-confirm="Remove this source?"
+                                    hx-swap="none">&times;</button>
+                        </div>
+                        {{else}}
+                        <p class="text-muted text-small">No sources recorded for this church.</p>
+                        {{end}}
+                    </div>
+
+                    <form hx-post="/admin/churches/sources/add" hx-swap="none" class="relic-admin-box flex gap-10 items-end">
+                        <input type="hidden" name="church_id" value="{{.Church.ID}}">
+                        <div class="form-group mb-0 flex-1">
+                            <label for="new_source">Add Source (Name or URL)</label>
+                            <input type="text" id="new_source" name="source" placeholder="e.g. OrthodoxWiki" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Add Source</button>
                     </form>
                 </div>
             </div>

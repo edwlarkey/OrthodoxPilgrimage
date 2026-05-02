@@ -495,12 +495,26 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	if r.Method == http.MethodGet {
-		var relics []sqlcdb.ListRelicsForChurchRow
+		var relics []RelicWithImages
 		var saints []sqlcdb.Saint
+		var sources []sqlcdb.ChurchSource
 
 		if !isNew {
-			relics, _ = a.DB.ListRelicsForChurch(r.Context(), church.ID)
+			relicRows, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
 			saints, _ = a.DB.ListSaints(r.Context())
+			sources, _ = a.DB.ListSourcesForChurch(r.Context(), church.ID)
+
+			relics = make([]RelicWithImages, len(relicRows))
+			for i, rRow := range relicRows {
+				rImages, _ := a.DB.ListImagesForRelic(r.Context(), sqlcdb.ListImagesForRelicParams{
+					RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true},
+					RelicSaintID:  sql.NullInt64{Int64: rRow.ID, Valid: true},
+				})
+				relics[i] = RelicWithImages{
+					Relic:  rRow,
+					Images: rImages,
+				}
+			}
 		}
 
 		data := map[string]any{
@@ -509,6 +523,7 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 			"IsNew":     isNew,
 			"Relics":    relics,
 			"Saints":    saints,
+			"Sources":   sources,
 			"ActiveNav": "churches",
 			"Title":     "Edit Church",
 		}
@@ -747,4 +762,108 @@ func (a *Application) adminRelicDeleteHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	http.Redirect(w, r, "/admin/relics", http.StatusSeeOther)
+}
+
+func (a *Application) adminChurchSourceAddHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	churchID, _ := strconv.ParseInt(r.FormValue("church_id"), 10, 64)
+	source := r.FormValue("source")
+
+	if source == "" {
+		http.Error(w, "Source is required", http.StatusBadRequest)
+		return
+	}
+
+	err := a.DB.CreateChurchSource(r.Context(), sqlcdb.CreateChurchSourceParams{
+		ChurchID: churchID,
+		Source:   source,
+	})
+	if err != nil {
+		slog.Error("Failed to add church source", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	a.logAudit(r.Context(), "CREATE", "church_source", churchID, map[string]any{"church_id": churchID, "source": source})
+
+	w.Header().Set("HX-Location", r.Header.Get("HX-Current-URL"))
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (a *Application) adminChurchSourceDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, _ := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
+
+	err := a.DB.DeleteChurchSource(r.Context(), id)
+	if err != nil {
+		slog.Error("Failed to delete church source", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	a.logAudit(r.Context(), "DELETE", "church_source", id, nil)
+
+	w.Header().Set("HX-Location", r.Header.Get("HX-Current-URL"))
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (a *Application) adminRelicImageAddHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	churchID, _ := strconv.ParseInt(r.FormValue("relic_church_id"), 10, 64)
+	saintID, _ := strconv.ParseInt(r.FormValue("relic_saint_id"), 10, 64)
+	url := r.FormValue("url")
+	altText := r.FormValue("alt_text")
+	source := r.FormValue("source")
+
+	err := a.DB.CreateImage(r.Context(), sqlcdb.CreateImageParams{
+		RelicChurchID: sql.NullInt64{Int64: churchID, Valid: true},
+		RelicSaintID:  sql.NullInt64{Int64: saintID, Valid: true},
+		Url:           url,
+		AltText:       sql.NullString{String: altText, Valid: altText != ""},
+		Source:        sql.NullString{String: source, Valid: source != ""},
+	})
+
+	if err != nil {
+		slog.Error("Failed to add relic image", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	a.logAudit(r.Context(), "CREATE", "relic_image", churchID, map[string]any{"church_id": churchID, "saint_id": saintID, "url": url})
+
+	w.Header().Set("HX-Location", r.Header.Get("HX-Current-URL"))
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (a *Application) adminRelicImageDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, _ := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
+
+	err := a.DB.DeleteImage(r.Context(), id)
+	if err != nil {
+		slog.Error("Failed to delete relic image", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	a.logAudit(r.Context(), "DELETE", "relic_image", id, nil)
+
+	w.Header().Set("HX-Location", r.Header.Get("HX-Current-URL"))
+	w.WriteHeader(http.StatusNoContent)
 }

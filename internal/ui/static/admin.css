@@ -364,3 +364,81 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.1em;
 }
+
+/* Relic Management (Admin) */
+.relic-admin-box {
+    background: var(--bg-body);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+}
+
+.relic-images-admin {
+    margin-top: 20px;
+}
+
+.image-thumb-admin {
+    position: relative;
+    width: 100px;
+}
+
+.image-thumb-admin img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.btn-icon-delete {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--error);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    padding: 0;
+}
+
+.btn-icon-delete:hover {
+    filter: brightness(0.9);
+}
+
+.source-pill-admin {
+    background: var(--white);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.source-pill-admin .btn-icon-delete {
+    position: static;
+    background: none;
+    color: var(--error);
+    width: auto;
+    height: auto;
+    font-size: 16px;
+}
+
+.source-pill-admin .btn-icon-delete:hover {
+    color: #c0392b;
+}
+
+.text-xxs { font-size: 0.7rem; }
+.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }

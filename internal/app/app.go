@@ -60,6 +60,11 @@ func (a *Application) Routes() http.Handler {
 	adminMux.HandleFunc("/admin/relics/new", a.adminRelicEditHandler)
 	adminMux.HandleFunc("/admin/relics/delete", a.adminRelicDeleteHandler)
 
+	adminMux.HandleFunc("/admin/churches/sources/add", a.adminChurchSourceAddHandler)
+	adminMux.HandleFunc("/admin/churches/sources/delete", a.adminChurchSourceDeleteHandler)
+	adminMux.HandleFunc("/admin/relics/images/add", a.adminRelicImageAddHandler)
+	adminMux.HandleFunc("/admin/relics/images/delete", a.adminRelicImageDeleteHandler)
+
 	mux.Handle("/admin/", a.AdminAuthMiddleware(adminMux))
 
 	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
@@ -159,7 +164,7 @@ type ChurchWithRelics struct {
 	Church  sqlcdb.Church
 	Images  []sqlcdb.Image
 	Relics  []RelicWithImages
-	Sources []string
+	Sources []sqlcdb.ChurchSource
 }
 
 type RelicWithImages struct {
