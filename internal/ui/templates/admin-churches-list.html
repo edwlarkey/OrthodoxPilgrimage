@@ -41,12 +41,14 @@
                             <span class="status-pill status-{{.Status}}">{{.Status}}</span>
                         </td>
                         <td>
-                            <a href="/admin/churches/edit/{{.Slug}}" class="btn-action text-primary text-bold" style="margin-right: 15px; text-decoration: none; font-size: 0.85rem;">Edit</a>
-                            <button class="btn-action text-bold" style="color: var(--error); cursor: pointer; border: none; background: none; font-family: inherit; font-size: 0.85rem;"
-                                    hx-delete="/admin/churches/delete/{{.Slug}}" 
-                                    hx-confirm="Are you sure you want to delete this church?"
-                                    hx-target="#church-{{.ID}}"
-                                    hx-swap="outerHTML">Delete</button>
+                            <div class="flex gap-10">
+                                <a href="/admin/churches/edit/{{.Slug}}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Edit</a>
+                                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;"
+                                        hx-delete="/admin/churches/delete/{{.Slug}}" 
+                                        hx-confirm="Are you sure you want to delete this church?"
+                                        hx-target="#church-{{.ID}}"
+                                        hx-swap="outerHTML">Delete</button>
+                            </div>
                         </td>
                     </tr>
                     {{end}}
