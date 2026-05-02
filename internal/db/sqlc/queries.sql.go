@@ -21,6 +21,17 @@ func (q *Queries) CountChurches(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countRelics = `-- name: CountRelics :one
+SELECT count(*) FROM relics
+`
+
+func (q *Queries) CountRelics(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRelics)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countSaints = `-- name: CountSaints :one
 SELECT count(*) FROM saints
 `

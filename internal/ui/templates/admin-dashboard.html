@@ -1,70 +1,96 @@
-{{define "admin-content"}}
-<div class="dashboard-header">
-    <h1 style="margin: 0; font-size: 1.8rem; font-weight: 800;">Dashboard</h1>
-</div>
+{{define "admin-dashboard"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Admin</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
 
-<div class="stats-grid">
-    <div class="stat-card">
-        <span class="stat-label">Total Churches</span>
-        <div class="stat-value">{{.ChurchCount}}</div>
-    </div>
-    <div class="stat-card">
-        <span class="stat-label">Total Saints</span>
-        <div class="stat-value">{{.SaintCount}}</div>
-    </div>
-    <div class="stat-card">
-        <span class="stat-label">Relics Recorded</span>
-        <div class="stat-value">{{.RelicCount}}</div>
-    </div>
-</div>
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
 
-<section class="recent-activity">
-    <h2 style="font-size: 1.2rem; margin-bottom: 20px;">System Status</h2>
-    <div class="stat-card">
-        <p>Welcome to the administrative portal. Use the sidebar to manage site content.</p>
-        <p style="color: #95a5a6; font-size: 0.9rem;">MFA is <strong>Enabled</strong> for your account.</p>
-        
-        <div style="margin-top: 20px; display: flex; gap: 10px;">
-            <button class="reset-search-btn" style="width: auto;" onclick="showToast('Sample success message!')">Test Toast</button>
-            <button class="reset-search-btn" style="width: auto;" 
-                    hx-get="/admin/dashboard" 
-                    hx-target="#admin-modal-content"
-                    hx-swap="innerHTML">Test Modal</button>
+        <div class="admin-content-area">
+            <div class="page-header">
+                <h1>Dashboard</h1>
+            </div>
+
+            <div class="form-row-3 mt-25">
+                <div class="card mb-0">
+                    <span class="stat-label">Total Churches</span>
+                    <div class="stat-value">{{.ChurchCount}}</div>
+                </div>
+                <div class="card mb-0">
+                    <span class="stat-label">Total Saints</span>
+                    <div class="stat-value">{{.SaintCount}}</div>
+                </div>
+                <div class="card mb-0">
+                    <span class="stat-label">Relics Recorded</span>
+                    <div class="stat-value">{{.RelicCount}}</div>
+                </div>
+            </div>
+
+            <section class="mt-40">
+                <h2>System Status</h2>
+                <div class="card dashboard-welcome mt-20">
+                    <p>Welcome to the administrative portal. Use the sidebar to manage site content.</p>
+                    <p class="text-muted">MFA is <strong class="text-primary text-bold">Enabled</strong> for your account.</p>
+                    
+                    <div class="flex gap-10 mt-20">
+                        <button class="btn btn-secondary" onclick="showToast('Sample success message!', 'success')">Test Toast</button>
+                        <button class="btn btn-secondary" 
+                                hx-get="/admin/dashboard" 
+                                hx-target="#admin-modal-content"
+                                hx-swap="innerHTML">Test Modal</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="admin-modal-container" onclick="closeAdminModal(event)">
+        <div class="admin-modal" onclick="event.stopPropagation()">
+            <div id="admin-modal-content"></div>
         </div>
     </div>
-</section>
 
-<style>
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 40px;
-        margin-top: 30px;
-    }
-    .stat-card {
-        background: white;
-        padding: 25px;
-        border-radius: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        border: 1px solid #eee;
-    }
-    .stat-label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #95a5a6;
-        font-weight: 700;
-        margin-bottom: 10px;
-        display: block;
-    }
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #530c38;
-    }
-    .dashboard-header {
-        margin-bottom: 30px;
-    }
-</style>
+    <div id="toast-container"></div>
+
+    <script>
+        function closeAdminModal(e) {
+            document.getElementById('admin-modal-container').classList.remove('visible');
+            document.getElementById('admin-modal-content').innerHTML = '';
+        }
+
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'admin-modal-content') {
+                document.getElementById('admin-modal-container').classList.add('visible');
+            }
+        });
+
+        document.body.addEventListener('adminToast', function(evt) {
+            showToast(evt.detail.message, evt.detail.type);
+        });
+    </script>
+</body>
+</html>
 {{end}}

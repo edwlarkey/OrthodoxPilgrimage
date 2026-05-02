@@ -158,12 +158,13 @@ func (a *Application) adminMfaHandler(w http.ResponseWriter, r *http.Request) {
 func (a *Application) adminDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	churchCount, _ := a.DB.CountChurches(r.Context())
 	saintCount, _ := a.DB.CountSaints(r.Context())
+	relicCount, _ := a.DB.CountRelics(r.Context())
 
 	data := map[string]any{
 		"Username":    a.SessionManager.GetString(r.Context(), "username"),
 		"ChurchCount": churchCount,
 		"SaintCount":  saintCount,
-		"RelicCount":  0,
+		"RelicCount":  relicCount,
 		"ActiveNav":   "dashboard",
 		"Title":       "Dashboard",
 	}

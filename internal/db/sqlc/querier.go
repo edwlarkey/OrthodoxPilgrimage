@@ -11,6 +11,7 @@ import (
 
 type Querier interface {
 	CountChurches(ctx context.Context) (int64, error)
+	CountRelics(ctx context.Context) (int64, error)
 	CountSaints(ctx context.Context) (int64, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateChurch(ctx context.Context, arg CreateChurchParams) (Church, error)
