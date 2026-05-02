@@ -65,7 +65,7 @@ func TestAdminAuthFlow(t *testing.T) {
 	app.adminSetupHandler(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Contains(t, rr.Body.String(), "Admin created!")
-	
+
 	// Extract MFA secret from response
 	parts := strings.Split(rr.Body.String(), ": ")
 	require.True(t, len(parts) > 1)
@@ -77,13 +77,13 @@ func TestAdminAuthFlow(t *testing.T) {
 	form.Add("password", "pass1234")
 	req = httptest.NewRequest("POST", "/admin/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	
+
 	rr = httptest.NewRecorder()
 	app.SessionManager.LoadAndSave(http.HandlerFunc(app.adminLoginHandler)).ServeHTTP(rr, req)
-	
+
 	assert.Equal(t, http.StatusSeeOther, rr.Code)
 	assert.Equal(t, "/admin/mfa", rr.Header().Get("Location"))
-	
+
 	// Get the session cookie
 	cookie := rr.Header().Get("Set-Cookie")
 	assert.NotEmpty(t, cookie)
@@ -97,10 +97,10 @@ func TestAdminAuthFlow(t *testing.T) {
 	req = httptest.NewRequest("POST", "/admin/mfa", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Cookie", cookie)
-	
+
 	rr = httptest.NewRecorder()
 	app.SessionManager.LoadAndSave(http.HandlerFunc(app.adminMfaHandler)).ServeHTTP(rr, req)
-	
+
 	assert.Equal(t, http.StatusSeeOther, rr.Code)
 	assert.Equal(t, "/admin/dashboard", rr.Header().Get("Location"))
 }
@@ -128,7 +128,7 @@ func TestAdminAuthMiddleware(t *testing.T) {
 		app.SessionManager.Put(r.Context(), "mfa_pending", true)
 		w.WriteHeader(http.StatusOK)
 	})
-	
+
 	rr = httptest.NewRecorder()
 	req = httptest.NewRequest("GET", "/setup", nil)
 	app.SessionManager.LoadAndSave(setupSessionHandler).ServeHTTP(rr, req)
@@ -139,7 +139,7 @@ func TestAdminAuthMiddleware(t *testing.T) {
 	req.Header.Set("Cookie", cookie)
 	rr = httptest.NewRecorder()
 	app.SessionManager.LoadAndSave(handler).ServeHTTP(rr, req)
-	
+
 	assert.Equal(t, http.StatusSeeOther, rr.Code)
 	assert.Equal(t, "/admin/mfa", rr.Header().Get("Location"))
 }

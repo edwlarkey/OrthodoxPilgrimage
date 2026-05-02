@@ -224,24 +224,6 @@ UPDATE admins
 SET last_login_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
--- name: CreateAuditLog :exec
-INSERT INTO audit_logs (
-    admin_id,
-    action,
-    entity_type,
-    entity_id,
-    changes
-) VALUES (
-    ?, ?, ?, ?, ?
-);
-
--- name: ListAuditLogs :many
-SELECT al.*, a.username as admin_username
-FROM audit_logs al
-LEFT JOIN admins a ON al.admin_id = a.id
-ORDER BY al.created_at DESC
-LIMIT ? OFFSET ?;
-
 -- name: ListAllRelics :many
 SELECT r.*, s.name as saint_name, c.name as church_name
 FROM relics r

@@ -64,37 +64,6 @@ func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin
 	return i, err
 }
 
-const createAuditLog = `-- name: CreateAuditLog :exec
-INSERT INTO audit_logs (
-    admin_id,
-    action,
-    entity_type,
-    entity_id,
-    changes
-) VALUES (
-    ?, ?, ?, ?, ?
-)
-`
-
-type CreateAuditLogParams struct {
-	AdminID    sql.NullInt64  `json:"admin_id"`
-	Action     string         `json:"action"`
-	EntityType string         `json:"entity_type"`
-	EntityID   int64          `json:"entity_id"`
-	Changes    sql.NullString `json:"changes"`
-}
-
-func (q *Queries) CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) error {
-	_, err := q.db.ExecContext(ctx, createAuditLog,
-		arg.AdminID,
-		arg.Action,
-		arg.EntityType,
-		arg.EntityID,
-		arg.Changes,
-	)
-	return err
-}
-
 const createChurch = `-- name: CreateChurch :one
 INSERT INTO churches (
     name,
@@ -536,62 +505,6 @@ func (q *Queries) ListAllRelics(ctx context.Context) ([]ListAllRelicsRow, error)
 			&i.Description,
 			&i.SaintName,
 			&i.ChurchName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listAuditLogs = `-- name: ListAuditLogs :many
-SELECT al.id, al.admin_id, al."action", al.entity_type, al.entity_id, al.changes, al.created_at, a.username as admin_username
-FROM audit_logs al
-LEFT JOIN admins a ON al.admin_id = a.id
-ORDER BY al.created_at DESC
-LIMIT ? OFFSET ?
-`
-
-type ListAuditLogsParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-}
-
-type ListAuditLogsRow struct {
-	ID            int64          `json:"id"`
-	AdminID       sql.NullInt64  `json:"admin_id"`
-	Action        string         `json:"action"`
-	EntityType    string         `json:"entity_type"`
-	EntityID      int64          `json:"entity_id"`
-	Changes       sql.NullString `json:"changes"`
-	CreatedAt     sql.NullTime   `json:"created_at"`
-	AdminUsername sql.NullString `json:"admin_username"`
-}
-
-func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]ListAuditLogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAuditLogs, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListAuditLogsRow
-	for rows.Next() {
-		var i ListAuditLogsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.AdminID,
-			&i.Action,
-			&i.EntityType,
-			&i.EntityID,
-			&i.Changes,
-			&i.CreatedAt,
-			&i.AdminUsername,
 		); err != nil {
 			return nil, err
 		}

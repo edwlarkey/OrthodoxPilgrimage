@@ -8,16 +8,6 @@ CREATE TABLE admins (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE audit_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    admin_id INTEGER REFERENCES admins(id),
-    action TEXT NOT NULL, -- CREATE, UPDATE, DELETE, PUBLISH
-    entity_type TEXT NOT NULL, -- church, saint, relic, image
-    entity_id INTEGER NOT NULL,
-    changes TEXT, -- JSON stored as string
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE sessions (
     token TEXT PRIMARY KEY,
     data BLOB NOT NULL,
