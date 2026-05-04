@@ -60,13 +60,15 @@ func main() {
 	sessionManager.Cookie.SameSite = http.SameSiteLaxMode
 	sessionManager.Cookie.Secure = !*devMode // Only secure in non-dev (production)
 
-	// Seed database on every startup from data.json (source of truth)
-	slog.Info("Syncing database with data/data.json...")
-	if err := app.SeedDatabase(context.Background(), queries); err != nil {
-		slog.Error("failed to seed database", "error", err)
-		os.Exit(1)
+	// Seed database if requested
+	if *seed {
+		slog.Info("Syncing database with data/data.json...")
+		if err := app.SeedDatabase(context.Background(), queries); err != nil {
+			slog.Error("failed to seed database", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("Database synced successfully")
 	}
-	slog.Info("Database synced successfully")
 
 	slog.Info("Generating sitemap.xml...")
 	if err := app.GenerateSitemap(context.Background(), queries, "https://orthodoxpilgrimage.com"); err != nil {

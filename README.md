@@ -45,7 +45,7 @@ Orthodox Pilgrimage is a modern web application designed to help the faithful lo
     ```bash
     ./bin/orthodoxpilgrimage
     ```
-    The server will start on `:8080`. The database (`orthodox_pilgrimage.db`) is automatically created and seeded from `data.json` on startup.
+    The server will start on `:8080`. The database (`orthodox_pilgrimage.db`) is automatically created and migrated on startup. Use the `--seed` flag to populate it from `data.json`.
 
 ## 🤝 Contributing
 

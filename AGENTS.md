@@ -71,7 +71,7 @@ No change is considered complete until `make audit` has passed successfully.
 ### Seeding
 
 - **Source of truth:** `internal/app/data/data.json` is the single source of truth for all data.
-- **Sync:** On every startup, `SeedDatabase()` clears and re-inserts all data from the embedded JSON.
+- **Sync:** Database can be synced from the embedded JSON using the `--seed` flag on startup. This clears and re-inserts all data.
 - **Test seeding:** Use `SeedFromReader()` with `strings.NewReader()` or `bytes.NewReader()` for test data.
 
 ## Development Commands
