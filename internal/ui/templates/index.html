@@ -3,7 +3,7 @@
 <div id="tooltip" class="ol-tooltip"></div>
 
 <div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
-    <div class="sidebar-content" id="church-details" hx-on::afterswap="this.scrollTo(0,0)">
+    <div class="sidebar-content" id="church-details" hx-on::after-swap="this.scrollTo(0,0)">
         {{if .}}
             {{if eq .Type "church"}}
                 {{template "church-detail" .}}
