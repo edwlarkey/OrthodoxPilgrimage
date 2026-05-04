@@ -112,12 +112,17 @@ type RelicWithImages struct {
 	Images []sqlcdb.Image
 }
 
+type ChurchWithRelicImages struct {
+	Church sqlcdb.Church
+	Images []sqlcdb.Image
+}
+
 type SaintWithType struct {
 	Type            string
 	Saint           sqlcdb.Saint
 	Images          []sqlcdb.Image
 	ReferringChurch *sqlcdb.Church
-	Churches        []sqlcdb.Church
+	Churches        []ChurchWithRelicImages
 }
 
 func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -166,8 +171,20 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 			saint, saintErr := a.DB.GetSaintBySlug(r.Context(), slug)
 			if saintErr == nil {
 				// Fetch all churches for this saint
-				churches, _ := a.DB.ListChurchesBySaintSlug(r.Context(), slug)
+				churchesRows, _ := a.DB.ListChurchesBySaintSlug(r.Context(), slug)
 				images, _ := a.DB.ListImagesForSaint(r.Context(), sql.NullInt64{Int64: saint.ID, Valid: true})
+
+				churches := make([]ChurchWithRelicImages, len(churchesRows))
+				for i, c := range churchesRows {
+					cImages, _ := a.DB.ListImagesForRelic(r.Context(), sqlcdb.ListImagesForRelicParams{
+						RelicChurchID: sql.NullInt64{Int64: c.ID, Valid: true},
+						RelicSaintID:  sql.NullInt64{Int64: saint.ID, Valid: true},
+					})
+					churches[i] = ChurchWithRelicImages{
+						Church: c,
+						Images: cImages,
+					}
+				}
 
 				sData := SaintWithType{
 					Type:     "saint",

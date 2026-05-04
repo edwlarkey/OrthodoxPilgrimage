@@ -89,20 +89,52 @@
     {{if .Churches}}
     <div class="all-locations">
         <h3>Veneration Locations</h3>
-        <ul class="church-list">
+        <div class="relic-list">
             {{range .Churches}}
-            <li>
-                <a href="/churches/{{.Slug}}"
-                   hx-get="/churches/{{.Slug}}"
-                   hx-target="#church-details"
-                   hx-push-url="true">
-                    <span class="church-name">{{.Name}}</span>
-                    <span class="church-loc">{{.City}}, {{.StateProvince}}</span>
-                </a>
-            </li>
+            <div class="relic-item">
+                <div class="relic-pill">
+                    <div class="relic-details">
+                        <a href="/churches/{{.Church.Slug}}"
+                           hx-get="/churches/{{.Church.Slug}}"
+                           hx-target="#church-details"
+                           hx-push-url="true"
+                           class="saint-name">{{.Church.Name}}</a>
+                        <span class="relic-type">{{.Church.City}}, {{.Church.StateProvince}}</span>
+                    </div>
+                    {{if .Images}}
+                    <div class="relic-images">
+                        {{$cName := .Church.Name}}
+                        {{range .Images}}
+                        <div class="relic-image-container">
+                            <a href="#img-{{.ID}}">
+                                <img src="{{.Url}}" loading="lazy" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic at {{$cName}}{{end}}" title="{{if .AltText.Valid}}{{.AltText.String}}{{end}}">
+                            </a>
+                        </div>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
+            </div>
             {{end}}
-        </ul>
+        </div>
     </div>
+
+    {{range .Churches}}
+        {{$cName := .Church.Name}}
+        {{range .Images}}
+        <div class="lightbox-overlay" id="img-{{.ID}}">
+            <a href="#!" class="lightbox-close"></a>
+            <div class="lightbox-container">
+                <img src="{{.Url}}" alt="{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic at {{$cName}}{{end}}">
+                <div class="lightbox-caption">
+                    <p>{{if .AltText.Valid}}{{.AltText.String}}{{else}}Relic at {{$cName}}{{end}}</p>
+                    {{if .Source.Valid}}<span class="image-source">Source: {{.Source.String}}</span>{{end}}
+                </div>
+                <a href="#!" class="lightbox-close-btn">&times;</a>
+            </div>
+        </div>
+        {{end}}
+    {{end}}
     {{end}}
     
     <a href="/" 
