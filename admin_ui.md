@@ -131,11 +131,11 @@ High test coverage is a mandatory requirement for the admin interface.
 - [x] **Tests:** CRUD integration tests for all entities; Slug collision tests.
 
 ### Phase 4: Mapping & Geolocation UI
-- [ ] Integrate Leaflet/OpenLayers into the Church Edit form.
-- [ ] Implement geocoding search box that updates the map view.
-- [ ] Add Draggable Pin functionality.
-- [ ] Ensure pin movement updates the hidden Lat/Long inputs via HTMX/JS.
-- [ ] **Tests:** E2E tests for address search and pin dragging.
+- [x] Integrate Leaflet/OpenLayers into the Church Edit form.
+- [x] Implement geocoding search box that updates the map view.
+- [x] Add Draggable Pin functionality.
+- [x] Ensure pin movement updates the hidden Lat/Long inputs via HTMX/JS.
+- [x] **Tests:** E2E tests for address search and pin dragging.
 
 ### Phase 5: Image Pipeline & Tigris Integration
 - [ ] Set up Tigris S3 client and configuration.
