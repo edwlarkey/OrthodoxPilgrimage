@@ -11,15 +11,23 @@ import (
 	"strings"
 
 	"github.com/alexedwards/scs/v2"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 )
+
+type S3API interface {
+	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
+	DeleteObject(ctx context.Context, params *s3.DeleteObjectInput, optFns ...func(*s3.Options)) (*s3.DeleteObjectOutput, error)
+}
 
 type Application struct {
 	DB             *sqlcdb.Queries
 	DBConn         *sql.DB
 	Templates      *ui.TemplateManager
 	SessionManager *scs.SessionManager
+	S3Client       S3API
+	S3Bucket       string
 	DevMode        bool
 }
 
@@ -63,10 +71,13 @@ func (a *Application) Routes() http.Handler {
 	adminMux.HandleFunc("/admin/admins/new", a.adminCreateAdminHandler)
 	adminMux.HandleFunc("/admin/admins/delete", a.adminDeleteAdminHandler)
 
+	adminMux.HandleFunc("/admin/images/upload", a.adminImageUploadHandler)
+	adminMux.HandleFunc("/admin/images/gallery", a.adminImageGalleryHandler)
+	adminMux.HandleFunc("/admin/images/delete", a.adminImageDeleteHandler)
+	adminMux.HandleFunc("/admin/images/update", a.adminImageUpdateHandler)
+
 	adminMux.HandleFunc("/admin/churches/sources/add", a.adminChurchSourceAddHandler)
 	adminMux.HandleFunc("/admin/churches/sources/delete", a.adminChurchSourceDeleteHandler)
-	adminMux.HandleFunc("/admin/relics/images/add", a.adminRelicImageAddHandler)
-	adminMux.HandleFunc("/admin/relics/images/delete", a.adminRelicImageDeleteHandler)
 
 	mux.Handle("/admin/", a.AdminAuthMiddleware(adminMux))
 

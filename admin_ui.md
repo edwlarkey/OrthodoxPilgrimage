@@ -62,7 +62,10 @@ The church creation form will feature an integrated mapping tool:
 
 Automated processing ensures that all images are performant and consistent.
 - **Storage:** Tigris S3-compatible bucket.
-- **Path Logic:** `uploads/{entity_type}/{id}/{version}/{filename}`.
+- **Path Logic:**
+    - Churches: `churches/{slug}/{version}/{filename}`
+    - Saints: `saints/{slug}/{version}/{filename}`
+    - Relics: `relics/{church-slug}/{saint-slug}/{version}/{filename}`
 - **Pipeline:**
     1. **Original:** Stored exactly as uploaded.
     2. **Transformation:** Using `ImageMagick` (or a Go-native wrapper like `bimg`):

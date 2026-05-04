@@ -1,8 +1,10 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -12,6 +14,7 @@ import (
 	"time"
 
 	"github.com/alexedwards/scs/v2"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/db"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/db/sessionstore"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
@@ -486,13 +489,25 @@ func TestAdminChurchSourceHandlers(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, rr.Code)
 }
 
+type mockS3Client struct{}
+
+func (m *mockS3Client) PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+	return &s3.PutObjectOutput{}, nil
+}
+
+func (m *mockS3Client) DeleteObject(ctx context.Context, params *s3.DeleteObjectInput, optFns ...func(*s3.Options)) (*s3.DeleteObjectOutput, error) {
+	return &s3.DeleteObjectOutput{}, nil
+}
+
 func TestAdminRelicImageHandlers(t *testing.T) {
 	app, dbConn := setupAdminTest(t)
 	defer dbConn.Close()
+	app.S3Client = &mockS3Client{}
+	app.S3Bucket = "test-bucket"
 
 	ctx := context.Background()
-	church, _ := app.DB.CreateChurch(ctx, sqlcdb.CreateChurchParams{Name: "C", Slug: "c", CountryCode: "US", Status: "published"})
-	saint, _ := app.DB.CreateSaint(ctx, sqlcdb.CreateSaintParams{Name: "S", Slug: "s", Status: "published"})
+	church, _ := app.DB.CreateChurch(ctx, sqlcdb.CreateChurchParams{Name: "C", Slug: "church-slug", CountryCode: "US", Status: "published"})
+	saint, _ := app.DB.CreateSaint(ctx, sqlcdb.CreateSaintParams{Name: "S", Slug: "saint-slug", Status: "published"})
 	_ = app.DB.CreateRelic(ctx, sqlcdb.CreateRelicParams{ChurchID: church.ID, SaintID: saint.ID})
 
 	sessionHandler := func(h http.HandlerFunc) http.HandlerFunc {
@@ -503,26 +518,47 @@ func TestAdminRelicImageHandlers(t *testing.T) {
 		}
 	}
 
-	// Add Image
-	form := url.Values{}
-	form.Add("relic_church_id", strconv.FormatInt(church.ID, 10))
-	form.Add("relic_saint_id", strconv.FormatInt(saint.ID, 10))
-	form.Add("url", "http://image.com/img.jpg")
-	form.Add("alt_text", "Alt")
-	req := httptest.NewRequest("POST", "/admin/relics/images/add", strings.NewReader(form.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// 1. Add Image (Multipart Upload)
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	_ = writer.WriteField("entity_type", "relic")
+	_ = writer.WriteField("relic_church_id", strconv.FormatInt(church.ID, 10))
+	_ = writer.WriteField("relic_saint_id", strconv.FormatInt(saint.ID, 10))
+	
+	part, _ := writer.CreateFormFile("images", "test.png")
+	// Valid 1x1 PNG
+	pngData := []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\x0aIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\x0d\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82")
+	_, _ = part.Write(pngData)
+	_ = writer.Close()
+
+	req := httptest.NewRequest("POST", "/admin/images/upload", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 	rr := httptest.NewRecorder()
-	app.SessionManager.LoadAndSave(sessionHandler(app.adminRelicImageAddHandler)).ServeHTTP(rr, req)
+	app.SessionManager.LoadAndSave(sessionHandler(app.adminImageUploadHandler)).ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusNoContent, rr.Code)
 
-	// Delete Image
-	images, _ := app.DB.ListImagesForRelic(ctx, sqlcdb.ListImagesForRelicParams{RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true}, RelicSaintID: sql.NullInt64{Int64: saint.ID, Valid: true}})
+	// 2. Verify in DB
+	images, _ := app.DB.ListImagesForRelic(ctx, sqlcdb.ListImagesForRelicParams{
+		RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true}, 
+		RelicSaintID: sql.NullInt64{Int64: saint.ID, Valid: true},
+	})
 	require.NotEmpty(t, images)
-	req = httptest.NewRequest("POST", "/admin/relics/images/delete?id="+strconv.FormatInt(images[0].ID, 10), nil)
+	assert.Contains(t, images[0].Url, "relics/church-slug/saint-slug/optimized/test.webp")
+
+	// 3. Delete Image
+	req = httptest.NewRequest("POST", "/admin/images/delete?id="+strconv.FormatInt(images[0].ID, 10), nil)
 	rr = httptest.NewRecorder()
-	app.SessionManager.LoadAndSave(sessionHandler(app.adminRelicImageDeleteHandler)).ServeHTTP(rr, req)
+	app.SessionManager.LoadAndSave(sessionHandler(app.adminImageDeleteHandler)).ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusNoContent, rr.Code)
+
+	// Verify DB is empty
+	images, _ = app.DB.ListImagesForRelic(ctx, sqlcdb.ListImagesForRelicParams{
+		RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true}, 
+		RelicSaintID: sql.NullInt64{Int64: saint.ID, Valid: true},
+	})
+	assert.Empty(t, images)
 }
+
 
 func TestAdminAuthMiddleware(t *testing.T) {
 	app, dbConn := setupAdminTest(t)

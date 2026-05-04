@@ -118,6 +118,10 @@ DELETE FROM saints WHERE id = ?;
 SELECT * FROM saints
 WHERE slug = ?;
 
+-- name: GetSaint :one
+SELECT * FROM saints
+WHERE id = ?;
+
 -- name: CreateRelic :exec
 INSERT INTO relics (
     church_id,
@@ -162,6 +166,23 @@ ORDER BY sort_order, id;
 SELECT * FROM images
 WHERE relic_church_id = ? AND relic_saint_id = ?
 ORDER BY sort_order, id;
+
+-- name: GetImage :one
+SELECT * FROM images
+WHERE id = ?;
+
+-- name: UpdateImage :exec
+UPDATE images
+SET alt_text = ?,
+    is_primary = ?,
+    sort_order = ?
+WHERE id = ?;
+
+-- name: UnsetPrimaryImageForChurch :exec
+UPDATE images SET is_primary = 0 WHERE church_id = ?;
+
+-- name: UnsetPrimaryImageForSaint :exec
+UPDATE images SET is_primary = 0 WHERE saint_id = ?;
 
 -- name: DeleteImage :exec
 DELETE FROM images WHERE id = ?;

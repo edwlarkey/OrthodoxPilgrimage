@@ -491,6 +491,50 @@ func (q *Queries) GetChurchBySlug(ctx context.Context, slug string) (Church, err
 	return i, err
 }
 
+const getImage = `-- name: GetImage :one
+SELECT id, church_id, saint_id, relic_church_id, relic_saint_id, url, alt_text, source, is_primary, sort_order FROM images
+WHERE id = ?
+`
+
+func (q *Queries) GetImage(ctx context.Context, id int64) (Image, error) {
+	row := q.db.QueryRowContext(ctx, getImage, id)
+	var i Image
+	err := row.Scan(
+		&i.ID,
+		&i.ChurchID,
+		&i.SaintID,
+		&i.RelicChurchID,
+		&i.RelicSaintID,
+		&i.Url,
+		&i.AltText,
+		&i.Source,
+		&i.IsPrimary,
+		&i.SortOrder,
+	)
+	return i, err
+}
+
+const getSaint = `-- name: GetSaint :one
+SELECT id, name, slug, feast_day, description, lives_url, updated_at, status FROM saints
+WHERE id = ?
+`
+
+func (q *Queries) GetSaint(ctx context.Context, id int64) (Saint, error) {
+	row := q.db.QueryRowContext(ctx, getSaint, id)
+	var i Saint
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.FeastDay,
+		&i.Description,
+		&i.LivesUrl,
+		&i.UpdatedAt,
+		&i.Status,
+	)
+	return i, err
+}
+
 const getSaintBySlug = `-- name: GetSaintBySlug :one
 SELECT id, name, slug, feast_day, description, lives_url, updated_at, status FROM saints
 WHERE slug = ?
@@ -1245,6 +1289,24 @@ func (q *Queries) SearchSaints(ctx context.Context, name string) ([]Saint, error
 	return items, nil
 }
 
+const unsetPrimaryImageForChurch = `-- name: UnsetPrimaryImageForChurch :exec
+UPDATE images SET is_primary = 0 WHERE church_id = ?
+`
+
+func (q *Queries) UnsetPrimaryImageForChurch(ctx context.Context, churchID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, unsetPrimaryImageForChurch, churchID)
+	return err
+}
+
+const unsetPrimaryImageForSaint = `-- name: UnsetPrimaryImageForSaint :exec
+UPDATE images SET is_primary = 0 WHERE saint_id = ?
+`
+
+func (q *Queries) UnsetPrimaryImageForSaint(ctx context.Context, saintID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, unsetPrimaryImageForSaint, saintID)
+	return err
+}
+
 const updateAdminLastLogin = `-- name: UpdateAdminLastLogin :exec
 UPDATE admins
 SET last_login_at = CURRENT_TIMESTAMP
@@ -1354,6 +1416,31 @@ func (q *Queries) UpdateChurch(ctx context.Context, arg UpdateChurchParams) (Chu
 		&i.Status,
 	)
 	return i, err
+}
+
+const updateImage = `-- name: UpdateImage :exec
+UPDATE images
+SET alt_text = ?,
+    is_primary = ?,
+    sort_order = ?
+WHERE id = ?
+`
+
+type UpdateImageParams struct {
+	AltText   sql.NullString `json:"alt_text"`
+	IsPrimary sql.NullBool   `json:"is_primary"`
+	SortOrder sql.NullInt64  `json:"sort_order"`
+	ID        int64          `json:"id"`
+}
+
+func (q *Queries) UpdateImage(ctx context.Context, arg UpdateImageParams) error {
+	_, err := q.db.ExecContext(ctx, updateImage,
+		arg.AltText,
+		arg.IsPrimary,
+		arg.SortOrder,
+		arg.ID,
+	)
+	return err
 }
 
 const updateSaint = `-- name: UpdateSaint :one

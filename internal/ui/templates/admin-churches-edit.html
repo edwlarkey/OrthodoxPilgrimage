@@ -122,6 +122,42 @@
             {{if not .IsNew}}
             <div class="card max-w-900 p-0 mt-40">
                 <div style="padding: 40px;">
+                    <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Image Gallery</h2>
+                    
+                    <form hx-post="/admin/images/upload" 
+                          hx-encoding="multipart/form-data" 
+                          hx-swap="none"
+                          hx-indicator="#upload-indicator"
+                          class="upload-box mb-30">
+                        <input type="hidden" name="entity_type" value="church">
+                        <input type="hidden" name="entity_id" value="{{.Church.ID}}">
+                        <div class="flex items-end gap-15">
+                            <div class="flex-1">
+                                <label for="images" class="btn btn-secondary w-full text-center pointer" style="display: block;">
+                                    Select Images
+                                </label>
+                                <input type="file" id="images" name="images" multiple accept="image/*" class="hidden" 
+                                       onchange="this.form.querySelector('.file-count').innerText = this.files.length + ' files selected'">
+                                <div class="file-count text-xxs text-muted mt-5 text-center">No files selected</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </div>
+                        <div id="upload-indicator" class="htmx-indicator mt-10 text-center">
+                            <div class="spinner"></div>
+                            <span class="text-small text-muted">Optimizing and uploading...</span>
+                        </div>
+                    </form>
+
+                    <div hx-get="/admin/images/gallery?entity_type=church&entity_id={{.Church.ID}}" 
+                         hx-trigger="load, imageGalleryUpdated from:body"
+                         hx-swap="innerHTML">
+                        <div class="loading">Loading gallery...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card max-w-900 p-0 mt-40">
+                <div style="padding: 40px;">
                     <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Relics at this Location</h2>
                     
                     {{range .Relics}}
@@ -140,36 +176,31 @@
 
                         <div class="relic-images-admin">
                             <h4 class="text-xs-caps text-muted mb-10">Relic Images</h4>
-                            <div class="flex gap-15 flex-wrap mb-20">
-                                {{range .Images}}
-                                <div class="image-thumb-admin">
-                                    <img src="{{.Url}}" alt="Relic Image">
-                                    <button class="btn-icon-delete"
-                                            hx-delete="/admin/relics/images/delete?id={{.ID}}"
-                                            hx-confirm="Delete this image?"
-                                            hx-swap="none">&times;</button>
-                                    {{if .Source.Valid}}
-                                    <div class="text-xxs text-muted mt-5 truncate" title="{{.Source.String}}">Src: {{.Source.String}}</div>
-                                    {{end}}
-                                </div>
-                                {{else}}
-                                <p class="text-muted text-small">No images for this relic.</p>
-                                {{end}}
+                            
+                            <div hx-get="/admin/images/gallery?entity_type=relic&relic_church_id={{$.Church.ID}}&relic_saint_id={{.Relic.ID}}" 
+                                 hx-trigger="load, imageGalleryUpdated from:body"
+                                 hx-swap="innerHTML">
+                                <div class="loading">Loading relic images...</div>
                             </div>
 
-                            <form hx-post="/admin/relics/images/add" hx-swap="none" class="flex gap-10 items-end">
+                            <form hx-post="/admin/images/upload" 
+                                  hx-encoding="multipart/form-data" 
+                                  hx-swap="none" 
+                                  hx-indicator="#relic-upload-indicator-{{.Relic.ID}}"
+                                  class="flex gap-10 items-end mt-15">
+                                <input type="hidden" name="entity_type" value="relic">
                                 <input type="hidden" name="relic_church_id" value="{{$.Church.ID}}">
                                 <input type="hidden" name="relic_saint_id" value="{{.Relic.ID}}">
                                 <div class="form-group mb-0 flex-1">
-                                    <label class="text-xxs">Image URL</label>
-                                    <input type="url" name="url" placeholder="https://..." required style="padding: 6px; font-size: 0.8rem;">
+                                    <label class="text-xxs">Upload Relic Images</label>
+                                    <input type="file" name="images" multiple accept="image/*" required style="padding: 6px; font-size: 0.8rem;">
                                 </div>
-                                <div class="form-group mb-0 flex-1">
-                                    <label class="text-xxs">Source</label>
-                                    <input type="text" name="source" placeholder="Source name" style="padding: 6px; font-size: 0.8rem;">
-                                </div>
-                                <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Add Image</button>
+                                <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Upload</button>
                             </form>
+                            <div id="relic-upload-indicator-{{.Relic.ID}}" class="htmx-indicator mt-10">
+                                <div class="spinner"></div>
+                                <span class="text-xxs text-muted">Uploading...</span>
+                            </div>
                         </div>
                     </div>
                     {{else}}

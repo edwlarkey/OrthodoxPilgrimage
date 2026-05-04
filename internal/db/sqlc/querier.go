@@ -34,6 +34,8 @@ type Querier interface {
 	GetAdminByUsername(ctx context.Context, username string) (Admin, error)
 	GetChurch(ctx context.Context, id int64) (Church, error)
 	GetChurchBySlug(ctx context.Context, slug string) (Church, error)
+	GetImage(ctx context.Context, id int64) (Image, error)
+	GetSaint(ctx context.Context, id int64) (Saint, error)
 	GetSaintBySlug(ctx context.Context, slug string) (Saint, error)
 	ListAdmins(ctx context.Context) ([]Admin, error)
 	ListAllRelics(ctx context.Context) ([]ListAllRelicsRow, error)
@@ -52,9 +54,12 @@ type Querier interface {
 	ListSaintsByStatus(ctx context.Context, status string) ([]Saint, error)
 	ListSourcesForChurch(ctx context.Context, churchID int64) ([]ChurchSource, error)
 	SearchSaints(ctx context.Context, name string) ([]Saint, error)
+	UnsetPrimaryImageForChurch(ctx context.Context, churchID sql.NullInt64) error
+	UnsetPrimaryImageForSaint(ctx context.Context, saintID sql.NullInt64) error
 	UpdateAdminLastLogin(ctx context.Context, id int64) error
 	UpdateAdminMFA(ctx context.Context, arg UpdateAdminMFAParams) error
 	UpdateChurch(ctx context.Context, arg UpdateChurchParams) (Church, error)
+	UpdateImage(ctx context.Context, arg UpdateImageParams) error
 	UpdateSaint(ctx context.Context, arg UpdateSaintParams) (Saint, error)
 }
 

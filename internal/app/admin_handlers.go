@@ -739,60 +739,6 @@ func (a *Application) adminChurchSourceDeleteHandler(w http.ResponseWriter, r *h
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (a *Application) adminRelicImageAddHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	r.Body = http.MaxBytesReader(w, r.Body, 4096)
-	churchID, _ := strconv.ParseInt(r.FormValue("relic_church_id"), 10, 64)
-	saintID, _ := strconv.ParseInt(r.FormValue("relic_saint_id"), 10, 64)
-	url := r.FormValue("url")
-	altText := r.FormValue("alt_text")
-	source := r.FormValue("source")
-
-	err := a.DB.CreateImage(r.Context(), sqlcdb.CreateImageParams{
-		RelicChurchID: sql.NullInt64{Int64: churchID, Valid: true},
-		RelicSaintID:  sql.NullInt64{Int64: saintID, Valid: true},
-		Url:           url,
-		AltText:       sql.NullString{String: altText, Valid: altText != ""},
-		Source:        sql.NullString{String: source, Valid: source != ""},
-	})
-
-	if err != nil {
-		slog.Error("Failed to add relic image", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	a.logAudit(r.Context(), "CREATE", "relic_image", churchID, map[string]any{"church_id": churchID, "saint_id": saintID, "url": url})
-
-	w.Header().Set("HX-Location", r.Header.Get("HX-Current-URL"))
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (a *Application) adminRelicImageDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	id, _ := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
-
-	err := a.DB.DeleteImage(r.Context(), id)
-	if err != nil {
-		slog.Error("Failed to delete relic image", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	a.logAudit(r.Context(), "DELETE", "relic_image", id, nil)
-
-	w.Header().Set("HX-Location", r.Header.Get("HX-Current-URL"))
-	w.WriteHeader(http.StatusNoContent)
-}
-
 func (a *Application) adminListAdminsHandler(w http.ResponseWriter, r *http.Request) {
 	admins, err := a.DB.ListAdmins(r.Context())
 	if err != nil {
