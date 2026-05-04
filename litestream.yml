@@ -1,3 +1,7 @@
+snapshot:
+  interval: 12h
+  retention: 72h
+
 dbs:
   - path: /orthodox_pilgrimage.db
     replica:
