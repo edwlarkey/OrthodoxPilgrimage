@@ -3,7 +3,7 @@ snapshot:
   retention: 72h
 
 dbs:
-  - path: /orthodox_pilgrimage.db
+  - path: /data/orthodox_pilgrimage.db
     replica:
       url: s3://${BUCKET_NAME}?endpoint=fly.storage.tigris.dev&region=auto
       sync-interval: 1m

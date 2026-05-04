@@ -24,6 +24,7 @@ func main() {
 	logFormat := flag.String("log-format", "text", "log format: text or json")
 	devMode := flag.Bool("dev", false, "enable development mode")
 	seed := flag.Bool("seed", false, "seed database from data/data.json")
+	dbPath := flag.String("db-path", "orthodox_pilgrimage.db", "path to the sqlite database file")
 	flag.Parse()
 
 	var handler slog.Handler
@@ -65,7 +66,7 @@ func main() {
 		slog.Warn("S3 configuration missing; image uploads will be disabled", "bucket", imageBucket, "endpoint", s3Endpoint)
 	}
 
-	dsn := "orthodox_pilgrimage.db?_busy_timeout=5000"
+	dsn := *dbPath + "?_busy_timeout=5000"
 	dbConn, err := internaldb.New(dsn)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
