@@ -19,6 +19,7 @@ type Querier interface {
 	CreateImage(ctx context.Context, arg CreateImageParams) error
 	CreateRelic(ctx context.Context, arg CreateRelicParams) error
 	CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint, error)
+	DeleteAdmin(ctx context.Context, id int64) error
 	DeleteAllChurches(ctx context.Context) error
 	DeleteAllImages(ctx context.Context) error
 	DeleteAllRelics(ctx context.Context) error
@@ -34,6 +35,7 @@ type Querier interface {
 	GetChurch(ctx context.Context, id int64) (Church, error)
 	GetChurchBySlug(ctx context.Context, slug string) (Church, error)
 	GetSaintBySlug(ctx context.Context, slug string) (Saint, error)
+	ListAdmins(ctx context.Context) ([]Admin, error)
 	ListAllRelics(ctx context.Context) ([]ListAllRelicsRow, error)
 	ListChurches(ctx context.Context) ([]Church, error)
 	ListChurchesBySaintSlug(ctx context.Context, slug string) ([]Church, error)

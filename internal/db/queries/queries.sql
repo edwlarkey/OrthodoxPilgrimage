@@ -260,3 +260,10 @@ JOIN saints s ON r.saint_id = s.id
 JOIN churches c ON r.church_id = c.id
 ORDER BY c.updated_at DESC NULLS LAST
 LIMIT 5;
+
+-- name: ListAdmins :many
+SELECT * FROM admins
+ORDER BY username;
+
+-- name: DeleteAdmin :exec
+DELETE FROM admins WHERE id = ?;

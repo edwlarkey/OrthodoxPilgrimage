@@ -41,7 +41,6 @@ func (a *Application) Routes() http.Handler {
 	mux.HandleFunc("/admin/login", a.adminLoginHandler)
 	mux.HandleFunc("/admin/setup", a.adminSetupHandler)
 	mux.HandleFunc("/admin/logout", a.adminLogoutHandler)
-	mux.HandleFunc("/admin/mfa", a.adminMfaHandler)
 
 	// Protected admin routes
 	adminMux := http.NewServeMux()
@@ -59,6 +58,10 @@ func (a *Application) Routes() http.Handler {
 	adminMux.HandleFunc("/admin/relics", a.adminRelicsListHandler)
 	adminMux.HandleFunc("/admin/relics/new", a.adminRelicEditHandler)
 	adminMux.HandleFunc("/admin/relics/delete", a.adminRelicDeleteHandler)
+
+	adminMux.HandleFunc("/admin/admins", a.adminListAdminsHandler)
+	adminMux.HandleFunc("/admin/admins/new", a.adminCreateAdminHandler)
+	adminMux.HandleFunc("/admin/admins/delete", a.adminDeleteAdminHandler)
 
 	adminMux.HandleFunc("/admin/churches/sources/add", a.adminChurchSourceAddHandler)
 	adminMux.HandleFunc("/admin/churches/sources/delete", a.adminChurchSourceDeleteHandler)
@@ -127,12 +130,6 @@ func (a *Application) AdminAuthMiddleware(next http.Handler) http.Handler {
 
 		if !a.SessionManager.Exists(r.Context(), "admin_id") {
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
-			return
-		}
-
-		// Check for MFA pending
-		if !a.DevMode && a.SessionManager.GetBool(r.Context(), "mfa_pending") && r.URL.Path != "/admin/mfa" {
-			http.Redirect(w, r, "/admin/mfa", http.StatusSeeOther)
 			return
 		}
 
@@ -684,7 +681,6 @@ func (a *Application) saintsDirectoryHandler(w http.ResponseWriter, r *http.Requ
 		Metadata: metadata,
 		Content:  data,
 	}
-
 	w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
 	if err := a.Templates.Render(w, "index", pageData); err != nil {
 		http.Error(w, "failed to render template", http.StatusInternalServerError)

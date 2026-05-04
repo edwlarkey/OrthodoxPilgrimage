@@ -18,7 +18,8 @@ import (
 
 func main() {
 	logFormat := flag.String("log-format", "text", "log format: text or json")
-	devMode := flag.Bool("dev", false, "enable development mode (bypasses MFA, etc)")
+	devMode := flag.Bool("dev", false, "enable development mode")
+	seed := flag.Bool("seed", false, "seed database from data/data.json")
 	flag.Parse()
 
 	var handler slog.Handler

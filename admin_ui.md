@@ -125,7 +125,7 @@ High test coverage is a mandatory requirement for the admin interface.
 - [x] **Saints Management:** List, Create, Edit, Delete (HTMX-powered).
 - [x] **Church Management:** List, Create, Edit, Delete.
 - [x] **Relic Management:** Interface to link Saints to Churches.
-- [ ] **Admin Management:** Invite-only system to create new administrators from the dashboard.
+- [x] **Admin Management:** Invite-only system to create new administrators from the dashboard.
 - [x] Implement Draft/Published status toggle for all entities.
 - [x] Implement auto-slugging with collision detection.
 - [x] **Tests:** CRUD integration tests for all entities; Slug collision tests.

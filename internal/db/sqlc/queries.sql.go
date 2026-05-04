@@ -287,6 +287,15 @@ func (q *Queries) CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint
 	return i, err
 }
 
+const deleteAdmin = `-- name: DeleteAdmin :exec
+DELETE FROM admins WHERE id = ?
+`
+
+func (q *Queries) DeleteAdmin(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteAdmin, id)
+	return err
+}
+
 const deleteAllChurches = `-- name: DeleteAllChurches :exec
 DELETE FROM churches
 `
@@ -501,6 +510,42 @@ func (q *Queries) GetSaintBySlug(ctx context.Context, slug string) (Saint, error
 		&i.Status,
 	)
 	return i, err
+}
+
+const listAdmins = `-- name: ListAdmins :many
+SELECT id, username, password_hash, mfa_secret, mfa_enabled, last_login_at, created_at FROM admins
+ORDER BY username
+`
+
+func (q *Queries) ListAdmins(ctx context.Context) ([]Admin, error) {
+	rows, err := q.db.QueryContext(ctx, listAdmins)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Admin
+	for rows.Next() {
+		var i Admin
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.PasswordHash,
+			&i.MfaSecret,
+			&i.MfaEnabled,
+			&i.LastLoginAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listAllRelics = `-- name: ListAllRelics :many

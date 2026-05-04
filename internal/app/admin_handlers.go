@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
-	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -86,71 +85,6 @@ func (a *Application) adminLoginHandler(w http.ResponseWriter, r *http.Request) 
 		a.SessionManager.Put(r.Context(), "admin_id", admin.ID)
 		a.SessionManager.Put(r.Context(), "username", admin.Username)
 
-		if !a.DevMode {
-			if admin.MfaEnabled.Bool || admin.MfaSecret.Valid {
-				a.SessionManager.Put(r.Context(), "mfa_pending", true)
-				http.Redirect(w, r, "/admin/mfa", http.StatusSeeOther)
-				return
-			}
-		}
-
-		http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
-	}
-}
-
-func (a *Application) adminMfaHandler(w http.ResponseWriter, r *http.Request) {
-	if !a.SessionManager.Exists(r.Context(), "admin_id") {
-		http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
-		return
-	}
-
-	if r.Method == http.MethodGet {
-		ts, err := a.Templates.Get("admin-mfa")
-		if err != nil {
-			slog.Error("Template not found", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		err = ts.ExecuteTemplate(w, "admin-mfa", nil)
-		if err != nil {
-			slog.Error("Error rendering template", "error", err)
-		}
-		return
-	}
-
-	if r.Method == http.MethodPost {
-		r.Body = http.MaxBytesReader(w, r.Body, 4096)
-		code := r.FormValue("code")
-		adminID := a.SessionManager.GetInt64(r.Context(), "admin_id")
-
-		admin, err := a.DB.GetAdmin(r.Context(), adminID)
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		if !admin.MfaSecret.Valid {
-			http.Error(w, "MFA Not Configured", http.StatusBadRequest)
-			return
-		}
-
-		valid := totp.Validate(code, admin.MfaSecret.String)
-		if !valid && !a.DevMode {
-			ts, err := a.Templates.Get("admin-mfa")
-			if err != nil {
-				slog.Error("Template not found", "error", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-			err = ts.ExecuteTemplate(w, "admin-mfa", map[string]string{"Error": "Invalid verification code"})
-			if err != nil {
-				slog.Error("Error rendering template", "error", err)
-			}
-			return
-		}
-
-		a.SessionManager.Remove(r.Context(), "mfa_pending")
-		_ = a.DB.UpdateAdminLastLogin(r.Context(), admin.ID)
 		http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
 	}
 }
@@ -234,26 +168,16 @@ func (a *Application) adminSetupHandler(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		key, err := totp.Generate(totp.GenerateOpts{
-			Issuer:      "OrthodoxPilgrimage",
-			AccountName: username,
-		})
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
 		_, err = a.DB.CreateAdmin(r.Context(), sqlcdb.CreateAdminParams{
 			Username:     username,
 			PasswordHash: string(hash),
-			MfaSecret:    sql.NullString{String: key.Secret(), Valid: true},
 		})
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		fmt.Fprintf(w, "Admin created! PLEASE SAVE YOUR MFA SECRET: %s\nThen go to /admin/login", key.Secret())
+		fmt.Fprintf(w, "Admin created! Then go to /admin/login")
 	}
 }
 
@@ -770,9 +694,9 @@ func (a *Application) adminChurchSourceAddHandler(w http.ResponseWriter, r *http
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	churchID, _ := strconv.ParseInt(r.FormValue("church_id"), 10, 64)
 	source := r.FormValue("source")
-
 	if source == "" {
 		http.Error(w, "Source is required", http.StatusBadRequest)
 		return
@@ -821,6 +745,7 @@ func (a *Application) adminRelicImageAddHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	churchID, _ := strconv.ParseInt(r.FormValue("relic_church_id"), 10, 64)
 	saintID, _ := strconv.ParseInt(r.FormValue("relic_saint_id"), 10, 64)
 	url := r.FormValue("url")
@@ -866,4 +791,131 @@ func (a *Application) adminRelicImageDeleteHandler(w http.ResponseWriter, r *htt
 
 	w.Header().Set("HX-Location", r.Header.Get("HX-Current-URL"))
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (a *Application) adminListAdminsHandler(w http.ResponseWriter, r *http.Request) {
+	admins, err := a.DB.ListAdmins(r.Context())
+	if err != nil {
+		slog.Error("Failed to list admins", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		ActiveNav string
+		Title     string
+		Username  string
+		Admins    []sqlcdb.Admin
+	}{
+		ActiveNav: "admins",
+		Title:     "Admins",
+		Username:  a.SessionManager.GetString(r.Context(), "username"),
+		Admins:    admins,
+	}
+
+	ts, err := a.Templates.Get("admin-admins-list")
+	if err != nil {
+		slog.Error("Template not found", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	err = ts.ExecuteTemplate(w, "admin-admins-list", data)
+	if err != nil {
+		slog.Error("Error rendering template", "error", err)
+	}
+}
+
+func (a *Application) adminCreateAdminHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		ts, err := a.Templates.Get("admin-admins-new")
+		if err != nil {
+			slog.Error("Template not found", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		err = ts.ExecuteTemplate(w, "admin-admins-new", nil)
+		if err != nil {
+			slog.Error("Error rendering template", "error", err)
+		}
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 4096)
+		username := strings.TrimSpace(r.FormValue("username"))
+		password := r.FormValue("password")
+
+		if username == "" || len(password) < 8 {
+			ts, _ := a.Templates.Get("admin-admins-new")
+			err := ts.ExecuteTemplate(w, "admin-admins-new", map[string]string{"Error": "Username required and password must be at least 8 characters.", "Username": username})
+			if err != nil {
+				slog.Error("Error rendering template", "error", err)
+			}
+			return
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+		if err != nil {
+			slog.Error("Failed to hash password", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		admin, err := a.DB.CreateAdmin(r.Context(), sqlcdb.CreateAdminParams{
+			Username:     username,
+			PasswordHash: string(hash),
+		})
+
+		if err != nil {
+			slog.Error("Failed to create admin", "error", err)
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+				ts, _ := a.Templates.Get("admin-admins-new")
+				err = ts.ExecuteTemplate(w, "admin-admins-new", map[string]string{"Error": "Username already exists.", "Username": username})
+				if err != nil {
+					slog.Error("Error rendering template", "error", err)
+				}
+				return
+			}
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		a.logAudit(r.Context(), "CREATE", "admin", admin.ID, nil)
+
+		w.Header().Set("HX-Trigger", `{"adminToast": {"message": "Admin created successfully.", "type": "success"}}`)
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (a *Application) adminDeleteAdminHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, err := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	// Prevent self-deletion
+	currentAdminID := a.SessionManager.GetInt64(r.Context(), "admin_id")
+	if id == currentAdminID {
+		w.Header().Set("HX-Trigger", `{"adminToast": {"message": "You cannot delete your own account.", "type": "error"}}`)
+		w.WriteHeader(http.StatusNoContent) // Just swallow it, or we could return 400
+		return
+	}
+
+	err = a.DB.DeleteAdmin(r.Context(), id)
+	if err != nil {
+		slog.Error("Failed to delete admin", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	a.logAudit(r.Context(), "DELETE", "admin", id, nil)
+
+	w.Header().Set("HX-Trigger", `{"adminToast": {"message": "Admin deleted successfully.", "type": "success"}}`)
+	w.WriteHeader(http.StatusOK) // Just empty response, outerHTML swap will remove the row
 }
