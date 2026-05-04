@@ -49,7 +49,7 @@ func (a *Application) ProcessAndUploadImage(ctx context.Context, file io.Reader,
 	optimizedPath := filepath.Join(tempDir, "optimized.webp")
 
 	// Save original to disk for processing
-	out, err := os.Create(originalPath)
+	out, err := os.Create(originalPath) //nolint:gosec // G703: path is from os.MkdirTemp, not user input
 	if err != nil {
 		return fmt.Errorf("failed to create original temp file: %w", err)
 	}
@@ -134,7 +134,7 @@ func (a *Application) ProcessAndUploadImage(ctx context.Context, file io.Reader,
 
 	// 3. Save to Database
 	imageURL := fmt.Sprintf("https://images.orthodoxpilgrimage.com/%s", optimizedS3Key)
-	
+
 	params := sqlcdb.CreateImageParams{
 		Url:       imageURL,
 		AltText:   sql.NullString{String: meta.AltText, Valid: meta.AltText != ""},
@@ -195,7 +195,7 @@ func (a *Application) adminImageUploadHandler(w http.ResponseWriter, r *http.Req
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
-	
+
 	entityType := r.FormValue("entity_type")
 	entityIDStr := r.FormValue("entity_id")
 	entityID, _ := strconv.ParseInt(entityIDStr, 10, 64)
@@ -210,7 +210,7 @@ func (a *Application) adminImageUploadHandler(w http.ResponseWriter, r *http.Req
 			slog.Error("Failed to open uploaded file", "error", err)
 			continue
 		}
-		
+
 		err = a.ProcessAndUploadImage(r.Context(), file, fileHeader.Filename, ImageMetadata{
 			EntityType:    entityType,
 			EntityID:      entityID,
@@ -309,7 +309,7 @@ func (a *Application) adminImageDeleteHandler(w http.ResponseWriter, r *http.Req
 	// 1. Delete from S3
 	if a.S3Client != nil {
 		key := strings.TrimPrefix(image.Url, "https://images.orthodoxpilgrimage.com/")
-		
+
 		_, err = a.S3Client.DeleteObject(r.Context(), &s3.DeleteObjectInput{
 			Bucket: aws.String(a.S3Bucket),
 			Key:    aws.String(key),

@@ -524,7 +524,7 @@ func TestAdminRelicImageHandlers(t *testing.T) {
 	_ = writer.WriteField("entity_type", "relic")
 	_ = writer.WriteField("relic_church_id", strconv.FormatInt(church.ID, 10))
 	_ = writer.WriteField("relic_saint_id", strconv.FormatInt(saint.ID, 10))
-	
+
 	part, _ := writer.CreateFormFile("images", "test.png")
 	// Valid 1x1 PNG
 	pngData := []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\x0aIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\x0d\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82")
@@ -539,8 +539,8 @@ func TestAdminRelicImageHandlers(t *testing.T) {
 
 	// 2. Verify in DB
 	images, _ := app.DB.ListImagesForRelic(ctx, sqlcdb.ListImagesForRelicParams{
-		RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true}, 
-		RelicSaintID: sql.NullInt64{Int64: saint.ID, Valid: true},
+		RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true},
+		RelicSaintID:  sql.NullInt64{Int64: saint.ID, Valid: true},
 	})
 	require.NotEmpty(t, images)
 	assert.Contains(t, images[0].Url, "relics/church-slug/saint-slug/optimized/test.webp")
@@ -553,12 +553,11 @@ func TestAdminRelicImageHandlers(t *testing.T) {
 
 	// Verify DB is empty
 	images, _ = app.DB.ListImagesForRelic(ctx, sqlcdb.ListImagesForRelicParams{
-		RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true}, 
-		RelicSaintID: sql.NullInt64{Int64: saint.ID, Valid: true},
+		RelicChurchID: sql.NullInt64{Int64: church.ID, Valid: true},
+		RelicSaintID:  sql.NullInt64{Int64: saint.ID, Valid: true},
 	})
 	assert.Empty(t, images)
 }
-
 
 func TestAdminAuthMiddleware(t *testing.T) {
 	app, dbConn := setupAdminTest(t)

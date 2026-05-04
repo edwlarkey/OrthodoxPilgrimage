@@ -5,7 +5,7 @@
         <a href="/" 
            hx-get="/"
            hx-target="#church-details"
-           hx-swap="innerHTML show:top"
+            hx-swap="innerHTML"
            hx-push-url="true"
            class="reset-search-btn-sidebar"
            title="Reset Map">
@@ -132,7 +132,7 @@
                         <a href="/{{.Relic.Slug}}?from={{$churchSlug}}"
                            hx-get="/{{.Relic.Slug}}?from={{$churchSlug}}"
                            hx-target="#church-details"
-                           hx-swap="innerHTML show:top"
+hx-swap="innerHTML"
                            hx-push-url="true"
                            class="saint-name">{{.Relic.Name}}</a>                        {{if .Relic.RelicDescription.Valid}}
                             <span class="relic-type">{{.Relic.RelicDescription.String}}</span>

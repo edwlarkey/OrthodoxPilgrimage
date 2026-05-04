@@ -46,5 +46,5 @@ func TestSlugify(t *testing.T) {
 }
 
 // More complex tests would require mocking S3 and ImageMagick
-// which might be out of scope for a quick verification but 
+// which might be out of scope for a quick verification but
 // good to have in a real project.
