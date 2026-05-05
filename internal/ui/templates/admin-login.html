@@ -1,0 +1,36 @@
+{{define "admin-login"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Orthodox Pilgrimage</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+</head>
+<body class="auth-body">
+    <div class="login-card">
+        <div class="login-header">
+            <h1>{{if .Title}}{{.Title}}{{else}}Orthodox Pilgrimage{{end}}</h1>
+            <p class="text-muted text-semibold text-xs-caps mt-10 mb-0">Admin Portal</p>
+        </div>
+        
+        {{if .Error}}
+        <div class="error-msg">{{.Error}}</div>
+        {{end}}
+
+        <form action="{{if .Setup}}/admin/setup{{else}}/admin/login{{end}}" method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="{{if .Setup}}new-password{{else}}current-password{{end}}">
+            </div>
+            <button type="submit" class="btn btn-primary w-full mt-10">{{if .Setup}}Create Admin{{else}}Sign In{{end}}</button>
+        </form>
+    </div>
+</body>
+</html>
+{{end}}

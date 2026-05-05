@@ -1,0 +1,436 @@
+{{define "admin-churches-edit"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .IsNew}}New Church{{else}}Edit {{.Church.Name}}{{end}} - Admin</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.0.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v9.0.0/dist/ol.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
+
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
+
+        <div class="admin-content-area">
+            <div class="card max-w-900 p-0">
+                <div style="padding: 40px;">
+                    <h1 class="mb-0 mt-0 text-bold" style="font-size: 1.8rem; margin-bottom: 30px;">{{if .IsNew}}New Church{{else}}Edit {{.Church.Name}}{{end}}</h1>
+                    
+                    <form hx-post="{{if .IsNew}}/admin/churches/new{{else}}/admin/churches/edit/{{.Church.Slug}}{{end}}" hx-push-url="false">
+                        <div class="form-group">
+                            <label for="name">Church Name</label>
+                            <input type="text" id="name" name="name" value="{{if not .IsNew}}{{.Church.Name}}{{end}}" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="slug">Slug (leave empty to auto-generate)</label>
+                                <input type="text" id="slug" name="slug" value="{{if not .IsNew}}{{.Church.Slug}}{{end}}" placeholder="e.g. st-nicholas-nyc">
+                            </div>
+                            <div class="form-group">
+                                <label for="jurisdiction">Jurisdiction</label>
+                                <input type="text" id="jurisdiction" name="jurisdiction" value="{{if and (not .IsNew) .Church.Jurisdiction.Valid}}{{.Church.Jurisdiction.String}}{{end}}" placeholder="e.g. GOARCH">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address_text">Address</label>
+                            <input type="text" id="address_text" name="address_text" value="{{if not .IsNew}}{{.Church.AddressText}}{{end}}" placeholder="123 Main St">
+                        </div>
+
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label for="city">City</label>
+                                <input type="text" id="city" name="city" value="{{if not .IsNew}}{{.Church.City}}{{end}}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="state_province">State / Province</label>
+                                <input type="text" id="state_province" name="state_province" value="{{if not .IsNew}}{{.Church.StateProvince}}{{end}}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="postal_code">Postal Code</label>
+                                <input type="text" id="postal_code" name="postal_code" value="{{if and (not .IsNew) .Church.PostalCode.Valid}}{{.Church.PostalCode.String}}{{end}}">
+                            </div>
+                        </div>
+
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label for="country_code">Country Code</label>
+                                <input type="text" id="country_code" name="country_code" value="{{if .IsNew}}US{{else}}{{.Church.CountryCode}}{{end}}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="latitude">Latitude</label>
+                                <input type="number" step="any" id="latitude" name="latitude" value="{{if not .IsNew}}{{.Church.Latitude}}{{end}}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="longitude">Longitude</label>
+                                <input type="number" step="any" id="longitude" name="longitude" value="{{if not .IsNew}}{{.Church.Longitude}}{{end}}" required>
+                            </div>
+                        </div>
+
+                        <div class="map-section mt-20">
+                            <div class="map-search-container">
+                                <label for="map-search">Search Address for Map</label>
+                                <div class="flex gap-10">
+                                    <input type="text" id="map-search" placeholder="Enter address to find on map..." class="flex-1">
+                                    <button type="button" id="map-search-btn" class="btn btn-secondary">Search</button>
+                                </div>
+                                <div id="map-search-results" class="map-search-results" style="display: none;"></div>
+                            </div>
+                            <div id="admin-map"></div>
+                            <p class="text-muted text-xxs">Drag the pin on the map to refine the location. Latitude and Longitude will update automatically.</p>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="website">Website</label>
+                                <input type="url" id="website" name="website" value="{{if and (not .IsNew) .Church.Website.Valid}}{{.Church.Website.String}}{{end}}" placeholder="https://...">
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone</label>
+                                <input type="tel" id="phone" name="phone" value="{{if and (not .IsNew) .Church.Phone.Valid}}{{.Church.Phone.String}}{{end}}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" name="description" rows="4">{{if and (not .IsNew) .Church.Description.Valid}}{{.Church.Description.String}}{{end}}</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select id="status" name="status">
+                                <option value="published" {{if or .IsNew (eq .Church.Status "published")}}selected{{end}}>Published</option>
+                                <option value="draft" {{if and (not .IsNew) (eq .Church.Status "draft")}}selected{{end}}>Draft</option>
+                            </select>
+                        </div>
+
+                        <div class="flex gap-15 mt-40">
+                            <button type="submit" class="btn btn-primary">Save Church</button>
+                            <a href="/admin/churches" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {{if not .IsNew}}
+            <div class="card max-w-900 p-0 mt-40">
+                <div style="padding: 40px;">
+                    <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Image Gallery</h2>
+                    
+                    <form hx-post="/admin/images/upload" 
+                          hx-encoding="multipart/form-data" 
+                          hx-swap="none"
+                          hx-indicator="#upload-indicator"
+                          class="upload-box mb-30">
+                        <input type="hidden" name="entity_type" value="church">
+                        <input type="hidden" name="entity_id" value="{{.Church.ID}}">
+                        <div class="flex items-end gap-15">
+                            <div class="flex-1">
+                                <label for="images" class="btn btn-secondary w-full text-center pointer" style="display: block;">
+                                    Select Images
+                                </label>
+                                <input type="file" id="images" name="images" multiple accept="image/*" class="hidden" 
+                                       onchange="this.form.querySelector('.file-count').innerText = this.files.length + ' files selected'">
+                                <div class="file-count text-xxs text-muted mt-5 text-center">No files selected</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </div>
+                        <div id="upload-indicator" class="htmx-indicator mt-10 text-center">
+                            <div class="spinner"></div>
+                            <span class="text-small text-muted">Optimizing and uploading...</span>
+                        </div>
+                    </form>
+
+                    <div hx-get="/admin/images/gallery?entity_type=church&entity_id={{.Church.ID}}" 
+                         hx-trigger="load, imageGalleryUpdated from:body"
+                         hx-swap="innerHTML">
+                        <div class="loading">Loading gallery...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card max-w-900 p-0 mt-40">
+                <div style="padding: 40px;">
+                    <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Relics at this Location</h2>
+                    
+                    {{range .Relics}}
+                    <div class="relic-admin-box" id="relic-{{$.Church.ID}}-{{.Relic.ID}}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="mt-0 mb-10 text-bold">{{.Relic.Name}}</h3>
+                                <p class="text-muted mb-20">{{if .Relic.RelicDescription.Valid}}{{.Relic.RelicDescription.String}}{{else}}No description{{end}}</p>
+                            </div>
+                            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;"
+                                    hx-delete="/admin/relics/delete?church_id={{$.Church.ID}}&saint_id={{.Relic.ID}}" 
+                                    hx-confirm="Remove this relic from the church?"
+                                    hx-target="#relic-{{$.Church.ID}}-{{.Relic.ID}}"
+                                    hx-swap="outerHTML">Remove Relic</button>
+                        </div>
+
+                        <div class="relic-images-admin">
+                            <h4 class="text-xs-caps text-muted mb-10">Relic Images</h4>
+                            
+                            <div hx-get="/admin/images/gallery?entity_type=relic&relic_church_id={{$.Church.ID}}&relic_saint_id={{.Relic.ID}}" 
+                                 hx-trigger="load, imageGalleryUpdated from:body"
+                                 hx-swap="innerHTML">
+                                <div class="loading">Loading relic images...</div>
+                            </div>
+
+                            <form hx-post="/admin/images/upload" 
+                                  hx-encoding="multipart/form-data" 
+                                  hx-swap="none" 
+                                  hx-indicator="#relic-upload-indicator-{{.Relic.ID}}"
+                                  class="flex gap-10 items-end mt-15">
+                                <input type="hidden" name="entity_type" value="relic">
+                                <input type="hidden" name="relic_church_id" value="{{$.Church.ID}}">
+                                <input type="hidden" name="relic_saint_id" value="{{.Relic.ID}}">
+                                <div class="form-group mb-0 flex-1">
+                                    <label class="text-xxs">Upload Relic Images</label>
+                                    <input type="file" name="images" multiple accept="image/*" required style="padding: 6px; font-size: 0.8rem;">
+                                </div>
+                                <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Upload</button>
+                            </form>
+                            <div id="relic-upload-indicator-{{.Relic.ID}}" class="htmx-indicator mt-10">
+                                <div class="spinner"></div>
+                                <span class="text-xxs text-muted">Uploading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    {{else}}
+                    <p class="text-center text-muted mb-40">No relics recorded here.</p>
+                    {{end}}
+
+                    <h3 class="mb-0 mt-40 text-bold" style="font-size: 1.2rem; margin-bottom: 20px;">Add a Relic</h3>
+                    <form hx-post="/admin/relics/new" hx-push-url="false" style="background: #f8f9fa; padding: 25px; border-radius: 12px; border: 1px solid var(--border);">
+                        <input type="hidden" name="church_id" value="{{.Church.ID}}">
+                        
+                        <div class="form-row">
+                            <div class="form-group mb-0">
+                                <label for="saint_id">Saint</label>
+                                <select id="saint_id" name="saint_id" required>
+                                    <option value="">Select a saint...</option>
+                                    {{range .Saints}}
+                                    <option value="{{.ID}}">{{.Name}}</option>
+                                    {{end}}
+                                </select>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label for="relic_description">Description (optional)</label>
+                                <input type="text" id="relic_description" name="description" placeholder="e.g. Right hand, fragment">
+                            </div>
+                        </div>
+                        <div class="mt-20">
+                            <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Add Relic</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card max-w-900 p-0 mt-40">
+                <div style="padding: 40px;">
+                    <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Information Sources</h2>
+                    
+                    <div class="flex gap-10 flex-wrap mb-20">
+                        {{range .Sources}}
+                        <div class="source-pill-admin">
+                            <span class="saint-name">{{.Source}}</span>
+                            <button class="btn-icon-delete"
+                                    hx-delete="/admin/churches/sources/delete?id={{.ID}}"
+                                    hx-confirm="Remove this source?"
+                                    hx-swap="none">&times;</button>
+                        </div>
+                        {{else}}
+                        <p class="text-muted text-small">No sources recorded for this church.</p>
+                        {{end}}
+                    </div>
+
+                    <form hx-post="/admin/churches/sources/add" hx-swap="none" class="relic-admin-box flex gap-10 items-end">
+                        <input type="hidden" name="church_id" value="{{.Church.ID}}">
+                        <div class="form-group mb-0 flex-1">
+                            <label for="new_source">Add Source (Name or URL)</label>
+                            <input type="text" id="new_source" name="source" placeholder="e.g. OrthodoxWiki" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Add Source</button>
+                    </form>
+                </div>
+            </div>
+            {{end}}
+            </div>
+            </main>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+            const latInput = document.getElementById('latitude');
+            const lngInput = document.getElementById('longitude');
+
+            let initialLat = parseFloat(latInput.value) || 39.8283;
+            let initialLng = parseFloat(lngInput.value) || -98.5795;
+            let initialZoom = latInput.value && lngInput.value ? 16 : 4;
+
+            const map = new ol.Map({
+                target: 'admin-map',
+                layers: [
+                    new ol.layer.Tile({
+                        source: new ol.source.OSM()
+                    })
+                ],
+                view: new ol.View({
+                    center: ol.proj.fromLonLat([initialLng, initialLat]),
+                    zoom: initialZoom
+                })
+            });
+
+            const svgPin = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21C16 17 20 13.4183 20 9C20 4.58172 16.4183 1 12 1C7.58172 1 4 4.58172 4 9C4 13.4183 8 17 12 21Z" fill="#530c38" stroke="white" stroke-width="1"/><circle cx="12" cy="9" r="3" fill="white"/></svg>';
+
+            const iconStyle = new ol.style.Style({
+                image: new ol.style.Icon({
+                    anchor: [0.5, 1],
+                    src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgPin),
+                    scale: 1,
+                }),
+            });
+
+            const vectorSource = new ol.source.Vector();
+            const markerFeature = new ol.Feature({
+                geometry: new ol.geom.Point(ol.proj.fromLonLat([initialLng, initialLat]))
+            });
+            vectorSource.addFeature(markerFeature);
+
+            const vectorLayer = new ol.layer.Vector({
+                source: vectorSource,
+                style: iconStyle
+            });
+            map.addLayer(vectorLayer);
+
+            const translate = new ol.interaction.Translate({
+                features: new ol.Collection([markerFeature])
+            });
+            map.addInteraction(translate);
+
+            // Change cursor when hovering over the marker
+            map.on('pointermove', function(e) {
+                const pixel = map.getEventPixel(e.originalEvent);
+                const hit = map.hasFeatureAtPixel(pixel);
+                map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+            });
+
+            translate.on('translateend', function(evt) {
+                const coords = ol.proj.toLonLat(markerFeature.getGeometry().getCoordinates());
+                lngInput.value = coords[0].toFixed(6);
+                latInput.value = coords[1].toFixed(6);
+            });
+
+            // Geocoding Search
+            const searchInput = document.getElementById('map-search');
+            const searchBtn = document.getElementById('map-search-btn');
+            const resultsDiv = document.getElementById('map-search-results');
+
+            function performSearch() {
+                const query = searchInput.value.trim();
+                if (query.length < 3) return;
+
+                searchBtn.disabled = true;
+                searchBtn.innerText = 'Searching...';
+
+                fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`)
+                    .then(response => response.json())
+                    .then(data => {
+                        resultsDiv.innerHTML = '';
+                        if (data.features && data.features.length > 0) {
+                            data.features.forEach(feature => {
+                                const item = document.createElement('div');
+                                item.className = 'map-search-result-item';
+
+                                const props = feature.properties;
+                                const name = props.name || '';
+                                const city = props.city || '';
+                                const state = props.state || '';
+                                const country = props.country || '';
+                                const address = [city, state, country].filter(x => x).join(', ');
+
+                                item.innerHTML = `
+                                    <span class="result-title">${name}</span>
+                                    <span class="result-address">${address}</span>
+                                `;
+
+                                item.onclick = () => {
+                                    const coords = feature.geometry.coordinates;
+                                    const olCoords = ol.proj.fromLonLat(coords);
+
+                                    markerFeature.getGeometry().setCoordinates(olCoords);
+                                    map.getView().animate({center: olCoords, zoom: 16});
+
+                                    lngInput.value = coords[0].toFixed(6);
+                                    latInput.value = coords[1].toFixed(6);
+
+                                    // Also try to fill other fields if they are empty
+                                    if (props.postcode && !document.getElementById('postal_code').value) {
+                                        document.getElementById('postal_code').value = props.postcode;
+                                    }
+                                    if (props.city && !document.getElementById('city').value) {
+                                        document.getElementById('city').value = props.city;
+                                    }
+                                    if (props.state && !document.getElementById('state_province').value) {
+                                        document.getElementById('state_province').value = props.state;
+                                    }
+                                    if (props.countrycode && !document.getElementById('country_code').value) {
+                                        document.getElementById('country_code').value = props.countrycode.toUpperCase();
+                                    }
+
+                                    resultsDiv.style.display = 'none';
+                                    searchInput.value = '';
+                                };
+                                resultsDiv.appendChild(item);
+                            });
+                            resultsDiv.style.display = 'block';
+                        } else {
+                            resultsDiv.innerHTML = '<div class="map-search-result-item">No results found</div>';
+                            resultsDiv.style.display = 'block';
+                        }
+                    })
+                    .finally(() => {
+                        searchBtn.disabled = false;
+                        searchBtn.innerText = 'Search';
+                    });
+            }
+
+            searchBtn.onclick = performSearch;
+            searchInput.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performSearch();
+                }
+            };
+
+            // Close results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+
+            // Update marker if manual input changes
+            const updateMarkerFromInputs = () => {
+                const lat = parseFloat(latInput.value);
+                const lng = parseFloat(lngInput.value);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const coords = ol.proj.fromLonLat([lng, lat]);
+                    markerFeature.getGeometry().setCoordinates(coords);
+                    map.getView().setCenter(coords);
+                }
+            };
+
+            latInput.onchange = updateMarkerFromInputs;
+            lngInput.onchange = updateMarkerFromInputs;
+            });
+            </script>
+            </body>
+            </html>
+            {{end}}

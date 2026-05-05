@@ -4,7 +4,7 @@ This document outlines the plan for creating a website to help Orthodox Christia
 
 ## 1. Vision
 
-To create a resource that maps the locations of Orthodox churches containing relics of saints available for public veneration, making it easy for people to plan pilgrimages.
+To create an interactive, community-driven resource that maps the locations of Orthodox churches across North America containing sacred relics of saints available for public veneration, making it easy for the faithful to plan their spiritual journeys.
 
 ## 2. Core Features (MVP - Minimum Viable Product)
 

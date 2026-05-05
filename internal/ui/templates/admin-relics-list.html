@@ -1,0 +1,56 @@
+{{define "admin-relics-list"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relics - Admin</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
+
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
+
+        <div class="admin-content-area">
+            <div class="page-header">
+                <h1>Relics</h1>
+                <a href="/admin/relics/new" class="btn btn-primary">Add New Relic</a>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Church</th>
+                        <th>Saint</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Relics}}
+                    <tr id="relic-{{.ChurchID}}-{{.SaintID}}">
+                        <td class="text-semibold">{{.ChurchName}}</td>
+                        <td>{{.SaintName}}</td>
+                        <td>{{if .Description.Valid}}{{.Description.String}}{{else}}-{{end}}</td>
+                        <td>
+                            <div class="flex gap-10">
+                                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;"
+                                        hx-delete="/admin/relics/delete?church_id={{.ChurchID}}&saint_id={{.SaintID}}" 
+                                        hx-confirm="Are you sure you want to remove this relic link?"
+                                        hx-target="#relic-{{.ChurchID}}-{{.SaintID}}"
+                                        hx-swap="outerHTML">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
+{{end}}

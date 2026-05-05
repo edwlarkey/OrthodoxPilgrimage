@@ -8,14 +8,23 @@ import (
 	"os"
 	"time"
 
+	"github.com/alexedwards/scs/v2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/app"
 	internaldb "github.com/edwlarkey/orthodoxpilgrimage/internal/db"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/db/sessionstore"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 )
 
 func main() {
 	logFormat := flag.String("log-format", "text", "log format: text or json")
+	devMode := flag.Bool("dev", false, "enable development mode")
+	seed := flag.Bool("seed", false, "seed database from data/data.json")
+	dbPath := flag.String("db-path", "orthodox_pilgrimage.db", "path to the sqlite database file")
 	flag.Parse()
 
 	var handler slog.Handler
@@ -27,7 +36,37 @@ func main() {
 	}
 	slog.SetDefault(slog.New(handler))
 
-	dsn := "orthodox_pilgrimage.db?_busy_timeout=5000"
+	// S3 / Tigris Configuration
+	imageBucket := os.Getenv("IMAGE_BUCKET")
+	s3Endpoint := os.Getenv("AWS_ENDPOINT_URL_S3") // For Tigris: https://fly.storage.tigris.dev
+	s3Region := os.Getenv("AWS_REGION")
+	if s3Region == "" {
+		s3Region = "auto"
+	}
+
+	var s3Client *s3.Client
+	if imageBucket != "" && s3Endpoint != "" {
+		cfg, err := config.LoadDefaultConfig(context.TODO(),
+			config.WithRegion(s3Region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+				os.Getenv("AWS_ACCESS_KEY_ID"),
+				os.Getenv("AWS_SECRET_ACCESS_KEY"),
+				"",
+			)),
+		)
+		if err != nil {
+			slog.Error("failed to load S3 config", "error", err)
+		} else {
+			s3Client = s3.NewFromConfig(cfg, func(o *s3.Options) {
+				o.BaseEndpoint = aws.String(s3Endpoint)
+			})
+			slog.Info("S3 client initialized", "bucket", imageBucket, "endpoint", s3Endpoint)
+		}
+	} else {
+		slog.Warn("S3 configuration missing; image uploads will be disabled", "bucket", imageBucket, "endpoint", s3Endpoint)
+	}
+
+	dsn := *dbPath + "?_busy_timeout=5000"
 	dbConn, err := internaldb.New(dsn)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
@@ -48,13 +87,23 @@ func main() {
 
 	queries := sqlcdb.New(dbConn)
 
-	// Seed database on every startup from data.json (source of truth)
-	slog.Info("Syncing database with data/data.json...")
-	if err := app.SeedDatabase(context.Background(), queries); err != nil {
-		slog.Error("failed to seed database", "error", err)
-		os.Exit(1)
+	// Initialize session manager
+	sessionManager := scs.New()
+	sessionManager.Store = sessionstore.New(dbConn)
+	sessionManager.Lifetime = 24 * time.Hour
+	sessionManager.Cookie.Persist = true
+	sessionManager.Cookie.SameSite = http.SameSiteLaxMode
+	sessionManager.Cookie.Secure = !*devMode // Only secure in non-dev (production)
+
+	// Seed database if requested
+	if *seed {
+		slog.Info("Syncing database with data/data.json...")
+		if err := app.SeedDatabase(context.Background(), queries); err != nil {
+			slog.Error("failed to seed database", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("Database synced successfully")
 	}
-	slog.Info("Database synced successfully")
 
 	slog.Info("Generating sitemap.xml...")
 	if err := app.GenerateSitemap(context.Background(), queries, "https://orthodoxpilgrimage.com"); err != nil {
@@ -70,8 +119,13 @@ func main() {
 	}
 
 	application := &app.Application{
-		DB:        queries,
-		Templates: tmplMgr,
+		DB:             queries,
+		DBConn:         dbConn,
+		Templates:      tmplMgr,
+		SessionManager: sessionManager,
+		S3Client:       s3Client,
+		S3Bucket:       imageBucket,
+		DevMode:        *devMode,
 	}
 
 	srv := &http.Server{

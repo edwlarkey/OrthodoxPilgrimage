@@ -1,0 +1,167 @@
+{{define "admin-dashboard"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Admin</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
+
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
+
+        <div class="admin-content-area">
+            <div class="page-header">
+                <h1>Dashboard</h1>
+            </div>
+
+            <div class="form-row-3 mt-25">
+                <div class="card mb-0">
+                    <span class="stat-label">Total Churches</span>
+                    <div class="stat-value">{{.ChurchCount}}</div>
+                </div>
+                <div class="card mb-0">
+                    <span class="stat-label">Total Saints</span>
+                    <div class="stat-value">{{.SaintCount}}</div>
+                </div>
+                <div class="card mb-0">
+                    <span class="stat-label">Relics Recorded</span>
+                    <div class="stat-value">{{.RelicCount}}</div>
+                </div>
+            </div>
+
+            <div class="form-row mt-40">
+                <section>
+                    <div class="flex justify-between items-center mb-20">
+                        <h2 class="mb-0" style="margin-top: 0; font-size: 1.2rem;">Recently Added Churches</h2>
+                        <a href="/admin/churches/new" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Add New</a>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .RecentChurches}}
+                            <tr>
+                                <td>
+                                    <a href="/admin/churches/edit/{{.Slug}}" class="text-primary text-bold" style="text-decoration: none;">{{.Name}}</a>
+                                </td>
+                                <td class="text-muted">{{.City}}, {{.StateProvince}}</td>
+                                <td><span class="status-pill status-{{.Status}}">{{.Status}}</span></td>
+                            </tr>
+                            {{else}}
+                            <tr><td colspan="3" class="text-center text-muted">No churches found.</td></tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </section>
+
+                <section>
+                    <div class="flex justify-between items-center mb-20">
+                        <h2 class="mb-0" style="margin-top: 0; font-size: 1.2rem;">Recently Added Saints</h2>
+                        <a href="/admin/saints/new" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Add New</a>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Feast Day</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .RecentSaints}}
+                            <tr>
+                                <td>
+                                    <a href="/admin/saints/edit/{{.Slug}}" class="text-primary text-bold" style="text-decoration: none;">{{.Name}}</a>
+                                </td>
+                                <td class="text-muted">{{if .FeastDay.Valid}}{{.FeastDay.String}}{{else}}-{{end}}</td>
+                                <td><span class="status-pill status-{{.Status}}">{{.Status}}</span></td>
+                            </tr>
+                            {{else}}
+                            <tr><td colspan="3" class="text-center text-muted">No saints found.</td></tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+
+            <section class="mt-40 mb-40">
+                <div class="flex justify-between items-center mb-20">
+                    <h2 class="mb-0" style="margin-top: 0; font-size: 1.2rem;">Recently Linked Relics</h2>
+                    <a href="/admin/relics/new" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Add New</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Church</th>
+                            <th>Saint</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .RecentRelics}}
+                        <tr>
+                            <td class="text-bold">{{.ChurchName}}</td>
+                            <td class="text-bold">{{.SaintName}}</td>
+                            <td class="text-muted">{{if .Description.Valid}}{{.Description.String}}{{else}}-{{end}}</td>
+                        </tr>
+                        {{else}}
+                        <tr><td colspan="3" class="text-center text-muted">No relics found.</td></tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </main>
+
+    <div id="admin-modal-container" onclick="closeAdminModal(event)">
+        <div class="admin-modal" onclick="event.stopPropagation()">
+            <div id="admin-modal-content"></div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        function closeAdminModal(e) {
+            document.getElementById('admin-modal-container').classList.remove('visible');
+            document.getElementById('admin-modal-content').innerHTML = '';
+        }
+
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'admin-modal-content') {
+                document.getElementById('admin-modal-container').classList.add('visible');
+            }
+        });
+
+        document.body.addEventListener('adminToast', function(evt) {
+            showToast(evt.detail.message, evt.detail.type);
+        });
+    </script>
+</body>
+</html>
+{{end}}

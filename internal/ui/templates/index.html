@@ -3,7 +3,7 @@
 <div id="tooltip" class="ol-tooltip"></div>
 
 <div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
-    <div class="sidebar-content" id="church-details">
+    <div class="sidebar-content" id="church-details" hx-on::after-swap="this.scrollTo(0,0)">
         {{if .}}
             {{if eq .Type "church"}}
                 {{template "church-detail" .}}
@@ -317,6 +317,18 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('sidebar-toggle').style.display = 'none';
         }
     });
+
+    // Pulse Info Button Feature
+    if (!sessionStorage.getItem('infoPulsed')) {
+        setTimeout(() => {
+            if (sessionStorage.getItem('infoPulsed')) return; // Check again in case it was clicked during the delay
+            
+            const toggle = document.querySelector('.info-toggle');
+            if (toggle && !document.getElementById('info-content').classList.contains('visible')) {
+                toggle.classList.add('pulsing');
+            }
+        }, 15000);
+    }
 });
 </script>
 {{end}}

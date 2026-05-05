@@ -1,6 +1,6 @@
 # Orthodox Pilgrimage
 
-Orthodox Pilgrimage is a modern web application designed to help the faithful locate and venerate the relics of Orthodox Saints across North America and beyond. It provides an interactive, mobile-friendly map to discover holy sites, monasteries, and cathedrals that house these sacred treasures.
+Orthodox Pilgrimage is a modern, community-driven web application designed to help the faithful locate and venerate the sacred relics of Orthodox Saints across North America. It provides an interactive, mobile-friendly map to discover holy sites, monasteries, and cathedrals that house these sacred treasures.
 
 ![Orthodox Pilgrimage Screenshot](screenshots/demo-screenshot.jpg)
 
@@ -45,7 +45,7 @@ Orthodox Pilgrimage is a modern web application designed to help the faithful lo
     ```bash
     ./bin/orthodoxpilgrimage
     ```
-    The server will start on `:8080`. The database (`orthodox_pilgrimage.db`) is automatically created and seeded from `data.json` on startup.
+    The server will start on `:8080`. The database (`orthodox_pilgrimage.db`) is automatically created and migrated on startup. Use the `--seed` flag to populate it from `data.json`.
 
 ## 🤝 Contributing
 

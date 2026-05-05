@@ -1,0 +1,59 @@
+{{define "admin-saints-list"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saints - Admin</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
+
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
+
+        <div class="admin-content-area">
+            <div class="page-header">
+                <h1>Saints</h1>
+                <a href="/admin/saints/new" class="btn btn-primary">Add New Saint</a>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Feast Day</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Saints}}
+                    <tr id="saint-{{.ID}}">
+                        <td class="text-semibold">{{.Name}}</td>
+                        <td>{{if .FeastDay.Valid}}{{.FeastDay.String}}{{else}}-{{end}}</td>
+                        <td>
+                            <span class="status-pill status-{{.Status}}">{{.Status}}</span>
+                        </td>
+                        <td>
+                            <div class="flex gap-10">
+                                <a href="/admin/saints/edit/{{.Slug}}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Edit</a>
+                                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;"
+                                        hx-delete="/admin/saints/delete/{{.Slug}}" 
+                                        hx-confirm="Are you sure you want to delete this saint?"
+                                        hx-target="#saint-{{.ID}}"
+                                        hx-swap="outerHTML">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
+{{end}}

@@ -16,7 +16,7 @@ mkdir -p "$OUTPUT_DIR"
 echo "Processing images in $INPUT_DIR..."
 
 # 1. Loop through jpg, jpeg, and png files
-for img in "$INPUT_DIR"/*.{jpg,jpeg,png,JPG,JPEG,PNG}; do
+for img in "$INPUT_DIR"/*.{jpg,jpeg,png,heic,JPG,JPEG,PNG,HEIC}; do
     # Skip if no files match
     [ -e "$img" ] || continue
 

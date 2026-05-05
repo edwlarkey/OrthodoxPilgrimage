@@ -2,6 +2,10 @@
 SELECT * FROM saints
 ORDER BY name;
 
+-- name: ListSaintsByStatus :many
+SELECT * FROM saints
+WHERE status = ?
+ORDER BY name;
 
 -- name: GetChurch :one
 SELECT * FROM churches
@@ -15,17 +19,23 @@ WHERE slug = ?;
 SELECT * FROM churches
 ORDER BY name;
 
+-- name: ListChurchesByStatus :many
+SELECT * FROM churches
+WHERE status = ?
+ORDER BY name;
+
 -- name: ListChurchesInBounds :many
 SELECT * FROM churches
 WHERE latitude >= ? AND latitude <= ?
   AND longitude >= ? AND longitude <= ?
+  AND status = 'published'
 ORDER BY name;
 
 -- name: ListChurchesBySaintSlug :many
 SELECT c.* FROM churches c
 JOIN relics r ON c.id = r.church_id
 JOIN saints s ON r.saint_id = s.id
-WHERE s.slug = ?
+WHERE s.slug = ? AND c.status = 'published'
 ORDER BY c.name;
 
 -- name: CreateChurch :one
@@ -44,11 +54,36 @@ INSERT INTO churches (
     website,
     phone,
     description,
+    status,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 RETURNING *;
+
+-- name: UpdateChurch :one
+UPDATE churches
+SET name = ?,
+    slug = ?,
+    type = ?,
+    address_text = ?,
+    city = ?,
+    state_province = ?,
+    postal_code = ?,
+    country_code = ?,
+    latitude = ?,
+    longitude = ?,
+    jurisdiction = ?,
+    website = ?,
+    phone = ?,
+    description = ?,
+    status = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING *;
+
+-- name: DeleteChurch :exec
+DELETE FROM churches WHERE id = ?;
 
 -- name: CreateSaint :one
 INSERT INTO saints (
@@ -57,15 +92,35 @@ INSERT INTO saints (
     feast_day,
     description,
     lives_url,
+    status,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?
 )
 RETURNING *;
+
+-- name: UpdateSaint :one
+UPDATE saints
+SET name = ?,
+    slug = ?,
+    feast_day = ?,
+    description = ?,
+    lives_url = ?,
+    status = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING *;
+
+-- name: DeleteSaint :exec
+DELETE FROM saints WHERE id = ?;
 
 -- name: GetSaintBySlug :one
 SELECT * FROM saints
 WHERE slug = ?;
+
+-- name: GetSaint :one
+SELECT * FROM saints
+WHERE id = ?;
 
 -- name: CreateRelic :exec
 INSERT INTO relics (
@@ -112,6 +167,26 @@ SELECT * FROM images
 WHERE relic_church_id = ? AND relic_saint_id = ?
 ORDER BY sort_order, id;
 
+-- name: GetImage :one
+SELECT * FROM images
+WHERE id = ?;
+
+-- name: UpdateImage :exec
+UPDATE images
+SET alt_text = ?,
+    is_primary = ?,
+    sort_order = ?
+WHERE id = ?;
+
+-- name: UnsetPrimaryImageForChurch :exec
+UPDATE images SET is_primary = 0 WHERE church_id = ?;
+
+-- name: UnsetPrimaryImageForSaint :exec
+UPDATE images SET is_primary = 0 WHERE saint_id = ?;
+
+-- name: DeleteImage :exec
+DELETE FROM images WHERE id = ?;
+
 -- name: DeleteAllImages :exec
 DELETE FROM images;
 
@@ -120,6 +195,9 @@ SELECT count(*) FROM churches;
 
 -- name: CountSaints :one
 SELECT count(*) FROM saints;
+
+-- name: CountRelics :one
+SELECT count(*) FROM relics;
 
 -- name: SearchSaints :many
 SELECT * FROM saints
@@ -143,4 +221,70 @@ DELETE FROM church_sources;
 INSERT INTO church_sources (church_id, source) VALUES (?, ?);
 
 -- name: ListSourcesForChurch :many
-SELECT source FROM church_sources WHERE church_id = ?;
+SELECT * FROM church_sources WHERE church_id = ?;
+
+-- name: DeleteChurchSource :exec
+DELETE FROM church_sources WHERE id = ?;
+
+-- name: GetAdminByUsername :one
+SELECT * FROM admins
+WHERE username = ?;
+
+-- name: GetAdmin :one
+SELECT * FROM admins
+WHERE id = ?;
+
+-- name: CreateAdmin :one
+INSERT INTO admins (
+    username,
+    password_hash,
+    mfa_secret
+) VALUES (
+    ?, ?, ?
+)
+RETURNING *;
+
+-- name: UpdateAdminMFA :exec
+UPDATE admins
+SET mfa_secret = ?, mfa_enabled = ?
+WHERE id = ?;
+
+-- name: UpdateAdminLastLogin :exec
+UPDATE admins
+SET last_login_at = CURRENT_TIMESTAMP
+WHERE id = ?;
+
+-- name: ListAllRelics :many
+SELECT r.*, s.name as saint_name, c.name as church_name
+FROM relics r
+JOIN saints s ON r.saint_id = s.id
+JOIN churches c ON r.church_id = c.id
+ORDER BY c.name, s.name;
+
+-- name: DeleteRelic :exec
+DELETE FROM relics WHERE church_id = ? AND saint_id = ?;
+
+-- name: ListRecentChurches :many
+SELECT * FROM churches
+ORDER BY updated_at DESC NULLS LAST, id DESC
+LIMIT 5;
+
+-- name: ListRecentSaints :many
+SELECT * FROM saints
+ORDER BY updated_at DESC NULLS LAST, id DESC
+LIMIT 5;
+
+-- name: ListRecentRelics :many
+SELECT r.*, s.name as saint_name, c.name as church_name
+FROM relics r
+JOIN saints s ON r.saint_id = s.id
+JOIN churches c ON r.church_id = c.id
+ORDER BY c.updated_at DESC NULLS LAST
+LIMIT 5;
+
+-- name: ListAdmins :many
+SELECT * FROM admins
+ORDER BY username;
+
+-- name: DeleteAdmin :exec
+DELETE FROM admins WHERE id = ?;

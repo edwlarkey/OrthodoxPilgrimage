@@ -10,13 +10,25 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alexedwards/scs/v2"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 )
 
+type S3API interface {
+	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
+	DeleteObject(ctx context.Context, params *s3.DeleteObjectInput, optFns ...func(*s3.Options)) (*s3.DeleteObjectOutput, error)
+}
+
 type Application struct {
-	DB        *sqlcdb.Queries
-	Templates *ui.TemplateManager
+	DB             *sqlcdb.Queries
+	DBConn         *sql.DB
+	Templates      *ui.TemplateManager
+	SessionManager *scs.SessionManager
+	S3Client       S3API
+	S3Bucket       string
+	DevMode        bool
 }
 
 func (a *Application) SeedDatabase(ctx context.Context) error {
@@ -25,11 +37,50 @@ func (a *Application) SeedDatabase(ctx context.Context) error {
 
 func (a *Application) Routes() http.Handler {
 	mux := http.NewServeMux()
+
+	// Public routes
 	mux.HandleFunc("/", a.homeHandler)
 	mux.HandleFunc("/churches/", a.churchDetailHandler)
 	mux.HandleFunc("/saints/", a.saintsDirectoryHandler)
 	mux.HandleFunc("/api/v1/churches", a.listChurchesHandler)
 	mux.HandleFunc("/api/v1/search", a.searchHandler)
+
+	// Admin routes
+	mux.HandleFunc("/admin/login", a.adminLoginHandler)
+	mux.HandleFunc("/admin/setup", a.adminSetupHandler)
+	mux.HandleFunc("/admin/logout", a.adminLogoutHandler)
+
+	// Protected admin routes
+	adminMux := http.NewServeMux()
+	adminMux.HandleFunc("/admin/dashboard", a.adminDashboardHandler)
+	adminMux.HandleFunc("/admin/saints", a.adminSaintsListHandler)
+	adminMux.HandleFunc("/admin/saints/new", a.adminSaintEditHandler)
+	adminMux.HandleFunc("/admin/saints/edit/", a.adminSaintEditHandler)
+	adminMux.HandleFunc("/admin/saints/delete/", a.adminSaintDeleteHandler)
+
+	adminMux.HandleFunc("/admin/churches", a.adminChurchesListHandler)
+	adminMux.HandleFunc("/admin/churches/new", a.adminChurchEditHandler)
+	adminMux.HandleFunc("/admin/churches/edit/", a.adminChurchEditHandler)
+	adminMux.HandleFunc("/admin/churches/delete/", a.adminChurchDeleteHandler)
+
+	adminMux.HandleFunc("/admin/relics", a.adminRelicsListHandler)
+	adminMux.HandleFunc("/admin/relics/new", a.adminRelicEditHandler)
+	adminMux.HandleFunc("/admin/relics/delete", a.adminRelicDeleteHandler)
+
+	adminMux.HandleFunc("/admin/admins", a.adminListAdminsHandler)
+	adminMux.HandleFunc("/admin/admins/new", a.adminCreateAdminHandler)
+	adminMux.HandleFunc("/admin/admins/delete", a.adminDeleteAdminHandler)
+
+	adminMux.HandleFunc("/admin/images/upload", a.adminImageUploadHandler)
+	adminMux.HandleFunc("/admin/images/gallery", a.adminImageGalleryHandler)
+	adminMux.HandleFunc("/admin/images/delete", a.adminImageDeleteHandler)
+	adminMux.HandleFunc("/admin/images/update", a.adminImageUpdateHandler)
+
+	adminMux.HandleFunc("/admin/churches/sources/add", a.adminChurchSourceAddHandler)
+	adminMux.HandleFunc("/admin/churches/sources/delete", a.adminChurchSourceDeleteHandler)
+
+	mux.Handle("/admin/", a.AdminAuthMiddleware(adminMux))
+
 	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "sitemap.xml")
 	})
@@ -68,7 +119,7 @@ func (a *Application) Routes() http.Handler {
 		staticHandler.ServeHTTP(w, r)
 	}))
 
-	return a.LoggingMiddleware(a.flyDevRobotsMiddleware(mux))
+	return a.LoggingMiddleware(a.flyDevRobotsMiddleware(a.SessionManager.LoadAndSave(mux)))
 }
 
 func (a *Application) flyDevRobotsMiddleware(next http.Handler) http.Handler {
@@ -76,6 +127,23 @@ func (a *Application) flyDevRobotsMiddleware(next http.Handler) http.Handler {
 		if strings.HasSuffix(r.Host, ".fly.dev") {
 			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (a *Application) AdminAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Public admin routes that don't need auth
+		if r.URL.Path == "/admin/login" || r.URL.Path == "/admin/setup" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if !a.SessionManager.Exists(r.Context(), "admin_id") {
+			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+			return
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -104,7 +172,7 @@ type ChurchWithRelics struct {
 	Church  sqlcdb.Church
 	Images  []sqlcdb.Image
 	Relics  []RelicWithImages
-	Sources []string
+	Sources []sqlcdb.ChurchSource
 }
 
 type RelicWithImages struct {
@@ -624,7 +692,6 @@ func (a *Application) saintsDirectoryHandler(w http.ResponseWriter, r *http.Requ
 		Metadata: metadata,
 		Content:  data,
 	}
-
 	w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
 	if err := a.Templates.Render(w, "index", pageData); err != nil {
 		http.Error(w, "failed to render template", http.StatusInternalServerError)

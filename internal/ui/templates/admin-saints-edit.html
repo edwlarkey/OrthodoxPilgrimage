@@ -1,0 +1,107 @@
+{{define "admin-saints-edit"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .IsNew}}New Saint{{else}}Edit {{.Saint.Name}}{{end}} - Admin</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
+
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
+
+        <div class="admin-content-area">
+            <div class="card max-w-800 p-0">
+                <div style="padding: 40px;">
+                    <h1 class="mb-0 mt-0 text-bold" style="font-size: 1.8rem; margin-bottom: 30px;">{{if .IsNew}}New Saint{{else}}Edit {{.Saint.Name}}{{end}}</h1>
+                    
+                    <form hx-post="{{if .IsNew}}/admin/saints/new{{else}}/admin/saints/edit/{{.Saint.Slug}}{{end}}" hx-push-url="false">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" value="{{if not .IsNew}}{{.Saint.Name}}{{end}}" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="slug">Slug (leave empty to auto-generate)</label>
+                                <input type="text" id="slug" name="slug" value="{{if not .IsNew}}{{.Saint.Slug}}{{end}}" placeholder="e.g. st-nicholas">
+                            </div>
+                            <div class="form-group">
+                                <label for="feast_day">Feast Day</label>
+                                <input type="text" id="feast_day" name="feast_day" value="{{if and (not .IsNew) .Saint.FeastDay.Valid}}{{.Saint.FeastDay.String}}{{end}}" placeholder="e.g. December 6">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" name="description" rows="5">{{if and (not .IsNew) .Saint.Description.Valid}}{{.Saint.Description.String}}{{end}}</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lives_url">Lives URL</label>
+                            <input type="url" id="lives_url" name="lives_url" value="{{if and (not .IsNew) .Saint.LivesUrl.Valid}}{{.Saint.LivesUrl.String}}{{end}}" placeholder="https://...">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select id="status" name="status">
+                                <option value="published" {{if or .IsNew (eq .Saint.Status "published")}}selected{{end}}>Published</option>
+                                <option value="draft" {{if and (not .IsNew) (eq .Saint.Status "draft")}}selected{{end}}>Draft</option>
+                            </select>
+                        </div>
+
+                        <div class="flex gap-15 mt-40">
+                            <button type="submit" class="btn btn-primary">Save Saint</button>
+                            <a href="/admin/saints" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {{if not .IsNew}}
+            <div class="card max-w-800 p-0 mt-40">
+                <div style="padding: 40px;">
+                    <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Image Gallery</h2>
+                    
+                    <form hx-post="/admin/images/upload" 
+                          hx-encoding="multipart/form-data" 
+                          hx-swap="none"
+                          hx-indicator="#saint-upload-indicator"
+                          class="upload-box mb-30">
+                        <input type="hidden" name="entity_type" value="saint">
+                        <input type="hidden" name="entity_id" value="{{.Saint.ID}}">
+                        <div class="flex items-end gap-15">
+                            <div class="flex-1">
+                                <label for="s-images" class="btn btn-secondary w-full text-center pointer" style="display: block;">
+                                    Select Images
+                                </label>
+                                <input type="file" id="s-images" name="images" multiple accept="image/*" class="hidden" 
+                                       onchange="this.form.querySelector('.file-count').innerText = this.files.length + ' files selected'">
+                                <div class="file-count text-xxs text-muted mt-5 text-center">No files selected</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </div>
+                        <div id="saint-upload-indicator" class="htmx-indicator mt-10 text-center">
+                            <div class="spinner"></div>
+                            <span class="text-small text-muted">Optimizing and uploading...</span>
+                        </div>
+                    </form>
+
+                    <div hx-get="/admin/images/gallery?entity_type=saint&entity_id={{.Saint.ID}}" 
+                         hx-trigger="load, imageGalleryUpdated from:body"
+                         hx-swap="innerHTML">
+                        <div class="loading">Loading gallery...</div>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </main>
+</body>
+</html>
+{{end}}

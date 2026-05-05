@@ -29,7 +29,7 @@ type PageData struct {
 func (a *Application) getBaseMetadata(rPath string) PageMetadata {
 	return PageMetadata{
 		Title:       "Orthodox Pilgrimage - Map of Saints' Relics in North America",
-		Description: "Discover and venerate the relics of Orthodox Saints across North America. An interactive map of holy sites, monasteries, and cathedrals.",
+		Description: "Discover and venerate the sacred relics of Orthodox Saints across North America. An interactive map of holy sites, monasteries, and cathedrals.",
 		Canonical:   "https://orthodoxpilgrimage.com" + rPath,
 		OGType:      "website",
 	}

@@ -5,6 +5,7 @@
         <a href="/" 
            hx-get="/"
            hx-target="#church-details"
+            hx-swap="innerHTML"
            hx-push-url="true"
            class="reset-search-btn-sidebar"
            title="Reset Map">
@@ -128,12 +129,12 @@
             <div class="relic-item">
                 <div class="relic-pill">
                     <div class="relic-details">
-                        <a href="/{{.Relic.Slug}}?from={{$churchSlug}}" 
+                        <a href="/{{.Relic.Slug}}?from={{$churchSlug}}"
                            hx-get="/{{.Relic.Slug}}?from={{$churchSlug}}"
                            hx-target="#church-details"
+hx-swap="innerHTML"
                            hx-push-url="true"
-                           class="saint-name">{{.Relic.Name}}</a>
-                        {{if .Relic.RelicDescription.Valid}}
+                           class="saint-name">{{.Relic.Name}}</a>                        {{if .Relic.RelicDescription.Valid}}
                             <span class="relic-type">{{.Relic.RelicDescription.String}}</span>
                         {{end}}
                     </div>
@@ -162,13 +163,13 @@
     <h3>Sources</h3>
     <div class="relic-pills">
     {{range .Sources}}
-        {{if or (hasPrefix . "http://") (hasPrefix . "https://") (hasPrefix . "www.")}}
-        <a href="{{.}}" target="_blank" rel="noopener noreferrer" class="relic-pill">
-            <span class="saint-name">{{.}}</span>
+        {{if or (hasPrefix .Source "http://") (hasPrefix .Source "https://") (hasPrefix .Source "www.")}}
+        <a href="{{.Source}}" target="_blank" rel="noopener noreferrer" class="relic-pill">
+            <span class="saint-name">{{.Source}}</span>
         </a>
         {{else}}
         <span class="relic-pill">
-            <span class="saint-name">{{.}}</span>
+            <span class="saint-name">{{.Source}}</span>
         </span>
         {{end}}
     {{end}}

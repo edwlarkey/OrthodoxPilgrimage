@@ -1,0 +1,29 @@
+{{define "admin-admins-new"}}
+<div class="modal-header">
+    <h2 class="m-0" style="font-size: 1.25rem;">Add New Admin</h2>
+    <button type="button" class="btn btn-secondary" onclick="closeAdminModal(event)" style="padding: 4px 8px;">✕</button>
+</div>
+<div class="modal-body">
+    <form hx-post="/admin/admins/new" hx-swap="outerHTML" hx-target="this">
+        {{if .Error}}
+        <div class="error-msg mb-20">{{.Error}}</div>
+        {{end}}
+        
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" class="form-control" required value="{{.Username}}">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Temporary Password</label>
+            <input type="password" id="password" name="password" class="form-control" required minlength="8">
+            <p class="help-text">Provide this to the new admin.</p>
+        </div>
+
+        <div class="form-actions mt-20" style="justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary" onclick="closeAdminModal(event)">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Admin</button>
+        </div>
+    </form>
+</div>
+{{end}}

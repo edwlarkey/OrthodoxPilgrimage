@@ -1,0 +1,65 @@
+{{define "admin-base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .Title}}{{.Title}}{{else}}Admin Dashboard{{end}} - Orthodox Pilgrimage</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
+
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
+
+        <div class="admin-content-area" id="admin-content">
+            {{template "admin-content" .}}
+        </div>
+    </main>
+
+    <div id="admin-modal-container" onclick="closeAdminModal(event)">
+        <div class="admin-modal" onclick="event.stopPropagation()">
+            <div id="admin-modal-content"></div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        function closeAdminModal(e) {
+            document.getElementById('admin-modal-container').classList.remove('visible');
+            document.getElementById('admin-modal-content').innerHTML = '';
+        }
+
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // HTMX integration for modals
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'admin-modal-content') {
+                document.getElementById('admin-modal-container').classList.add('visible');
+            }
+        });
+
+        // Handle custom events for toasts
+        document.body.addEventListener('adminToast', function(evt) {
+            showToast(evt.detail.message, evt.detail.type);
+        });
+    </script>
+</body>
+</html>
+{{end}}

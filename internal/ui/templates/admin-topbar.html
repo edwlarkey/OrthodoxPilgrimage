@@ -1,0 +1,11 @@
+{{define "admin-topbar"}}
+<header class="admin-topbar">
+    <div>
+        <span class="text-muted text-semibold text-xs-caps">{{if .Title}}{{.Title}}{{else}}Management{{end}}</span>
+    </div>
+    <div class="user-info">
+        <span class="text-muted text-semibold">Admin: {{.Username}}</span>
+        <a href="/admin/logout" class="logout-link">Logout</a>
+    </div>
+</header>
+{{end}}
