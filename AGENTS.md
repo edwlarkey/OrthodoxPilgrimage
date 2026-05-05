@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A Go web application that maps Orthodox Christian churches containing saints' relics for public veneration. Users browse an interactive Leaflet.js map to discover churches and explore associated saints.
+An interactive, community-driven Go web application that maps Orthodox Christian churches across North America containing sacred relics of saints for public veneration. Users browse a modern OpenLayers map to discover holy sites and explore associated saints.
 
 ## Tech Stack
 

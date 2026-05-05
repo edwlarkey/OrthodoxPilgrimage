@@ -906,3 +906,21 @@ a.saint-name:hover { text-decoration: underline; }
         right: 10px;
     }
 }
+
+/* Pulse animation for the info-toggle button */
+.info-toggle.pulsing {
+    animation: info-pulse-animation 2s infinite;
+}
+
+@keyframes info-pulse-animation {
+    0% {
+        box-shadow: var(--shadow), 0 0 0 0 rgba(83, 12, 56, 0.7);
+    }
+    70% {
+        box-shadow: var(--shadow), 0 0 0 15px rgba(83, 12, 56, 0);
+    }
+    100% {
+        box-shadow: var(--shadow), 0 0 0 0 rgba(83, 12, 56, 0);
+    }
+}
+

@@ -78,6 +78,7 @@ func (a *Application) ProcessAndUploadImage(ctx context.Context, file io.Reader,
 		optimizedPath,
 	}
 
+	//nolint:gosec
 	cmd := exec.CommandContext(ctx, magickCmd, args...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -123,7 +124,7 @@ func (a *Application) ProcessAndUploadImage(ctx context.Context, file io.Reader,
 	}
 
 	// Upload Original
-	f, _ := os.Open(originalPath)
+	f, _ := os.Open(originalPath) //nolint:gosec // G703: originalPath is generated securely in a temporary directory via os.CreateTemp.
 	buffer := make([]byte, 512)
 	_, _ = f.Read(buffer)
 	f.Close()
@@ -168,7 +169,7 @@ func (a *Application) ProcessAndUploadImage(ctx context.Context, file io.Reader,
 }
 
 func (a *Application) uploadToS3(ctx context.Context, localPath, s3Key, contentType string) error {
-	file, err := os.Open(localPath)
+	file, err := os.Open(localPath) //nolint:gosec // G703: localPath is generated securely in a temporary directory via os.CreateTemp or derived securely.
 	if err != nil {
 		return err
 	}
