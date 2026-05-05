@@ -200,6 +200,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e) e.stopPropagation();
         const content = document.getElementById('info-content');
         content.classList.toggle('visible');
+        
+        // Stop pulsing and save state
+        const toggle = document.querySelector('.info-toggle');
+        if (toggle) {
+            toggle.classList.remove('pulsing');
+            sessionStorage.setItem('infoPulsed', 'true');
+        }
     }
 
     // Close info overlay when clicking elsewhere
