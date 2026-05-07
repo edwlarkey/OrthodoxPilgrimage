@@ -1,0 +1,45 @@
+{{define "admin-relic-types-edit"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Admin</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
+
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
+
+        <div class="admin-content-area">
+            <div class="card max-w-600 p-0">
+                <div style="padding: 40px;">
+                    <h1 class="mb-0 mt-0 text-bold" style="font-size: 1.8rem; margin-bottom: 30px;">{{.Title}}</h1>
+                    
+                    <form hx-post="{{if .IsNew}}/admin/relic-types/new{{else}}/admin/relic-types/edit/{{.RelicType.ID}}{{end}}" hx-push-url="false">
+                        <div class="form-group">
+                            <label for="name">Relic Type Name</label>
+                            <input type="text" id="name" name="name" value="{{if not .IsNew}}{{.RelicType.Name}}{{end}}" placeholder="e.g. Major" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sort_order">Sort Order (lower numbers appear first)</label>
+                            <input type="number" id="sort_order" name="sort_order" value="{{if not .IsNew}}{{.RelicType.SortOrder}}{{else}}0{{end}}" required>
+                        </div>
+
+                        <div class="flex gap-15 mt-40">
+                            <button type="submit" class="btn btn-primary">Save Relic Type</button>
+                            <a href="/admin/relic-types" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+{{end}}

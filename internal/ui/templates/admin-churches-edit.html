@@ -34,8 +34,17 @@
                                 <input type="text" id="slug" name="slug" value="{{if not .IsNew}}{{.Church.Slug}}{{end}}" placeholder="e.g. st-nicholas-nyc">
                             </div>
                             <div class="form-group">
-                                <label for="jurisdiction">Jurisdiction</label>
-                                <input type="text" id="jurisdiction" name="jurisdiction" value="{{if and (not .IsNew) .Church.Jurisdiction.Valid}}{{.Church.Jurisdiction.String}}{{end}}" placeholder="e.g. GOARCH">
+                                <label for="jurisdiction_id">Jurisdiction</label>
+                                <select id="jurisdiction_id" name="jurisdiction_id">
+                                    <option value="">None / Unknown</option>
+                                    {{$churchJID := 0}}
+                                    {{if and (not .IsNew) .Church.JurisdictionID.Valid}}
+                                        {{$churchJID = .Church.JurisdictionID.Int64}}
+                                    {{end}}
+                                    {{range .Jurisdictions}}
+                                    <option value="{{.ID}}" {{if eq .ID $churchJID}}selected{{end}}>{{.Name}} ({{.Tradition}})</option>
+                                    {{end}}
+                                </select>
                             </div>
                         </div>
 
@@ -163,9 +172,31 @@
                     {{range .Relics}}
                     <div class="relic-admin-box" id="relic-{{$.Church.ID}}-{{.Relic.ID}}">
                         <div class="flex justify-between items-start">
-                            <div>
+                            <div class="flex-1 mr-20">
                                 <h3 class="mt-0 mb-10 text-bold">{{.Relic.Name}}</h3>
-                                <p class="text-muted mb-20">{{if .Relic.RelicDescription.Valid}}{{.Relic.RelicDescription.String}}{{else}}No description{{end}}</p>
+                                <form hx-post="/admin/relics/update" hx-swap="none" class="flex gap-10 items-end mb-20">
+                                    <input type="hidden" name="church_id" value="{{$.Church.ID}}">
+                                    <input type="hidden" name="saint_id" value="{{.Relic.ID}}">
+                                    
+                                    <div class="form-group mb-0" style="flex: 1;">
+                                        <label class="text-xxs">Relic Type</label>
+                                        <select name="relic_type_id" style="padding: 6px; font-size: 0.8rem;">
+                                            <option value="">Unknown / Other</option>
+                                            {{$currentRelicTypeID := 0}}
+                                            {{if .Relic.RelicTypeID.Valid}}
+                                                {{$currentRelicTypeID = .Relic.RelicTypeID.Int64}}
+                                            {{end}}
+                                            {{range $.RelicTypes}}
+                                            <option value="{{.ID}}" {{if eq .ID $currentRelicTypeID}}selected{{end}}>{{.Name}}</option>
+                                            {{end}}
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-0" style="flex: 2;">
+                                        <label class="text-xxs">Description</label>
+                                        <input type="text" name="description" value="{{if .Relic.RelicDescription.Valid}}{{.Relic.RelicDescription.String}}{{end}}" style="padding: 6px; font-size: 0.8rem;">
+                                    </div>
+                                    <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Save</button>
+                                </form>
                             </div>
                             <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;"
                                     hx-delete="/admin/relics/delete?church_id={{$.Church.ID}}&saint_id={{.Relic.ID}}" 
@@ -211,12 +242,21 @@
                     <form hx-post="/admin/relics/new" hx-push-url="false" style="background: #f8f9fa; padding: 25px; border-radius: 12px; border: 1px solid var(--border);">
                         <input type="hidden" name="church_id" value="{{.Church.ID}}">
                         
-                        <div class="form-row">
+                        <div class="form-row-3">
                             <div class="form-group mb-0">
                                 <label for="saint_id">Saint</label>
                                 <select id="saint_id" name="saint_id" required>
                                     <option value="">Select a saint...</option>
                                     {{range .Saints}}
+                                    <option value="{{.ID}}">{{.Name}}</option>
+                                    {{end}}
+                                </select>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label for="relic_type_id">Relic Type</label>
+                                <select id="relic_type_id" name="relic_type_id">
+                                    <option value="">Unknown / Other</option>
+                                    {{range .RelicTypes}}
                                     <option value="{{.ID}}">{{.Name}}</option>
                                     {{end}}
                                 </select>

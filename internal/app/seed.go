@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 	"time"
 
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
@@ -161,6 +162,9 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 		}
 	}
 
+	// 3.5 Load or create Jurisdictions
+	jurisdictionMap := make(map[string]int64)
+
 	// 4. Insert Churches
 	for _, c := range df.Churches {
 		updatedAt := sql.NullTime{}
@@ -169,23 +173,47 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 				updatedAt = sql.NullTime{Time: t, Valid: true}
 			}
 		}
+
+		var jurisdictionID sql.NullInt64
+		if c.Jurisdiction != "" {
+			if jID, ok := jurisdictionMap[c.Jurisdiction]; ok {
+				jurisdictionID = sql.NullInt64{Int64: jID, Valid: true}
+			} else {
+				tradition := "Orthodox"
+				pinColor := "#530c38"
+				if strings.Contains(c.Jurisdiction, "Roman Catholic") {
+					tradition = "Roman Catholic"
+					pinColor = "#2e5a88"
+				}
+				j, err := queries.CreateJurisdiction(ctx, sqlcdb.CreateJurisdictionParams{
+					Name:      c.Jurisdiction,
+					Tradition: tradition,
+					PinColor:  pinColor,
+				})
+				if err == nil {
+					jurisdictionMap[c.Jurisdiction] = j.ID
+					jurisdictionID = sql.NullInt64{Int64: j.ID, Valid: true}
+				}
+			}
+		}
+
 		church, err := queries.CreateChurch(ctx, sqlcdb.CreateChurchParams{
-			Name:          c.Name,
-			Slug:          c.Slug,
-			Type:          sql.NullString{String: c.Type, Valid: c.Type != ""},
-			AddressText:   c.AddressText,
-			City:          c.City,
-			StateProvince: c.StateProvince,
-			PostalCode:    sql.NullString{String: c.PostalCode, Valid: c.PostalCode != ""},
-			CountryCode:   c.CountryCode,
-			Latitude:      c.Latitude,
-			Longitude:     c.Longitude,
-			Jurisdiction:  sql.NullString{String: c.Jurisdiction, Valid: c.Jurisdiction != ""},
-			Website:       sql.NullString{String: c.Website, Valid: c.Website != ""},
-			Phone:         sql.NullString{String: c.Phone, Valid: c.Phone != ""},
-			Description:   sql.NullString{String: c.Description, Valid: c.Description != ""},
-			Status:        "published",
-			UpdatedAt:     updatedAt,
+			Name:           c.Name,
+			Slug:           c.Slug,
+			Type:           sql.NullString{String: c.Type, Valid: c.Type != ""},
+			AddressText:    c.AddressText,
+			City:           c.City,
+			StateProvince:  c.StateProvince,
+			PostalCode:     sql.NullString{String: c.PostalCode, Valid: c.PostalCode != ""},
+			CountryCode:    c.CountryCode,
+			Latitude:       c.Latitude,
+			Longitude:      c.Longitude,
+			JurisdictionID: jurisdictionID,
+			Website:        sql.NullString{String: c.Website, Valid: c.Website != ""},
+			Phone:          sql.NullString{String: c.Phone, Valid: c.Phone != ""},
+			Description:    sql.NullString{String: c.Description, Valid: c.Description != ""},
+			Status:         "published",
+			UpdatedAt:      updatedAt,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create church %s: %w", c.Name, err)
@@ -220,6 +248,7 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 			err = queries.CreateRelic(ctx, sqlcdb.CreateRelicParams{
 				ChurchID: church.ID,
 				SaintID:  saintID,
+				RelicTypeID: sql.NullInt64{Int64: 2, Valid: true}, // Default to Fragment
 				Description: sql.NullString{
 					String: r.Description,
 					Valid:  r.Description != "",

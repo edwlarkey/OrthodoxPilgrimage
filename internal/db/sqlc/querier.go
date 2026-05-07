@@ -17,7 +17,9 @@ type Querier interface {
 	CreateChurch(ctx context.Context, arg CreateChurchParams) (Church, error)
 	CreateChurchSource(ctx context.Context, arg CreateChurchSourceParams) error
 	CreateImage(ctx context.Context, arg CreateImageParams) error
+	CreateJurisdiction(ctx context.Context, arg CreateJurisdictionParams) (Jurisdiction, error)
 	CreateRelic(ctx context.Context, arg CreateRelicParams) error
+	CreateRelicType(ctx context.Context, arg CreateRelicTypeParams) (RelicType, error)
 	CreateSaint(ctx context.Context, arg CreateSaintParams) (Saint, error)
 	DeleteAdmin(ctx context.Context, id int64) error
 	DeleteAllChurches(ctx context.Context) error
@@ -28,27 +30,33 @@ type Querier interface {
 	DeleteChurch(ctx context.Context, id int64) error
 	DeleteChurchSource(ctx context.Context, id int64) error
 	DeleteImage(ctx context.Context, id int64) error
+	DeleteJurisdiction(ctx context.Context, id int64) error
 	DeleteRelic(ctx context.Context, arg DeleteRelicParams) error
+	DeleteRelicType(ctx context.Context, id int64) error
 	DeleteSaint(ctx context.Context, id int64) error
 	GetAdmin(ctx context.Context, id int64) (Admin, error)
 	GetAdminByUsername(ctx context.Context, username string) (Admin, error)
-	GetChurch(ctx context.Context, id int64) (Church, error)
-	GetChurchBySlug(ctx context.Context, slug string) (Church, error)
+	GetChurch(ctx context.Context, id int64) (GetChurchRow, error)
+	GetChurchBySlug(ctx context.Context, slug string) (GetChurchBySlugRow, error)
 	GetImage(ctx context.Context, id int64) (Image, error)
+	GetJurisdiction(ctx context.Context, id int64) (Jurisdiction, error)
+	GetRelicType(ctx context.Context, id int64) (RelicType, error)
 	GetSaint(ctx context.Context, id int64) (Saint, error)
 	GetSaintBySlug(ctx context.Context, slug string) (Saint, error)
 	ListAdmins(ctx context.Context) ([]Admin, error)
 	ListAllRelics(ctx context.Context) ([]ListAllRelicsRow, error)
-	ListChurches(ctx context.Context) ([]Church, error)
-	ListChurchesBySaintSlug(ctx context.Context, slug string) ([]Church, error)
-	ListChurchesByStatus(ctx context.Context, status string) ([]Church, error)
-	ListChurchesInBounds(ctx context.Context, arg ListChurchesInBoundsParams) ([]Church, error)
+	ListChurches(ctx context.Context) ([]ListChurchesRow, error)
+	ListChurchesBySaintSlug(ctx context.Context, slug string) ([]ListChurchesBySaintSlugRow, error)
+	ListChurchesByStatus(ctx context.Context, status string) ([]ListChurchesByStatusRow, error)
+	ListChurchesInBounds(ctx context.Context, arg ListChurchesInBoundsParams) ([]ListChurchesInBoundsRow, error)
 	ListImagesForChurch(ctx context.Context, churchID sql.NullInt64) ([]Image, error)
 	ListImagesForRelic(ctx context.Context, arg ListImagesForRelicParams) ([]Image, error)
 	ListImagesForSaint(ctx context.Context, saintID sql.NullInt64) ([]Image, error)
-	ListRecentChurches(ctx context.Context) ([]Church, error)
+	ListJurisdictions(ctx context.Context) ([]Jurisdiction, error)
+	ListRecentChurches(ctx context.Context) ([]ListRecentChurchesRow, error)
 	ListRecentRelics(ctx context.Context) ([]ListRecentRelicsRow, error)
 	ListRecentSaints(ctx context.Context) ([]Saint, error)
+	ListRelicTypes(ctx context.Context) ([]RelicType, error)
 	ListRelicsForChurch(ctx context.Context, churchID int64) ([]ListRelicsForChurchRow, error)
 	ListSaints(ctx context.Context) ([]Saint, error)
 	ListSaintsByStatus(ctx context.Context, status string) ([]Saint, error)
@@ -60,6 +68,9 @@ type Querier interface {
 	UpdateAdminMFA(ctx context.Context, arg UpdateAdminMFAParams) error
 	UpdateChurch(ctx context.Context, arg UpdateChurchParams) (Church, error)
 	UpdateImage(ctx context.Context, arg UpdateImageParams) error
+	UpdateJurisdiction(ctx context.Context, arg UpdateJurisdictionParams) (Jurisdiction, error)
+	UpdateRelic(ctx context.Context, arg UpdateRelicParams) error
+	UpdateRelicType(ctx context.Context, arg UpdateRelicTypeParams) (RelicType, error)
 	UpdateSaint(ctx context.Context, arg UpdateSaintParams) (Saint, error)
 }
 

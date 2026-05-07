@@ -2,17 +2,17 @@
 <div id="map"></div>
 <div id="tooltip" class="ol-tooltip"></div>
 
-<div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
+<div class="sidebar {{if not .Content}}hidden{{end}}" id="sidebar">
     <div class="sidebar-content" id="church-details" hx-on::after-swap="this.scrollTo(0,0)">
-        {{if .}}
-            {{if eq .Type "church"}}
-                {{template "church-detail" .}}
-            {{else if eq .Type "saint"}}
-                {{template "saint-detail" .}}
-            {{else if eq .Type "church-directory"}}
-                {{template "church-directory" .}}
-            {{else if eq .Type "saint-directory"}}
-                {{template "saint-directory" .}}
+        {{if .Content}}
+            {{if eq .Content.Type "church"}}
+                {{template "church-detail" .Content}}
+            {{else if eq .Content.Type "saint"}}
+                {{template "saint-detail" .Content}}
+            {{else if eq .Content.Type "church-directory"}}
+                {{template "church-directory" .Content}}
+            {{else if eq .Content.Type "saint-directory"}}
+                {{template "saint-directory" .Content}}
             {{end}}
         {{else}}
             <div class="sidebar-header">
@@ -28,6 +28,29 @@
             </div>
             <div class="loading">Select a location on the map to begin your pilgrimage.</div>
         {{end}}
+    </div>
+</div>
+
+<div class="filter-container">
+    <button class="filter-toggle" onclick="toggleFilter(event)" aria-label="Filter Locations">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+        Filter Map
+    </button>
+    <div class="filter-content" id="filter-content">
+        <div class="info-section-content">
+            <h3>Tradition</h3>
+            <div class="filter-group">
+                <label><input type="checkbox" id="filter-orthodox" checked onchange="applyFilters()"> Orthodox Sites</label>
+                <label><input type="checkbox" id="filter-catholic" checked onchange="applyFilters()"> Roman Catholic Sites</label>
+            </div>
+            
+            <h3 style="margin-top: 20px;">Relic Type</h3>
+            <div class="filter-group">
+                {{range .RelicTypes}}
+                <label><input type="checkbox" id="filter-relic-{{.ID}}" data-relic-name="{{.Name}}" checked onchange="applyFilters()"> {{.Name}}</label>
+                {{end}}
+            </div>
+        </div>
     </div>
 </div>
 
@@ -59,21 +82,21 @@ document.addEventListener('DOMContentLoaded', function() {
     let initialCenter = [-98.5795, 39.8283];
     let fetchUrl = '/api/v1/churches';
 
-    {{if .}}
-        {{if eq .Type "church"}}
-            initialCenter = [{{.Church.Longitude}}, {{.Church.Latitude}}];
+    {{if .Content}}
+        {{if eq .Content.Type "church"}}
+            initialCenter = [{{.Content.Church.Longitude}}, {{.Content.Church.Latitude}}];
             initialZoom = CHURCH_ZOOM;
             document.getElementById('sidebar-title').innerText = "Church Info";
-        {{else if eq .Type "saint"}}
-            {{if .ReferringChurch}}
-                initialCenter = [{{.ReferringChurch.Longitude}}, {{.ReferringChurch.Latitude}}];
+        {{else if eq .Content.Type "saint"}}
+            {{if .Content.ReferringChurch}}
+                initialCenter = [{{.Content.ReferringChurch.Longitude}}, {{.Content.ReferringChurch.Latitude}}];
                 initialZoom = CHURCH_ZOOM;
             {{end}}
-            fetchUrl = '/api/v1/churches?saint={{.Saint.Slug}}';
+            fetchUrl = '/api/v1/churches?saint={{.Content.Saint.Slug}}';
             document.getElementById('sidebar-title').innerText = "Saint Info";
-        {{else if eq .Type "church-directory"}}
+        {{else if eq .Content.Type "church-directory"}}
             document.getElementById('sidebar-title').innerText = "All Churches";
-        {{else if eq .Type "saint-directory"}}
+        {{else if eq .Content.Type "saint-directory"}}
             document.getElementById('sidebar-title').innerText = "All Saints";
         {{end}}
     {{end}}
@@ -124,22 +147,57 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     map.addOverlay(tooltipOverlay);
 
-    const svgPin = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21C16 17 20 13.4183 20 9C20 4.58172 16.4183 1 12 1C7.58172 1 4 4.58172 4 9C4 13.4183 8 17 12 21Z" fill="#530c38" stroke="white" stroke-width="1"/><circle cx="12" cy="9" r="3" fill="white"/></svg>';
+    const styleCache = {};
+    function getPinStyle(color) {
+        if (!styleCache[color]) {
+            const svg = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21C16 17 20 13.4183 20 9C20 4.58172 16.4183 1 12 1C7.58172 1 4 4.58172 4 9C4 13.4183 8 17 12 21Z" fill="${color}" stroke="white" stroke-width="1"/><circle cx="12" cy="9" r="3" fill="white"/></svg>`;
+            styleCache[color] = new ol.style.Style({
+                image: new ol.style.Icon({
+                    anchor: [0.5, 1],
+                    src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
+                    scale: 1,
+                }),
+            });
+        }
+        return styleCache[color];
+    }
 
-    const iconStyle = new ol.style.Style({
-        image: new ol.style.Icon({
-            anchor: [0.5, 1],
-            src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgPin),
-            scale: 1,
-        }),
-    });
+    function clusterStyleFunction(feature) {
+        const subFeatures = feature.get('features');
+        const size = subFeatures ? subFeatures.length : 0;
+        if (size > 1) {
+            return new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 12,
+                    stroke: new ol.style.Stroke({ color: '#fff', width: 2 }),
+                    fill: new ol.style.Fill({ color: '#530c38' })
+                }),
+                text: new ol.style.Text({
+                    text: size.toString(),
+                    fill: new ol.style.Fill({ color: '#fff' })
+                })
+            });
+        } else if (size === 1) {
+            const originalFeature = subFeatures[0];
+            const color = originalFeature.get('pinColor') || '#530c38';
+            return getPinStyle(color);
+        }
+        return null;
+    }
 
     const vectorSource = new ol.source.Vector();
-    const vectorLayer = new ol.layer.Vector({
+    const clusterSource = new ol.source.Cluster({
+        distance: 40,
         source: vectorSource,
-        style: iconStyle,
+    });
+    
+    const vectorLayer = new ol.layer.Vector({
+        source: clusterSource,
+        style: clusterStyleFunction,
     });
     map.addLayer(vectorLayer);
+
+    let allFeatures = [];
 
     function loadChurches(url, focusAfterLoad = false, animate = true) {
         return fetch(url)
@@ -147,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(churches => {
                 vectorSource.clear();
                 if (churches.length === 0) return;
-                const features = [];
+                allFeatures = [];
                 churches.forEach(church => {
                     if (church.latitude && church.longitude) {
                         const feature = new ol.Feature({
@@ -155,35 +213,88 @@ document.addEventListener('DOMContentLoaded', function() {
                             churchSlug: church.slug,
                             churchName: church.name,
                             lat: church.latitude,
-                            lng: church.longitude
+                            lng: church.longitude,
+                            pinColor: church.pinColor,
+                            tradition: church.tradition,
+                            relicTypes: church.relicTypes || []
                         });
-                        features.push(feature);
+                        allFeatures.push(feature);
                     }
                 });
-                vectorSource.addFeatures(features);
+                
+                applyFilters();
 
                 if (focusAfterLoad) {
-                    if (features.length > 1) {
+                    if (allFeatures.length > 1) {
                         const extent = vectorSource.getExtent();
                         view.fit(extent, { 
                             padding: getMapPadding(), 
                             duration: animate ? 500 : 0, 
                             maxZoom: CHURCH_ZOOM 
                         });
-                    } else if (features.length === 1) {
-                        const coords = features[0].getGeometry().getCoordinates();
+                    } else if (allFeatures.length === 1) {
+                        const coords = allFeatures[0].getGeometry().getCoordinates();
                         focusOnCoordinate(coords, CHURCH_ZOOM, animate);
                     }
                 }
-                return features;
+                return allFeatures;
             })
             .catch(error => console.error('Error loading church data:', error));
     }
 
+    window.applyFilters = function() {
+        const showOrthodox = document.getElementById('filter-orthodox').checked;
+        const showCatholic = document.getElementById('filter-catholic').checked;
+        
+        // Dynamically gather checked relic types
+        const checkedRelicTypes = new Set();
+        document.querySelectorAll('input[id^="filter-relic-"]').forEach(checkbox => {
+            if (checkbox.checked) {
+                checkedRelicTypes.add(checkbox.getAttribute('data-relic-name'));
+            }
+        });
+        // Also capture the total number of relic type filters to handle unmapped relics
+        const totalRelicTypeFilters = document.querySelectorAll('input[id^="filter-relic-"]').length;
+        
+        vectorSource.clear();
+        const filteredFeatures = allFeatures.filter(f => {
+            // Tradition Filter
+            const tradition = f.get('tradition') || 'Orthodox';
+            let traditionMatch = false;
+            if (tradition === 'Roman Catholic' && showCatholic) traditionMatch = true;
+            if (tradition === 'Orthodox' && showOrthodox) traditionMatch = true;
+            
+            if (!traditionMatch) return false;
+
+            // Relic Type Filter
+            const relicTypes = f.get('relicTypes') || [];
+            // If the church has no relics (rare, but possible) or there are no relic filters available
+            if (relicTypes.length === 0 || totalRelicTypeFilters === 0) return true;
+            
+            return relicTypes.some(type => {
+                // If it's a known type that is checked
+                if (checkedRelicTypes.has(type)) return true;
+                // If it's an unknown type (not in the filter list), show it by default so it isn't orphaned
+                const isKnownType = Array.from(document.querySelectorAll('input[id^="filter-relic-"]'))
+                                         .some(cb => cb.getAttribute('data-relic-name') === type);
+                if (!isKnownType) return true;
+                
+                return false;
+            });
+        });
+        vectorSource.addFeatures(filteredFeatures);
+    }
+
+    window.toggleFilter = function(e) {
+        if (e) e.stopPropagation();
+        const content = document.getElementById('filter-content');
+        content.classList.toggle('visible');
+    }
+
     // Initial load
-    loadChurches(fetchUrl, {{if eq .Type "saint"}}true{{else}}false{{end}}, false).then(features => {
-        {{if eq .Type "church"}}
-            const initialCoords = ol.proj.fromLonLat([{{.Church.Longitude}}, {{.Church.Latitude}}]);
+    loadChurches(fetchUrl, {{if and .Content (eq .Content.Type "saint")}}true{{else}}false{{end}}, false).then(features => {
+        {{if and .Content (eq .Content.Type "church")}}
+            const initialCoords = ol.proj.fromLonLat([{{.Content.Church.Longitude}}, {{.Content.Church.Latitude}}]);
             focusOnCoordinate(initialCoords, CHURCH_ZOOM, false);
         {{end}}
     });
@@ -209,12 +320,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Close info overlay when clicking elsewhere
+    // Close info/filter overlay when clicking elsewhere
     document.addEventListener('click', function(e) {
-        const content = document.getElementById('info-content');
-        const toggle = document.querySelector('.info-toggle');
-        if (content && content.classList.contains('visible') && !content.contains(e.target) && !toggle.contains(e.target)) {
-            content.classList.remove('visible');
+        const infoContent = document.getElementById('info-content');
+        const infoToggle = document.querySelector('.info-toggle');
+        if (infoContent && infoContent.classList.contains('visible') && !infoContent.contains(e.target) && !infoToggle.contains(e.target)) {
+            infoContent.classList.remove('visible');
+        }
+
+        const filterContent = document.getElementById('filter-content');
+        const filterToggle = document.querySelector('.filter-toggle');
+        if (filterContent && filterContent.classList.contains('visible') && !filterContent.contains(e.target) && !filterToggle.contains(e.target)) {
+            filterContent.classList.remove('visible');
         }
     });
 
@@ -243,11 +360,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const pixel = map.getEventPixel(e.originalEvent);
         const feature = map.forEachFeatureAtPixel(pixel, f => f);
 
-        if (feature) {
-            tooltipElement.style.display = 'block';
-            tooltipOverlay.setPosition(e.coordinate);
-            tooltipElement.innerText = feature.get('churchName');
-            map.getTargetElement().style.cursor = 'pointer';
+        if (feature && feature.get('features')) {
+            const subFeatures = feature.get('features');
+            if (subFeatures.length === 1) {
+                tooltipElement.style.display = 'block';
+                tooltipOverlay.setPosition(e.coordinate);
+                tooltipElement.innerText = subFeatures[0].get('churchName');
+                map.getTargetElement().style.cursor = 'pointer';
+            } else if (subFeatures.length > 1) {
+                tooltipElement.style.display = 'block';
+                tooltipOverlay.setPosition(e.coordinate);
+                tooltipElement.innerText = subFeatures.length + ' locations';
+                map.getTargetElement().style.cursor = 'pointer';
+            } else {
+                tooltipElement.style.display = 'none';
+                map.getTargetElement().style.cursor = '';
+            }
         } else {
             tooltipElement.style.display = 'none';
             map.getTargetElement().style.cursor = '';
@@ -256,15 +384,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     map.on('click', function (event) {
         const feature = map.forEachFeatureAtPixel(event.pixel, f => f);
-        if (feature) {
-            const slug = feature.get('churchSlug');
-            htmx.ajax('GET', '/churches/' + slug, {
-                target: '#church-details',
-                swap: 'innerHTML'
-            });
+        if (feature && feature.get('features')) {
+            const subFeatures = feature.get('features');
+            if (subFeatures.length > 1) {
+                const extent = ol.extent.createEmpty();
+                subFeatures.forEach(function(f){
+                    ol.extent.extend(extent, f.getGeometry().getExtent());
+                });
+                view.fit(extent, { padding: getMapPadding(), duration: 500, maxZoom: CHURCH_ZOOM });
+            } else if (subFeatures.length === 1) {
+                const originalFeature = subFeatures[0];
+                const slug = originalFeature.get('churchSlug');
+                htmx.ajax('GET', '/churches/' + slug, {
+                    target: '#church-details',
+                    swap: 'innerHTML'
+                });
 
-            const coords = feature.getGeometry().getCoordinates();
-            focusOnCoordinate(coords, CHURCH_ZOOM);
+                const coords = originalFeature.getGeometry().getCoordinates();
+                focusOnCoordinate(coords, CHURCH_ZOOM);
+            }
         }
     });
 

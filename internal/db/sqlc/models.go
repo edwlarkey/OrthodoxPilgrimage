@@ -19,23 +19,24 @@ type Admin struct {
 }
 
 type Church struct {
-	ID            int64          `json:"id"`
-	Name          string         `json:"name"`
-	Slug          string         `json:"slug"`
-	Type          sql.NullString `json:"type"`
-	AddressText   string         `json:"address_text"`
-	City          string         `json:"city"`
-	StateProvince string         `json:"state_province"`
-	CountryCode   string         `json:"country_code"`
-	Latitude      float64        `json:"latitude"`
-	Longitude     float64        `json:"longitude"`
-	Jurisdiction  sql.NullString `json:"jurisdiction"`
-	Website       sql.NullString `json:"website"`
-	Phone         sql.NullString `json:"phone"`
-	Description   sql.NullString `json:"description"`
-	UpdatedAt     sql.NullTime   `json:"updated_at"`
-	PostalCode    sql.NullString `json:"postal_code"`
-	Status        string         `json:"status"`
+	ID             int64          `json:"id"`
+	Name           string         `json:"name"`
+	Slug           string         `json:"slug"`
+	Type           sql.NullString `json:"type"`
+	AddressText    string         `json:"address_text"`
+	City           string         `json:"city"`
+	StateProvince  string         `json:"state_province"`
+	CountryCode    string         `json:"country_code"`
+	Latitude       float64        `json:"latitude"`
+	Longitude      float64        `json:"longitude"`
+	Jurisdiction   sql.NullString `json:"jurisdiction"`
+	Website        sql.NullString `json:"website"`
+	Phone          sql.NullString `json:"phone"`
+	Description    sql.NullString `json:"description"`
+	UpdatedAt      sql.NullTime   `json:"updated_at"`
+	PostalCode     sql.NullString `json:"postal_code"`
+	Status         string         `json:"status"`
+	JurisdictionID sql.NullInt64  `json:"jurisdiction_id"`
 }
 
 type ChurchSource struct {
@@ -57,10 +58,24 @@ type Image struct {
 	SortOrder     sql.NullInt64  `json:"sort_order"`
 }
 
+type Jurisdiction struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	Tradition string `json:"tradition"`
+	PinColor  string `json:"pin_color"`
+}
+
 type Relic struct {
 	ChurchID    int64          `json:"church_id"`
 	SaintID     int64          `json:"saint_id"`
 	Description sql.NullString `json:"description"`
+	RelicTypeID sql.NullInt64  `json:"relic_type_id"`
+}
+
+type RelicType struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	SortOrder int64  `json:"sort_order"`
 }
 
 type Saint struct {

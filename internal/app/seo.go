@@ -22,8 +22,9 @@ type PageMetadata struct {
 }
 
 type PageData struct {
-	Metadata PageMetadata
-	Content  any
+	Metadata   PageMetadata
+	Content    any
+	RelicTypes []sqlcdb.RelicType
 }
 
 func (a *Application) getBaseMetadata(rPath string) PageMetadata {
@@ -35,7 +36,7 @@ func (a *Application) getBaseMetadata(rPath string) PageMetadata {
 	}
 }
 
-func (a *Application) getChurchMetadata(c sqlcdb.Church, relics []sqlcdb.ListRelicsForChurchRow) PageMetadata {
+func (a *Application) getChurchMetadata(c sqlcdb.GetChurchBySlugRow, relics []sqlcdb.ListRelicsForChurchRow) PageMetadata {
 	var saintNames []string
 	for _, r := range relics {
 		saintNames = append(saintNames, r.Name)
@@ -105,7 +106,7 @@ func (a *Application) getSaintMetadata(s sqlcdb.Saint) PageMetadata {
 	}
 }
 
-func (a *Application) generateChurchJSONLD(c sqlcdb.Church, relics []sqlcdb.ListRelicsForChurchRow) template.HTML {
+func (a *Application) generateChurchJSONLD(c sqlcdb.GetChurchBySlugRow, relics []sqlcdb.ListRelicsForChurchRow) template.HTML {
 	var saintNames []string
 	for _, r := range relics {
 		saintNames = append(saintNames, r.Name)

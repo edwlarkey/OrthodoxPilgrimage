@@ -42,6 +42,16 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="relic_type_id">Relic Type</label>
+                            <select id="relic_type_id" name="relic_type_id">
+                                <option value="">Unknown / Other</option>
+                                {{range .RelicTypes}}
+                                <option value="{{.ID}}">{{.Name}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
                             <label for="description">Description (e.g. "Right hand", "Particle")</label>
                             <textarea id="description" name="description" rows="3" placeholder="Description of the relic..."></textarea>
                         </div>

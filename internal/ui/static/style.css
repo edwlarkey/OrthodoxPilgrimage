@@ -409,6 +409,69 @@ h1.site-title a {
     margin-bottom: 15px;
 }
 
+.filter-container {
+    position: absolute;
+    top: 75px;
+    left: 340px;
+    z-index: 10;
+}
+
+.filter-toggle {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    color: var(--primary-color);
+    border: 1px solid var(--glass-border);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+}
+
+.filter-toggle:hover {
+    border-color: var(--accent-color);
+}
+
+.filter-content {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    width: 250px;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: none;
+    border: 1px solid var(--glass-border);
+    z-index: 1001;
+}
+
+.filter-content.visible {
+    display: block;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #555;
+    cursor: pointer;
+}
+
 .info-section-content .license-info {
     font-size: 0.8rem;
     border-top: 1px solid #eee;
@@ -757,6 +820,15 @@ a.saint-name:hover { text-decoration: underline; }
     .search-results {
         bottom: calc(100% + 10px);
         top: auto;
+    }
+    .filter-container {
+        top: 70px;
+        left: 20px;
+    }
+    body.sidebar-open .filter-container {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
     }
     /* Hide search container when sidebar is open */
     body.sidebar-open .search-container {

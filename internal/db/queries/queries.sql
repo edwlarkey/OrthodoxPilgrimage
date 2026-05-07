@@ -1,3 +1,39 @@
+-- name: ListJurisdictions :many
+SELECT * FROM jurisdictions ORDER BY name;
+
+-- name: GetJurisdiction :one
+SELECT * FROM jurisdictions WHERE id = ?;
+
+-- name: CreateJurisdiction :one
+INSERT INTO jurisdictions (name, tradition, pin_color) VALUES (?, ?, ?) RETURNING *;
+
+-- name: UpdateJurisdiction :one
+UPDATE jurisdictions
+SET name = ?, tradition = ?, pin_color = ?
+WHERE id = ?
+RETURNING *;
+
+-- name: DeleteJurisdiction :exec
+DELETE FROM jurisdictions WHERE id = ?;
+
+-- name: ListRelicTypes :many
+SELECT * FROM relic_types ORDER BY sort_order;
+
+-- name: GetRelicType :one
+SELECT * FROM relic_types WHERE id = ?;
+
+-- name: CreateRelicType :one
+INSERT INTO relic_types (name, sort_order) VALUES (?, ?) RETURNING *;
+
+-- name: UpdateRelicType :one
+UPDATE relic_types
+SET name = ?, sort_order = ?
+WHERE id = ?
+RETURNING *;
+
+-- name: DeleteRelicType :exec
+DELETE FROM relic_types WHERE id = ?;
+
 -- name: ListSaints :many
 SELECT * FROM saints
 ORDER BY name;
@@ -8,33 +44,45 @@ WHERE status = ?
 ORDER BY name;
 
 -- name: GetChurch :one
-SELECT * FROM churches
-WHERE id = ?;
+SELECT c.*, j.name as jurisdiction_name, j.tradition, j.pin_color
+FROM churches c
+LEFT JOIN jurisdictions j ON c.jurisdiction_id = j.id
+WHERE c.id = ?;
 
 -- name: GetChurchBySlug :one
-SELECT * FROM churches
-WHERE slug = ?;
+SELECT c.*, j.name as jurisdiction_name, j.tradition, j.pin_color
+FROM churches c
+LEFT JOIN jurisdictions j ON c.jurisdiction_id = j.id
+WHERE c.slug = ?;
 
 -- name: ListChurches :many
-SELECT * FROM churches
-ORDER BY name;
+SELECT c.*, j.name as jurisdiction_name, j.tradition, j.pin_color
+FROM churches c
+LEFT JOIN jurisdictions j ON c.jurisdiction_id = j.id
+ORDER BY c.name;
 
 -- name: ListChurchesByStatus :many
-SELECT * FROM churches
-WHERE status = ?
-ORDER BY name;
+SELECT c.*, j.name as jurisdiction_name, j.tradition, j.pin_color
+FROM churches c
+LEFT JOIN jurisdictions j ON c.jurisdiction_id = j.id
+WHERE c.status = ?
+ORDER BY c.name;
 
 -- name: ListChurchesInBounds :many
-SELECT * FROM churches
-WHERE latitude >= ? AND latitude <= ?
-  AND longitude >= ? AND longitude <= ?
-  AND status = 'published'
-ORDER BY name;
+SELECT c.*, j.name as jurisdiction_name, j.tradition, j.pin_color
+FROM churches c
+LEFT JOIN jurisdictions j ON c.jurisdiction_id = j.id
+WHERE c.latitude >= ? AND c.latitude <= ?
+  AND c.longitude >= ? AND c.longitude <= ?
+  AND c.status = 'published'
+ORDER BY c.name;
 
 -- name: ListChurchesBySaintSlug :many
-SELECT c.* FROM churches c
+SELECT c.*, j.name as jurisdiction_name, j.tradition, j.pin_color
+FROM churches c
 JOIN relics r ON c.id = r.church_id
 JOIN saints s ON r.saint_id = s.id
+LEFT JOIN jurisdictions j ON c.jurisdiction_id = j.id
 WHERE s.slug = ? AND c.status = 'published'
 ORDER BY c.name;
 
@@ -50,7 +98,7 @@ INSERT INTO churches (
     country_code,
     latitude,
     longitude,
-    jurisdiction,
+    jurisdiction_id,
     website,
     phone,
     description,
@@ -73,7 +121,7 @@ SET name = ?,
     country_code = ?,
     latitude = ?,
     longitude = ?,
-    jurisdiction = ?,
+    jurisdiction_id = ?,
     website = ?,
     phone = ?,
     description = ?,
@@ -126,15 +174,23 @@ WHERE id = ?;
 INSERT INTO relics (
     church_id,
     saint_id,
+    relic_type_id,
     description
 ) VALUES (
-    ?, ?, ?
+    ?, ?, ?, ?
 );
 
+-- name: UpdateRelic :exec
+UPDATE relics
+SET relic_type_id = ?,
+    description = ?
+WHERE church_id = ? AND saint_id = ?;
+
 -- name: ListRelicsForChurch :many
-SELECT s.*, r.description as relic_description
+SELECT s.*, r.description as relic_description, rt.name as relic_type, rt.id as relic_type_id
 FROM saints s
 JOIN relics r ON s.id = r.saint_id
+LEFT JOIN relic_types rt ON r.relic_type_id = rt.id
 WHERE r.church_id = ?;
 
 -- name: CreateImage :exec
@@ -255,18 +311,21 @@ SET last_login_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: ListAllRelics :many
-SELECT r.*, s.name as saint_name, c.name as church_name
+SELECT r.*, s.name as saint_name, c.name as church_name, rt.name as relic_type
 FROM relics r
 JOIN saints s ON r.saint_id = s.id
 JOIN churches c ON r.church_id = c.id
+LEFT JOIN relic_types rt ON r.relic_type_id = rt.id
 ORDER BY c.name, s.name;
 
 -- name: DeleteRelic :exec
 DELETE FROM relics WHERE church_id = ? AND saint_id = ?;
 
 -- name: ListRecentChurches :many
-SELECT * FROM churches
-ORDER BY updated_at DESC NULLS LAST, id DESC
+SELECT c.*, j.name as jurisdiction_name, j.tradition, j.pin_color
+FROM churches c
+LEFT JOIN jurisdictions j ON c.jurisdiction_id = j.id
+ORDER BY c.updated_at DESC NULLS LAST, c.id DESC
 LIMIT 5;
 
 -- name: ListRecentSaints :many
@@ -275,10 +334,11 @@ ORDER BY updated_at DESC NULLS LAST, id DESC
 LIMIT 5;
 
 -- name: ListRecentRelics :many
-SELECT r.*, s.name as saint_name, c.name as church_name
+SELECT r.*, s.name as saint_name, c.name as church_name, rt.name as relic_type
 FROM relics r
 JOIN saints s ON r.saint_id = s.id
 JOIN churches c ON r.church_id = c.id
+LEFT JOIN relic_types rt ON r.relic_type_id = rt.id
 ORDER BY c.updated_at DESC NULLS LAST
 LIMIT 5;
 
