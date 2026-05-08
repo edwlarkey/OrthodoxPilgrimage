@@ -860,6 +860,9 @@ h1.site-title a {
         cursor: pointer;
         position: relative;
         flex-shrink: 0;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        position: relative !important;
     }
 
     .mobile-relic-check:checked {

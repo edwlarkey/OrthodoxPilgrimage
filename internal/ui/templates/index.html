@@ -52,7 +52,7 @@
     <div class="filter-section">
         <button id="tradition-toggle" class="tradition-toggle" onclick="toggleTradition()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            Hide Non-Orthodox
+            <span id="tradition-label">Hide Non-Orthodox</span>
         </button>
     </div>
 
@@ -67,7 +67,7 @@
 
             {{range $index, $type := .RelicTypes}}
                 {{if lt $index 3}}
-                    <input type="checkbox" id="filter-relic-{{.ID}}" data-relic-name="{{.Name}}" class="btn-check relic-filter" onchange="handleRelicToggle(this)">
+                    <input type="checkbox" id="filter-relic-{{.ID}}" data-relic-id="{{.ID}}" data-relic-name="{{.Name}}" class="btn-check relic-filter" onchange="handleRelicToggle(this)">
                     <label for="filter-relic-{{.ID}}" class="btn-label">{{.Name}}</label>
                 {{end}}
             {{end}}
@@ -112,7 +112,7 @@
 
     <!-- Filter Pill -->
     <div class="mobile-filter-pill" id="mobile-filter-pill">
-        <button class="mobile-pill-btn" onclick="toggleMobileFilterPill()">
+        <button class="mobile-pill-btn" id="mobile-filter-btn" onclick="toggleMobileFilterPill()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="20" x2="20" y1="21" y2="17"/><line x1="20" x2="20" y1="13" y2="3"/><line x1="14" x2="14" y1="21" y2="9"/><line x1="8" x2="8" y1="21" y2="15"/></svg>
             Filters
         </button>
@@ -125,66 +125,16 @@
             <!-- Relic Types -->
             <div class="mobile-relic-scroll">
                 <div class="mobile-relic-group">
-                    <input type="checkbox" id="mobile-relic-all" checked class="btn-check" onchange="handleRelicAll(this)">
+                    <input type="checkbox" id="mobile-relic-all" checked class="mobile-relic-all-toggle" onchange="handleRelicAll(this)">
                     <label for="mobile-relic-all" class="mobile-relic-label">All</label>
                 </div>
                 {{range $index, $type := .RelicTypes}}
                 <div class="mobile-relic-group">
-                    <input type="checkbox" id="mobile-filter-relic-{{.ID}}" data-relic-id="{{.ID}}" data-relic-name="{{.Name}}" class="btn-check relic-filter mobile-relic-check" onchange="handleRelicToggle(this)">
+                    <input type="checkbox" id="mobile-filter-relic-{{.ID}}" data-relic-id="{{.ID}}" data-relic-name="{{.Name}}" class="relic-filter mobile-relic-check" onchange="handleRelicToggle(this)">
                     <label for="mobile-filter-relic-{{.ID}}" class="mobile-relic-label">{{.Name}}</label>
                 </div>
                 {{end}}
             </div>
-        </div>
-    </div>
-</div>
-            <div id="search-results" class="search-results"></div>
-        </div>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- Tradition Filter Section -->
-    <div class="filter-section">
-        <button id="tradition-toggle" class="tradition-toggle" onclick="toggleTradition()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            Hide Non-Orthodox
-        </button>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- Relic Filter Section -->
-    <div class="filter-section">
-        <h3>Type</h3>
-        <div class="btn-group">
-            <input type="checkbox" id="relic-all" checked class="btn-check" onchange="handleRelicAll(this)">
-            <label for="relic-all" class="btn-label">All</label>
-
-            {{range $index, $type := .RelicTypes}}
-                {{if lt $index 3}}
-                    <input type="checkbox" id="filter-relic-{{.ID}}" data-relic-name="{{.Name}}" class="btn-check relic-filter" onchange="handleRelicToggle(this)">
-                    <label for="filter-relic-{{.ID}}" class="btn-label">{{.Name}}</label>
-                {{end}}
-            {{end}}
-
-            {{if and .RelicTypes (gt (len .RelicTypes) 3)}}
-            <div class="dropdown-container">
-                <button class="dropdown-btn" id="relic-overflow-btn" onclick="toggleRelicDropdown(event)" aria-label="More relic types">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>
-                </button>
-                <div class="dropdown-menu" id="relic-overflow-menu">
-                    {{range $index, $type := .RelicTypes}}
-                        {{if ge $index 3}}
-                            <label class="dropdown-item">
-                                <input type="checkbox" data-relic-id="{{.ID}}" data-relic-name="{{.Name}}" class="relic-filter overflow-checkbox" onchange="handleRelicToggle(this)">
-                                {{.Name}}
-                            </label>
-                        {{end}}
-                    {{end}}
-                </div>
-            </div>
-            {{end}}
         </div>
     </div>
 </div>
@@ -238,16 +188,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getMapPadding() {
         if (window.innerWidth <= 500) {
-            // Mobile: Sidebar is at the bottom, 50vh. 
-            // We want the pin(s) in the top half.
             return [60, 20, window.innerHeight * 0.5 + 20, 20];
         } else {
-            // Desktop: Sidebar is on the right, ~380px wide.
             return [100, 450, 100, 100];
         }
     }
 
-    // Helper to center on a coordinate with sidebar padding
     function focusOnCoordinate(coords, zoomLevel = CHURCH_ZOOM, animate = true) {
         const point = new ol.geom.Point(coords);
         view.fit(point, {
@@ -383,81 +329,88 @@ document.addEventListener('DOMContentLoaded', function() {
         menu.classList.toggle('visible');
     }
 
-    window.handleRelicAll = function(checkbox) {
-        if (checkbox.checked) {
-            // Uncheck all other relic filters (main and overflow)
-            document.querySelectorAll('.relic-filter').forEach(cb => cb.checked = false);
-            updateDropdownButtonState();
+    function syncRelicUI(changedCheckbox) {
+        const relicId = changedCheckbox.getAttribute('data-relic-id');
+        const isChecked = changedCheckbox.checked;
+        const isAll = changedCheckbox.id === 'relic-all' || changedCheckbox.id === 'mobile-relic-all';
+
+        if (isAll) {
+            document.getElementById('relic-all').checked = isChecked;
+            const mobileAll = document.getElementById('mobile-relic-all');
+            if (mobileAll) mobileAll.checked = isChecked;
+            
+            if (isChecked) {
+                document.querySelectorAll('.relic-filter').forEach(cb => cb.checked = false);
+            }
         } else {
-            // If "All" is unchecked, we must check at least one or force it back to checked
-            const anyChecked = Array.from(document.querySelectorAll('.relic-filter')).some(cb => cb.checked);
-            if (!anyChecked) {
-                checkbox.checked = true;
+            document.querySelectorAll(`.relic-filter[data-relic-id="${relicId}"]`).forEach(cb => {
+                cb.checked = isChecked;
+            });
+
+            if (isChecked) {
+                document.getElementById('relic-all').checked = false;
+                const mobileAll = document.getElementById('mobile-relic-all');
+                if (mobileAll) mobileAll.checked = false;
+            } else {
+                const anyChecked = Array.from(document.querySelectorAll('.relic-filter')).some(cb => cb.checked);
+                if (!anyChecked) {
+                    document.getElementById('relic-all').checked = true;
+                    const mobileAll = document.getElementById('mobile-relic-all');
+                    if (mobileAll) mobileAll.checked = true;
+                }
             }
         }
+        updateFiltersUI();
+    }
+
+    window.handleRelicAll = function(checkbox) {
+        syncRelicUI(checkbox);
         applyFilters();
     }
 
     window.handleRelicToggle = function(checkbox) {
-        if (checkbox.checked) {
-            document.getElementById('relic-all').checked = false;
-        } else {
-            // If nothing else is checked, check "All"
-            const anyChecked = Array.from(document.querySelectorAll('.relic-filter')).some(cb => cb.checked);
-            if (!anyChecked) {
-                document.getElementById('relic-all').checked = true;
-            }
-        }
-        updateDropdownButtonState();
+        syncRelicUI(checkbox);
         applyFilters();
     }
 
-    function updateDropdownButtonState() {
-        const btn = document.getElementById('relic-overflow-btn');
-        if (!btn) return;
-        const anyOverflowChecked = Array.from(document.querySelectorAll('.overflow-checkbox')).some(cb => cb.checked);
-        if (anyOverflowChecked) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
+    function updateFiltersUI() {
+        const overflowBtn = document.getElementById('relic-overflow-btn');
+        if (overflowBtn) {
+            const anyOverflowChecked = Array.from(document.querySelectorAll('.overflow-checkbox')).some(cb => cb.checked);
+            overflowBtn.classList.toggle('active', anyOverflowChecked);
         }
+
+        const mobileFilterBtn = document.getElementById('mobile-filter-btn');
+        if (mobileFilterBtn) {
+            const isRelicFiltered = !document.getElementById('relic-all').checked;
+            const isTraditionFiltered = !showNonOrthodox;
+            mobileFilterBtn.classList.toggle('active', isRelicFiltered || isTraditionFiltered);
+        }
+
+        const desktopBtn = document.getElementById('tradition-toggle');
+        const mobileBtn = document.getElementById('mobile-tradition-toggle');
+        const desktopLabel = document.getElementById('tradition-label');
+        const mobileLabel = document.getElementById('mobile-tradition-label');
+
+        const labelText = showNonOrthodox ? 'Hide Non-Orthodox' : 'Show Non-Orthodox';
+        if (desktopLabel) desktopLabel.textContent = labelText;
+        if (mobileLabel) mobileLabel.textContent = labelText;
+        
+        const isApplied = !showNonOrthodox;
+        if (desktopBtn) desktopBtn.classList.toggle('active', isApplied);
+        if (mobileBtn) mobileBtn.classList.toggle('active', isApplied);
     }
 
     let showNonOrthodox = true;
 
-    // Set initial button state
-    document.addEventListener('DOMContentLoaded', function() {
-        const btn = document.getElementById('tradition-toggle');
-        if (btn && showNonOrthodox) {
-            btn.classList.add('active');
-            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Hide Non-Orthodox';
-        }
-    });
-
     window.toggleTradition = function() {
         showNonOrthodox = !showNonOrthodox;
-        const btn = document.getElementById('tradition-toggle');
-        btn.classList.toggle('active', showNonOrthodox);
-        btn.innerHTML = showNonOrthodox
-            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Hide Non-Orthodox'
-            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Show Non-Orthodox';
-        
-        // Update mobile pill label
-        const mobileLabel = document.getElementById('mobile-tradition-label');
-        const mobileBtn = document.getElementById('mobile-tradition-toggle');
-        if (mobileLabel) {
-            mobileLabel.textContent = showNonOrthodox ? 'Hide Non-Orthodox' : 'Show Non-Orthodox';
-        }
-        if (mobileBtn) {
-            mobileBtn.classList.toggle('active', !showNonOrthodox);
-        }
-        
+        updateFiltersUI();
         applyFilters();
     }
 
     window.applyFilters = function() {
         const isAllRelics = document.getElementById('relic-all').checked;
-        
         const activeRelicTypes = new Set();
         document.querySelectorAll('.relic-filter:checked').forEach(cb => {
             activeRelicTypes.add(cb.getAttribute('data-relic-name'));
@@ -465,20 +418,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         vectorSource.clear();
         const filteredFeatures = allFeatures.filter(f => {
-            // Tradition Filter
             const tradition = f.get('tradition') || 'Orthodox';
             if (!showNonOrthodox && tradition !== 'Orthodox') return false;
-
-            // Relic Type Filter
             if (isAllRelics) return true;
-
             const relicTypes = f.get('relicTypes') || [];
             return relicTypes.some(type => activeRelicTypes.has(type));
         });
         vectorSource.addFeatures(filteredFeatures);
     }
 
-    // Initial load
     loadChurches(fetchUrl, {{if and .Content (eq .Content.Type "saint")}}true{{else}}false{{end}}, false).then(features => {
         {{if and .Content (eq .Content.Type "church")}}
             const initialCoords = ol.proj.fromLonLat([{{.Content.Church.Longitude}}, {{.Content.Church.Latitude}}]);
@@ -498,8 +446,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e) e.stopPropagation();
         const content = document.getElementById('info-content');
         content.classList.toggle('visible');
-        
-        // Stop pulsing and save state
         const toggle = document.querySelector('.info-toggle');
         if (toggle) {
             toggle.classList.remove('pulsing');
@@ -507,14 +453,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Close info overlay when clicking elsewhere
     document.addEventListener('click', function(e) {
         const infoContent = document.getElementById('info-content');
         const infoToggle = document.querySelector('.info-toggle');
         if (infoContent && infoContent.classList.contains('visible') && !infoContent.contains(e.target) && !infoToggle.contains(e.target)) {
             infoContent.classList.remove('visible');
         }
-
         const relicMenu = document.getElementById('relic-overflow-menu');
         const relicBtn = document.getElementById('relic-overflow-btn');
         if (relicMenu && relicMenu.classList.contains('visible') && !relicMenu.contains(e.target) && !relicBtn.contains(e.target)) {
@@ -546,7 +490,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const pixel = map.getEventPixel(e.originalEvent);
         const feature = map.forEachFeatureAtPixel(pixel, f => f);
-
         if (feature && feature.get('features')) {
             const subFeatures = feature.get('features');
             if (subFeatures.length === 1) {
@@ -586,7 +529,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     target: '#church-details',
                     swap: 'innerHTML'
                 });
-
                 const coords = originalFeature.getGeometry().getCoordinates();
                 focusOnCoordinate(coords, CHURCH_ZOOM);
             }
@@ -596,26 +538,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.addEventListener('htmx:afterSwap', function(event) {
         if (event.detail.target.id === 'church-details') {
             const sidebar = document.getElementById('sidebar');
-            // Don't reopen if we just loaded the "loading/home" state
             if (sidebar.classList.contains('hidden') && !event.detail.target.querySelector('.loading')) {
                 toggleSidebar();
             }
         }
     });
 
-    // Custom events for map interaction via HTMX
     document.body.addEventListener('churchSelected', function(evt) {
         const data = evt.detail;
         document.getElementById('sidebar-title').innerText = "Church Info";
-
-        // Find feature in source or reload all if not found
         const features = vectorSource.getFeatures();
         const feature = features.find(f => f.get('churchSlug') === data.slug);
-
         if (feature) {
             focusOnCoordinate(feature.getGeometry().getCoordinates(), CHURCH_ZOOM);
         } else {
-            // Might happen if we were in saint view and clicked a church not in that view
             loadChurches('/api/v1/churches').then(() => {
                 focusOnCoordinate(ol.proj.fromLonLat([data.lng, data.lat]), CHURCH_ZOOM);
             });
@@ -632,29 +568,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = evt.detail;
         document.getElementById('sidebar-title').innerText = data.title || "Directory";
         loadChurches('/api/v1/churches', false);
-        
-        // Recenter and zoom out to initial state
         view.animate({
             center: ol.proj.fromLonLat([-98.5795, 39.8283]),
             zoom: window.innerWidth <= 500 ? 3 : 4,
             duration: 500
         });
-
         if (data.closeSidebar) {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar.classList.contains('hidden')) {
                 toggleSidebar();
             }
-            // Force hide the toggle button when resetting to the empty state
             document.getElementById('sidebar-toggle').style.display = 'none';
         }
     });
 
-    // Pulse Info Button Feature
     if (!sessionStorage.getItem('infoPulsed')) {
         setTimeout(() => {
-            if (sessionStorage.getItem('infoPulsed')) return; // Check again in case it was clicked during the delay
-            
+            if (sessionStorage.getItem('infoPulsed')) return;
             const toggle = document.querySelector('.info-toggle');
             if (toggle && !document.getElementById('info-content').classList.contains('visible')) {
                 toggle.classList.add('pulsing');
@@ -662,11 +592,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 15000);
     }
 
-    // Search functionality
     const searchInput = document.getElementById('search-input');
     const searchResults = document.getElementById('search-results');
     const searchPanel = document.getElementById('search-panel');
     const searchToggle = document.getElementById('search-toggle');
+    const mobileSearchInput = document.getElementById('mobile-search-input');
+    const mobileSearchResults = document.getElementById('mobile-search-results');
     let searchDebounceTimer;
 
     window.toggleSearch = function() {
@@ -691,9 +622,7 @@ document.addEventListener('DOMContentLoaded', function() {
         expand.classList.toggle('visible');
     };
 
-    // Close pill expand panels when clicking outside
     document.addEventListener('click', function(e) {
-        // Close search pill
         const searchPill = document.getElementById('mobile-search-pill');
         if (searchPill && !searchPill.contains(e.target)) {
             const expand = document.getElementById('mobile-search-expand');
@@ -701,7 +630,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 expand.classList.remove('visible');
             }
         }
-        // Close filter pill
         const filterPill = document.getElementById('mobile-filter-pill');
         if (filterPill && !filterPill.contains(e.target)) {
             const expand = document.getElementById('mobile-filter-expand');
@@ -711,28 +639,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Sync mobile search with desktop search
-    const mobileSearchInput = document.getElementById('mobile-search-input');
-    if (mobileSearchInput && searchInput) {
-        mobileSearchInput.addEventListener('input', (e) => {
-            searchInput.value = e.target.value;
-            searchInput.dispatchEvent(new Event('input'));
-        });
-        searchInput.addEventListener('input', (e) => {
-            mobileSearchInput.value = e.target.value;
-        });
-    }
-
-    const mobileSearchResults = document.getElementById('mobile-search-results');
-
-    if (searchInput && searchResults) {
-        searchInput.addEventListener('input', (e) => {
+    function setupSearch(input, results, otherInput, otherResults) {
+        if (!input || !results) return;
+        input.addEventListener('input', (e) => {
             clearTimeout(searchDebounceTimer);
             const query = e.target.value.trim();
+            if (otherInput) otherInput.value = e.target.value;
 
             if (query.length < 2) {
-                searchResults.style.display = 'none';
-                if (mobileSearchResults) mobileSearchResults.style.display = 'none';
+                results.style.display = 'none';
+                if (otherResults) otherResults.style.display = 'none';
                 return;
             }
 
@@ -740,53 +656,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
                     .then(response => response.json())
                     .then(data => {
-                        searchResults.innerHTML = '';
-                        if (mobileSearchResults) mobileSearchResults.innerHTML = '';
+                        results.innerHTML = '';
+                        if (otherResults) otherResults.innerHTML = '';
                         if (data.length > 0) {
                             data.forEach(result => {
                                 const item = document.createElement('a');
                                 item.href = `/${result.slug}`;
                                 item.className = 'search-result-item';
                                 item.innerHTML = `<span class="search-result-name">${result.name}</span>`;
-                                
                                 item.setAttribute('hx-get', `/${result.slug}`);
                                 item.setAttribute('hx-target', '#church-details');
                                 item.setAttribute('hx-push-url', 'true');
                                 htmx.process(item);
                                 
-                                searchResults.appendChild(item);
-                                if (mobileSearchResults) {
-                                    const mobileItem = item.cloneNode(false);
-                                    mobileItem.appendChild(item.firstChild.cloneNode(true));
-                                    mobileItem.setAttribute('hx-get', `/${result.slug}`);
-                                    mobileItem.setAttribute('hx-target', '#church-details');
-                                    mobileItem.setAttribute('hx-push-url', 'true');
-                                    htmx.process(mobileItem);
-                                    mobileSearchResults.appendChild(mobileItem);
+                                results.appendChild(item);
+                                if (otherResults) {
+                                    const otherItem = item.cloneNode(true);
+                                    htmx.process(otherItem);
+                                    otherResults.appendChild(otherItem);
                                 }
                             });
-                            searchResults.style.display = 'block';
-                            if (mobileSearchResults) mobileSearchResults.style.display = 'block';
+                            results.style.display = 'block';
+                            if (otherResults) otherResults.style.display = 'block';
                         } else {
-                            searchResults.style.display = 'none';
-                            if (mobileSearchResults) mobileSearchResults.style.display = 'none';
+                            results.style.display = 'none';
+                            if (otherResults) otherResults.style.display = 'none';
                         }
                     });
             }, 300);
         });
-
-        // Close search when clicking outside
-        document.addEventListener('click', (e) => {
-            if (searchToggle && searchPanel) {
-                if (!searchToggle.contains(e.target) && !searchPanel.contains(e.target)) {
-                    searchPanel.classList.remove('visible');
-                }
-            }
-            if (searchResults && !searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-            }
-        });
     }
+
+    setupSearch(searchInput, searchResults, mobileSearchInput, mobileSearchResults);
+    setupSearch(mobileSearchInput, mobileSearchResults, searchInput, searchResults);
+
+    document.addEventListener('click', (e) => {
+        if (searchToggle && searchPanel && !searchToggle.contains(e.target) && !searchPanel.contains(e.target)) {
+            searchPanel.classList.remove('visible');
+        }
+        if (searchResults && !searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    updateFiltersUI();
 });
 </script>
 {{end}}
