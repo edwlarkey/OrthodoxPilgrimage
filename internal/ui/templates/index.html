@@ -188,7 +188,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getMapPadding() {
         if (window.innerWidth <= 500) {
-            return [60, 20, window.innerHeight * 0.5 + 20, 20];
+            // Mobile: Sidebar is at the bottom (50vh).
+            // Header is ~65px, Pills are at 80px + ~35px = 115px.
+            // 140px top padding ensures pins are centered in the visible space.
+            return [140, 20, window.innerHeight * 0.5 + 20, 20];
         } else {
             return [100, 450, 100, 100];
         }
