@@ -32,24 +32,47 @@
 </div>
 
 <div class="filter-container">
-    <button class="filter-toggle" onclick="toggleFilter(event)" aria-label="Filter Locations">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-        Filter Map
-    </button>
-    <div class="filter-content" id="filter-content">
-        <div class="info-section-content">
-            <h3>Tradition</h3>
-            <div class="filter-group">
-                <label><input type="checkbox" id="filter-orthodox" checked onchange="applyFilters()"> Orthodox Sites</label>
-                <label><input type="checkbox" id="filter-catholic" checked onchange="applyFilters()"> Roman Catholic Sites</label>
-            </div>
+    <div class="filter-section">
+        <h3>Tradition</h3>
+        <div class="btn-group">
+            <input type="checkbox" id="filter-orthodox" checked class="btn-check" onchange="applyFilters()">
+            <label for="filter-orthodox" class="btn-label">Orthodox</label>
             
-            <h3 style="margin-top: 20px;">Relic Type</h3>
-            <div class="filter-group">
-                {{range .RelicTypes}}
-                <label><input type="checkbox" id="filter-relic-{{.ID}}" data-relic-name="{{.Name}}" checked onchange="applyFilters()"> {{.Name}}</label>
+            <input type="checkbox" id="filter-catholic" checked class="btn-check" onchange="applyFilters()">
+            <label for="filter-catholic" class="btn-label">Catholic</label>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <h3>Relics</h3>
+        <div class="btn-group">
+            <input type="checkbox" id="relic-all" checked class="btn-check" onchange="handleRelicAll(this)">
+            <label for="relic-all" class="btn-label">All</label>
+
+            {{range $index, $type := .RelicTypes}}
+                {{if lt $index 3}}
+                    <input type="checkbox" id="filter-relic-{{.ID}}" data-relic-name="{{.Name}}" class="btn-check relic-filter" onchange="handleRelicToggle(this)">
+                    <label for="filter-relic-{{.ID}}" class="btn-label">{{.Name}}</label>
                 {{end}}
+            {{end}}
+
+            {{if and .RelicTypes (gt (len .RelicTypes) 3)}}
+            <div class="dropdown-container">
+                <button class="dropdown-btn" id="relic-overflow-btn" onclick="toggleRelicDropdown(event)" aria-label="More relic types">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>
+                </button>
+                <div class="dropdown-menu" id="relic-overflow-menu">
+                    {{range $index, $type := .RelicTypes}}
+                        {{if ge $index 3}}
+                            <label class="dropdown-item">
+                                <input type="checkbox" data-relic-id="{{.ID}}" data-relic-name="{{.Name}}" class="relic-filter overflow-checkbox" onchange="handleRelicToggle(this)">
+                                {{.Name}}
+                            </label>
+                        {{end}}
+                    {{end}}
+                </div>
             </div>
+            {{end}}
         </div>
     </div>
 </div>
@@ -242,19 +265,61 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error loading church data:', error));
     }
 
+    window.toggleRelicDropdown = function(e) {
+        if (e) e.stopPropagation();
+        const menu = document.getElementById('relic-overflow-menu');
+        menu.classList.toggle('visible');
+    }
+
+    window.handleRelicAll = function(checkbox) {
+        if (checkbox.checked) {
+            // Uncheck all other relic filters (main and overflow)
+            document.querySelectorAll('.relic-filter').forEach(cb => cb.checked = false);
+            updateDropdownButtonState();
+        } else {
+            // If "All" is unchecked, we must check at least one or force it back to checked
+            const anyChecked = Array.from(document.querySelectorAll('.relic-filter')).some(cb => cb.checked);
+            if (!anyChecked) {
+                checkbox.checked = true;
+            }
+        }
+        applyFilters();
+    }
+
+    window.handleRelicToggle = function(checkbox) {
+        if (checkbox.checked) {
+            document.getElementById('relic-all').checked = false;
+        } else {
+            // If nothing else is checked, check "All"
+            const anyChecked = Array.from(document.querySelectorAll('.relic-filter')).some(cb => cb.checked);
+            if (!anyChecked) {
+                document.getElementById('relic-all').checked = true;
+            }
+        }
+        updateDropdownButtonState();
+        applyFilters();
+    }
+
+    function updateDropdownButtonState() {
+        const btn = document.getElementById('relic-overflow-btn');
+        if (!btn) return;
+        const anyOverflowChecked = Array.from(document.querySelectorAll('.overflow-checkbox')).some(cb => cb.checked);
+        if (anyOverflowChecked) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    }
+
     window.applyFilters = function() {
         const showOrthodox = document.getElementById('filter-orthodox').checked;
         const showCatholic = document.getElementById('filter-catholic').checked;
+        const isAllRelics = document.getElementById('relic-all').checked;
         
-        // Dynamically gather checked relic types
-        const checkedRelicTypes = new Set();
-        document.querySelectorAll('input[id^="filter-relic-"]').forEach(checkbox => {
-            if (checkbox.checked) {
-                checkedRelicTypes.add(checkbox.getAttribute('data-relic-name'));
-            }
+        const activeRelicTypes = new Set();
+        document.querySelectorAll('.relic-filter:checked').forEach(cb => {
+            activeRelicTypes.add(cb.getAttribute('data-relic-name'));
         });
-        // Also capture the total number of relic type filters to handle unmapped relics
-        const totalRelicTypeFilters = document.querySelectorAll('input[id^="filter-relic-"]').length;
         
         vectorSource.clear();
         const filteredFeatures = allFeatures.filter(f => {
@@ -267,28 +332,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!traditionMatch) return false;
 
             // Relic Type Filter
+            if (isAllRelics) return true;
+
             const relicTypes = f.get('relicTypes') || [];
-            // If the church has no relics (rare, but possible) or there are no relic filters available
-            if (relicTypes.length === 0 || totalRelicTypeFilters === 0) return true;
-            
-            return relicTypes.some(type => {
-                // If it's a known type that is checked
-                if (checkedRelicTypes.has(type)) return true;
-                // If it's an unknown type (not in the filter list), show it by default so it isn't orphaned
-                const isKnownType = Array.from(document.querySelectorAll('input[id^="filter-relic-"]'))
-                                         .some(cb => cb.getAttribute('data-relic-name') === type);
-                if (!isKnownType) return true;
-                
-                return false;
-            });
+            return relicTypes.some(type => activeRelicTypes.has(type));
         });
         vectorSource.addFeatures(filteredFeatures);
-    }
-
-    window.toggleFilter = function(e) {
-        if (e) e.stopPropagation();
-        const content = document.getElementById('filter-content');
-        content.classList.toggle('visible');
     }
 
     // Initial load
@@ -320,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Close info/filter overlay when clicking elsewhere
+    // Close info overlay when clicking elsewhere
     document.addEventListener('click', function(e) {
         const infoContent = document.getElementById('info-content');
         const infoToggle = document.querySelector('.info-toggle');
@@ -328,10 +377,10 @@ document.addEventListener('DOMContentLoaded', function() {
             infoContent.classList.remove('visible');
         }
 
-        const filterContent = document.getElementById('filter-content');
-        const filterToggle = document.querySelector('.filter-toggle');
-        if (filterContent && filterContent.classList.contains('visible') && !filterContent.contains(e.target) && !filterToggle.contains(e.target)) {
-            filterContent.classList.remove('visible');
+        const relicMenu = document.getElementById('relic-overflow-menu');
+        const relicBtn = document.getElementById('relic-overflow-btn');
+        if (relicMenu && relicMenu.classList.contains('visible') && !relicMenu.contains(e.target) && !relicBtn.contains(e.target)) {
+            relicMenu.classList.remove('visible');
         }
     });
 
