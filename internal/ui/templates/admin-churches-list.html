@@ -36,7 +36,7 @@
                     <tr id="church-{{.ID}}">
                         <td class="text-semibold">{{.Name}}</td>
                         <td>{{.City}}, {{.StateProvince}}</td>
-                        <td>{{if .Jurisdiction.Valid}}{{.Jurisdiction.String}}{{else}}-{{end}}</td>
+                        <td>{{if .JurisdictionName.Valid}}{{.JurisdictionName.String}}{{else}}-{{end}}</td>
                         <td>
                             <span class="status-pill status-{{.Status}}">{{.Status}}</span>
                         </td>

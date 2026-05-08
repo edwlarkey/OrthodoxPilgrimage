@@ -1331,12 +1331,9 @@ a.saint-name:hover { text-decoration: underline; }
         padding: 10px 18px;
         font-size: 0.85rem;
     }
-    /* Move map controls to bottom left on mobile */
+    /* Hide map controls on mobile */
     .ol-zoom {
-        top: auto !important;
-        left: 20px !important;
-        right: auto !important;
-        bottom: calc(52vh + 20px) !important;
+        display: none !important;
     }
 }
 
