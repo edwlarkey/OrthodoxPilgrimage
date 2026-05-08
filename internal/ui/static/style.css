@@ -165,6 +165,40 @@ h1.site-title a {
     flex-shrink: 0;
 }
 
+.search-toggle {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--primary-color);
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.search-toggle:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+}
+
+.search-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    display: none;
+    z-index: 1001;
+}
+
+.search-panel.visible {
+    display: block;
+}
+
 .search-input-wrapper {
     background: var(--glass-bg);
     backdrop-filter: blur(8px);
@@ -455,7 +489,7 @@ h1.site-title a {
 .filter-section h3 {
     margin: 0;
     font-size: 0.75rem;
-    font-weight: 800;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: #7f8c8d;
