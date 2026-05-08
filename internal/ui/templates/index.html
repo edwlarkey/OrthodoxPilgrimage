@@ -48,14 +48,10 @@
 
     <!-- Tradition Filter Section -->
     <div class="filter-section">
-        <h3>Tradition</h3>
-        <div class="btn-group">
-            <input type="checkbox" id="filter-orthodox" checked class="btn-check" onchange="applyFilters()">
-            <label for="filter-orthodox" class="btn-label">Orthodox</label>
-
-            <input type="checkbox" id="filter-catholic" checked class="btn-check" onchange="applyFilters()">
-            <label for="filter-catholic" class="btn-label">Roman Catholic</label>
-        </div>
+        <button id="tradition-toggle" class="tradition-toggle" onclick="toggleTradition()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            Hide Non-Orthodox
+        </button>
     </div>
 
     <div class="divider"></div>
@@ -329,9 +325,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    let showNonOrthodox = true;
+
+    // Set initial button state
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('tradition-toggle');
+        if (btn && showNonOrthodox) {
+            btn.classList.add('active');
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Hide Non-Orthodox';
+        }
+    });
+
+    window.toggleTradition = function() {
+        showNonOrthodox = !showNonOrthodox;
+        const btn = document.getElementById('tradition-toggle');
+        btn.classList.toggle('active', showNonOrthodox);
+        btn.innerHTML = showNonOrthodox
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Hide Non-Orthodox'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Show Non-Orthodox';
+        applyFilters();
+    }
+
     window.applyFilters = function() {
-        const showOrthodox = document.getElementById('filter-orthodox').checked;
-        const showCatholic = document.getElementById('filter-catholic').checked;
         const isAllRelics = document.getElementById('relic-all').checked;
         
         const activeRelicTypes = new Set();
@@ -343,11 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const filteredFeatures = allFeatures.filter(f => {
             // Tradition Filter
             const tradition = f.get('tradition') || 'Orthodox';
-            let traditionMatch = false;
-            if (tradition === 'Roman Catholic' && showCatholic) traditionMatch = true;
-            if (tradition === 'Orthodox' && showOrthodox) traditionMatch = true;
-            
-            if (!traditionMatch) return false;
+            if (!showNonOrthodox && tradition !== 'Orthodox') return false;
 
             // Relic Type Filter
             if (isAllRelics) return true;

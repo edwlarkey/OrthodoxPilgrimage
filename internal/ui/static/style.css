@@ -500,6 +500,35 @@ h1.site-title a {
     transform: translateY(-1px);
 }
 
+.tradition-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    color: var(--primary-color);
+    font-family: inherit;
+}
+
+.tradition-toggle:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+}
+
+.tradition-toggle.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 8px rgba(83, 12, 56, 0.2);
+}
+
 /* Custom Dropdown for Overflow */
 .dropdown-container {
     position: relative;
