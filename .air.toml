@@ -1,0 +1,4 @@
+[build]
+cmd = "make build"
+bin = "./bin/orthodoxpilgrimage"
+exclude_dir = ["internal/db/sqlc/"]

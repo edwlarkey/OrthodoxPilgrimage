@@ -397,9 +397,12 @@ h1.site-title a {
 }
 
 .info-section-content h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.1rem;
+    margin: 0 0 15px 0;
+    font-size: 1.05rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
     color: var(--primary-color);
+    letter-spacing: -0.02em;
 }
 
 .info-section-content p {
@@ -444,13 +447,19 @@ h1.site-title a {
     left: 0;
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
-    width: 250px;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    width: 260px;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
     display: none;
     border: 1px solid var(--glass-border);
     z-index: 1001;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .filter-content.visible {
@@ -460,16 +469,56 @@ h1.site-title a {
 .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
 }
 
 .filter-group label {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
-    color: #555;
+    gap: 10px;
+    font-size: 0.95rem;
+    color: var(--primary-color);
     cursor: pointer;
+    transition: color 0.2s;
+    font-weight: 500;
+}
+
+.filter-group label:hover {
+    color: var(--accent-color);
+}
+
+.filter-group input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(44, 62, 80, 0.3);
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.filter-group input[type="checkbox"]:hover {
+    border-color: var(--accent-color);
+}
+
+.filter-group input[type="checkbox"]:checked {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.filter-group input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
 .info-section-content .license-info {
@@ -822,13 +871,8 @@ a.saint-name:hover { text-decoration: underline; }
         top: auto;
     }
     .filter-container {
-        top: 70px;
+        top: 80px;
         left: 20px;
-    }
-    body.sidebar-open .filter-container {
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
     }
     /* Hide search container when sidebar is open */
     body.sidebar-open .search-container {
