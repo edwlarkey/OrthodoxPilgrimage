@@ -495,7 +495,7 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 
 		lat, _ := strconv.ParseFloat(latStr, 64)
 		lng, _ := strconv.ParseFloat(lngStr, 64)
-		
+
 		var jurisdictionID sql.NullInt64
 		if jurisdictionIDStr != "" {
 			if id, err := strconv.ParseInt(jurisdictionIDStr, 10, 64); err == nil {
@@ -506,41 +506,41 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 		var updatedChurch sqlcdb.Church
 		if isNew {
 			updatedChurch, err = a.DB.CreateChurch(r.Context(), sqlcdb.CreateChurchParams{
-				Name:          name,
-				Slug:          slug,
-				AddressText:   addressText,
-				City:          city,
-				StateProvince: stateProvince,
-				PostalCode:    sql.NullString{String: postalCode, Valid: postalCode != ""},
-				CountryCode:   countryCode,
-				Latitude:      lat,
-				Longitude:     lng,
+				Name:           name,
+				Slug:           slug,
+				AddressText:    addressText,
+				City:           city,
+				StateProvince:  stateProvince,
+				PostalCode:     sql.NullString{String: postalCode, Valid: postalCode != ""},
+				CountryCode:    countryCode,
+				Latitude:       lat,
+				Longitude:      lng,
 				JurisdictionID: jurisdictionID,
-				Website:       sql.NullString{String: website, Valid: website != ""},
-				Phone:         sql.NullString{String: phone, Valid: phone != ""},
-				Description:   sql.NullString{String: description, Valid: description != ""},
-				Status:        status,
+				Website:        sql.NullString{String: website, Valid: website != ""},
+				Phone:          sql.NullString{String: phone, Valid: phone != ""},
+				Description:    sql.NullString{String: description, Valid: description != ""},
+				Status:         status,
 			})
 			if err == nil {
 				a.logAudit(r.Context(), "CREATE", "church", updatedChurch.ID, updatedChurch)
 			}
 		} else {
 			updatedChurch, err = a.DB.UpdateChurch(r.Context(), sqlcdb.UpdateChurchParams{
-				ID:            church.ID,
-				Name:          name,
-				Slug:          slug,
-				AddressText:   addressText,
-				City:          city,
-				StateProvince: stateProvince,
-				PostalCode:    sql.NullString{String: postalCode, Valid: postalCode != ""},
-				CountryCode:   countryCode,
-				Latitude:      lat,
-				Longitude:     lng,
+				ID:             church.ID,
+				Name:           name,
+				Slug:           slug,
+				AddressText:    addressText,
+				City:           city,
+				StateProvince:  stateProvince,
+				PostalCode:     sql.NullString{String: postalCode, Valid: postalCode != ""},
+				CountryCode:    countryCode,
+				Latitude:       lat,
+				Longitude:      lng,
 				JurisdictionID: jurisdictionID,
-				Website:       sql.NullString{String: website, Valid: website != ""},
-				Phone:         sql.NullString{String: phone, Valid: phone != ""},
-				Description:   sql.NullString{String: description, Valid: description != ""},
-				Status:        status,
+				Website:        sql.NullString{String: website, Valid: website != ""},
+				Phone:          sql.NullString{String: phone, Valid: phone != ""},
+				Description:    sql.NullString{String: description, Valid: description != ""},
+				Status:         status,
 			})
 			if err == nil {
 				a.logAudit(r.Context(), "UPDATE", "church", church.ID, updatedChurch)
@@ -648,7 +648,7 @@ func (a *Application) adminRelicEditHandler(w http.ResponseWriter, r *http.Reque
 		churchID, _ := strconv.ParseInt(r.FormValue("church_id"), 10, 64)
 		saintID, _ := strconv.ParseInt(r.FormValue("saint_id"), 10, 64)
 		description := r.FormValue("description")
-		
+
 		var relicTypeID sql.NullInt64
 		if rtIDStr := r.FormValue("relic_type_id"); rtIDStr != "" {
 			if id, err := strconv.ParseInt(rtIDStr, 10, 64); err == nil {
@@ -686,7 +686,7 @@ func (a *Application) adminRelicUpdateHandler(w http.ResponseWriter, r *http.Req
 		churchID, _ := strconv.ParseInt(r.FormValue("church_id"), 10, 64)
 		saintID, _ := strconv.ParseInt(r.FormValue("saint_id"), 10, 64)
 		description := r.FormValue("description")
-		
+
 		var relicTypeID sql.NullInt64
 		if rtIDStr := r.FormValue("relic_type_id"); rtIDStr != "" {
 			if id, err := strconv.ParseInt(rtIDStr, 10, 64); err == nil {

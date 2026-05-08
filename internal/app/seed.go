@@ -246,8 +246,8 @@ func SeedFromReader(ctx context.Context, queries *sqlcdb.Queries, r io.Reader) e
 			}
 
 			err = queries.CreateRelic(ctx, sqlcdb.CreateRelicParams{
-				ChurchID: church.ID,
-				SaintID:  saintID,
+				ChurchID:    church.ID,
+				SaintID:     saintID,
 				RelicTypeID: sql.NullInt64{Int64: 2, Valid: true}, // Default to Fragment
 				Description: sql.NullString{
 					String: r.Description,

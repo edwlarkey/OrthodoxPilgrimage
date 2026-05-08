@@ -78,17 +78,6 @@
         </div>
     </header>
 
-    <div class="search-container">
-        <div class="search-input-wrapper">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px; color: #bdc3c7;">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="search-input" placeholder="Search for a saint..." autocomplete="off">
-        </div>
-        <div id="search-results" class="search-results"></div>
-    </div>
-
     <div class="app-container">
         {{template "content" .}}
     </div>
@@ -126,54 +115,6 @@
             const header = document.getElementById('site-header');
             header.classList.toggle('expanded');
         }
-
-        const searchInput = document.getElementById('search-input');
-        const searchResults = document.getElementById('search-results');
-        let debounceTimer;
-
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(debounceTimer);
-            const query = e.target.value.trim();
-
-            if (query.length < 2) {
-                searchResults.style.display = 'none';
-                return;
-            }
-
-            debounceTimer = setTimeout(() => {
-                fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        searchResults.innerHTML = '';
-                        if (data.length > 0) {
-                            data.forEach(result => {
-                                const item = document.createElement('a');
-                                item.href = `/${result.slug}`;
-                                item.className = 'search-result-item';
-                                item.innerHTML = `<span class="search-result-name">${result.name}</span>`;
-                                
-                                // Use HTMX to load the saint detail without a full page reload
-                                item.setAttribute('hx-get', `/${result.slug}`);
-                                item.setAttribute('hx-target', '#church-details');
-                                item.setAttribute('hx-push-url', 'true');
-                                htmx.process(item);
-                                
-                                searchResults.appendChild(item);
-                            });
-                            searchResults.style.display = 'block';
-                        } else {
-                            searchResults.style.display = 'none';
-                        }
-                    });
-            }, 300);
-        });
-
-        // Close search results when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-            }
-        });
     </script>
 </body>
 </html>
