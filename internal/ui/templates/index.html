@@ -2,17 +2,17 @@
 <div id="map"></div>
 <div id="tooltip" class="ol-tooltip"></div>
 
-<div class="sidebar {{if not .}}hidden{{end}}" id="sidebar">
+<div class="sidebar {{if not .Content}}hidden{{end}}" id="sidebar">
     <div class="sidebar-content" id="church-details" hx-on::after-swap="this.scrollTo(0,0)">
-        {{if .}}
-            {{if eq .Type "church"}}
-                {{template "church-detail" .}}
-            {{else if eq .Type "saint"}}
-                {{template "saint-detail" .}}
-            {{else if eq .Type "church-directory"}}
-                {{template "church-directory" .}}
-            {{else if eq .Type "saint-directory"}}
-                {{template "saint-directory" .}}
+        {{if .Content}}
+            {{if eq .Content.Type "church"}}
+                {{template "church-detail" .Content}}
+            {{else if eq .Content.Type "saint"}}
+                {{template "saint-detail" .Content}}
+            {{else if eq .Content.Type "church-directory"}}
+                {{template "church-directory" .Content}}
+            {{else if eq .Content.Type "saint-directory"}}
+                {{template "saint-directory" .Content}}
             {{end}}
         {{else}}
             <div class="sidebar-header">
@@ -28,6 +28,114 @@
             </div>
             <div class="loading">Select a location on the map to begin your pilgrimage.</div>
         {{end}}
+    </div>
+</div>
+
+<div class="top-controls-bar">
+    <!-- Search Section -->
+    <div class="search-section">
+        <button id="search-toggle" class="search-toggle" onclick="toggleSearch()" aria-label="Search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <div id="search-panel" class="search-panel">
+            <div class="search-input-wrapper">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px; color: #bdc3c7; flex-shrink: 0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="search-input" placeholder="Search for a saint..." autocomplete="off">
+            </div>
+            <div id="search-results" class="search-results"></div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Tradition Filter Section -->
+    <div class="filter-section">
+        <button id="tradition-toggle" class="tradition-toggle" onclick="toggleTradition()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <span id="tradition-label">Hide Non-Orthodox</span>
+        </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Relic Filter Section -->
+    <div class="filter-section">
+        <h3>Relics</h3>
+        <div class="btn-group">
+            <input type="checkbox" id="relic-all" checked class="btn-check" onchange="handleRelicAll(this)">
+            <label for="relic-all" class="btn-label">All</label>
+
+            {{range $index, $type := .RelicTypes}}
+                {{if lt $index 3}}
+                    <input type="checkbox" id="filter-relic-{{.ID}}" data-relic-id="{{.ID}}" data-relic-name="{{.Name}}" class="btn-check relic-filter" onchange="handleRelicToggle(this)">
+                    <label for="filter-relic-{{.ID}}" class="btn-label">{{.Name}}</label>
+                {{end}}
+            {{end}}
+
+            {{if and .RelicTypes (gt (len .RelicTypes) 3)}}
+            <div class="dropdown-container">
+                <button class="dropdown-btn" id="relic-overflow-btn" onclick="toggleRelicDropdown(event)" aria-label="More relic types">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>
+                </button>
+                <div class="dropdown-menu" id="relic-overflow-menu">
+                    {{range $index, $type := .RelicTypes}}
+                        {{if ge $index 3}}
+                            <label class="dropdown-item">
+                                <input type="checkbox" data-relic-id="{{.ID}}" data-relic-name="{{.Name}}" class="relic-filter overflow-checkbox" onchange="handleRelicToggle(this)">
+                                {{.Name}}
+                            </label>
+                        {{end}}
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Filter Pills -->
+<div class="mobile-filter-pills">
+    <!-- Search Pill -->
+    <div class="mobile-filter-pill" id="mobile-search-pill">
+        <button class="mobile-pill-btn" onclick="toggleMobileSearchPill()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Search
+        </button>
+        <div class="mobile-pill-expand" id="mobile-search-expand">
+            <div class="mobile-search-wrapper">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #bdc3c7; flex-shrink: 0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="mobile-search-input" placeholder="Search..." autocomplete="off">
+            </div>
+            <div id="mobile-search-results" class="mobile-search-results"></div>
+        </div>
+    </div>
+
+    <!-- Filter Pill -->
+    <div class="mobile-filter-pill" id="mobile-filter-pill">
+        <button class="mobile-pill-btn" id="mobile-filter-btn" onclick="toggleMobileFilterPill()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="20" x2="20" y1="21" y2="17"/><line x1="20" x2="20" y1="13" y2="3"/><line x1="14" x2="14" y1="21" y2="9"/><line x1="8" x2="8" y1="21" y2="15"/></svg>
+            Filters
+        </button>
+        <div class="mobile-pill-expand" id="mobile-filter-expand">
+            <!-- Tradition -->
+            <button id="mobile-tradition-toggle" class="mobile-pill-tradition" onclick="toggleTradition()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                <span id="mobile-tradition-label">Hide Non-Orthodox</span>
+            </button>
+            <!-- Relic Types -->
+            <div class="mobile-relic-scroll">
+                <div class="mobile-relic-group">
+                    <input type="checkbox" id="mobile-relic-all" checked class="mobile-relic-all-toggle" onchange="handleRelicAll(this)">
+                    <label for="mobile-relic-all" class="mobile-relic-label">All</label>
+                </div>
+                {{range $index, $type := .RelicTypes}}
+                <div class="mobile-relic-group">
+                    <input type="checkbox" id="mobile-filter-relic-{{.ID}}" data-relic-id="{{.ID}}" data-relic-name="{{.Name}}" class="relic-filter mobile-relic-check" onchange="handleRelicToggle(this)">
+                    <label for="mobile-filter-relic-{{.ID}}" class="mobile-relic-label">{{.Name}}</label>
+                </div>
+                {{end}}
+            </div>
+        </div>
     </div>
 </div>
 
@@ -59,37 +167,36 @@ document.addEventListener('DOMContentLoaded', function() {
     let initialCenter = [-98.5795, 39.8283];
     let fetchUrl = '/api/v1/churches';
 
-    {{if .}}
-        {{if eq .Type "church"}}
-            initialCenter = [{{.Church.Longitude}}, {{.Church.Latitude}}];
+    {{if .Content}}
+        {{if eq .Content.Type "church"}}
+            initialCenter = [{{.Content.Church.Longitude}}, {{.Content.Church.Latitude}}];
             initialZoom = CHURCH_ZOOM;
             document.getElementById('sidebar-title').innerText = "Church Info";
-        {{else if eq .Type "saint"}}
-            {{if .ReferringChurch}}
-                initialCenter = [{{.ReferringChurch.Longitude}}, {{.ReferringChurch.Latitude}}];
+        {{else if eq .Content.Type "saint"}}
+            {{if .Content.ReferringChurch}}
+                initialCenter = [{{.Content.ReferringChurch.Longitude}}, {{.Content.ReferringChurch.Latitude}}];
                 initialZoom = CHURCH_ZOOM;
             {{end}}
-            fetchUrl = '/api/v1/churches?saint={{.Saint.Slug}}';
+            fetchUrl = '/api/v1/churches?saint={{.Content.Saint.Slug}}';
             document.getElementById('sidebar-title').innerText = "Saint Info";
-        {{else if eq .Type "church-directory"}}
+        {{else if eq .Content.Type "church-directory"}}
             document.getElementById('sidebar-title').innerText = "All Churches";
-        {{else if eq .Type "saint-directory"}}
+        {{else if eq .Content.Type "saint-directory"}}
             document.getElementById('sidebar-title').innerText = "All Saints";
         {{end}}
     {{end}}
 
     function getMapPadding() {
         if (window.innerWidth <= 500) {
-            // Mobile: Sidebar is at the bottom, 50vh. 
-            // We want the pin(s) in the top half.
-            return [60, 20, window.innerHeight * 0.5 + 20, 20];
+            // Mobile: Sidebar is at the bottom (50vh).
+            // Header is ~65px, Pills are at 80px + ~35px = 115px.
+            // 140px top padding ensures pins are centered in the visible space.
+            return [140, 20, window.innerHeight * 0.5 + 20, 20];
         } else {
-            // Desktop: Sidebar is on the right, ~380px wide.
             return [100, 450, 100, 100];
         }
     }
 
-    // Helper to center on a coordinate with sidebar padding
     function focusOnCoordinate(coords, zoomLevel = CHURCH_ZOOM, animate = true) {
         const point = new ol.geom.Point(coords);
         view.fit(point, {
@@ -124,22 +231,57 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     map.addOverlay(tooltipOverlay);
 
-    const svgPin = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21C16 17 20 13.4183 20 9C20 4.58172 16.4183 1 12 1C7.58172 1 4 4.58172 4 9C4 13.4183 8 17 12 21Z" fill="#530c38" stroke="white" stroke-width="1"/><circle cx="12" cy="9" r="3" fill="white"/></svg>';
+    const styleCache = {};
+    function getPinStyle(color) {
+        if (!styleCache[color]) {
+            const svg = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21C16 17 20 13.4183 20 9C20 4.58172 16.4183 1 12 1C7.58172 1 4 4.58172 4 9C4 13.4183 8 17 12 21Z" fill="${color}" stroke="white" stroke-width="1"/><circle cx="12" cy="9" r="3" fill="white"/></svg>`;
+            styleCache[color] = new ol.style.Style({
+                image: new ol.style.Icon({
+                    anchor: [0.5, 1],
+                    src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
+                    scale: 1,
+                }),
+            });
+        }
+        return styleCache[color];
+    }
 
-    const iconStyle = new ol.style.Style({
-        image: new ol.style.Icon({
-            anchor: [0.5, 1],
-            src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgPin),
-            scale: 1,
-        }),
-    });
+    function clusterStyleFunction(feature) {
+        const subFeatures = feature.get('features');
+        const size = subFeatures ? subFeatures.length : 0;
+        if (size > 1) {
+            return new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 12,
+                    stroke: new ol.style.Stroke({ color: '#fff', width: 2 }),
+                    fill: new ol.style.Fill({ color: '#530c38' })
+                }),
+                text: new ol.style.Text({
+                    text: size.toString(),
+                    fill: new ol.style.Fill({ color: '#fff' })
+                })
+            });
+        } else if (size === 1) {
+            const originalFeature = subFeatures[0];
+            const color = originalFeature.get('pinColor') || '#530c38';
+            return getPinStyle(color);
+        }
+        return null;
+    }
 
     const vectorSource = new ol.source.Vector();
-    const vectorLayer = new ol.layer.Vector({
+    const clusterSource = new ol.source.Cluster({
+        distance: 40,
         source: vectorSource,
-        style: iconStyle,
+    });
+    
+    const vectorLayer = new ol.layer.Vector({
+        source: clusterSource,
+        style: clusterStyleFunction,
     });
     map.addLayer(vectorLayer);
+
+    let allFeatures = [];
 
     function loadChurches(url, focusAfterLoad = false, animate = true) {
         return fetch(url)
@@ -147,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(churches => {
                 vectorSource.clear();
                 if (churches.length === 0) return;
-                const features = [];
+                allFeatures = [];
                 churches.forEach(church => {
                     if (church.latitude && church.longitude) {
                         const feature = new ol.Feature({
@@ -155,35 +297,142 @@ document.addEventListener('DOMContentLoaded', function() {
                             churchSlug: church.slug,
                             churchName: church.name,
                             lat: church.latitude,
-                            lng: church.longitude
+                            lng: church.longitude,
+                            pinColor: church.pinColor,
+                            tradition: church.tradition,
+                            relicTypes: church.relicTypes || []
                         });
-                        features.push(feature);
+                        allFeatures.push(feature);
                     }
                 });
-                vectorSource.addFeatures(features);
+                
+                applyFilters();
 
                 if (focusAfterLoad) {
-                    if (features.length > 1) {
+                    if (allFeatures.length > 1) {
                         const extent = vectorSource.getExtent();
                         view.fit(extent, { 
                             padding: getMapPadding(), 
                             duration: animate ? 500 : 0, 
                             maxZoom: CHURCH_ZOOM 
                         });
-                    } else if (features.length === 1) {
-                        const coords = features[0].getGeometry().getCoordinates();
+                    } else if (allFeatures.length === 1) {
+                        const coords = allFeatures[0].getGeometry().getCoordinates();
                         focusOnCoordinate(coords, CHURCH_ZOOM, animate);
                     }
                 }
-                return features;
+                return allFeatures;
             })
             .catch(error => console.error('Error loading church data:', error));
     }
 
-    // Initial load
-    loadChurches(fetchUrl, {{if eq .Type "saint"}}true{{else}}false{{end}}, false).then(features => {
-        {{if eq .Type "church"}}
-            const initialCoords = ol.proj.fromLonLat([{{.Church.Longitude}}, {{.Church.Latitude}}]);
+    window.toggleRelicDropdown = function(e) {
+        if (e) e.stopPropagation();
+        const menu = document.getElementById('relic-overflow-menu');
+        menu.classList.toggle('visible');
+    }
+
+    function syncRelicUI(changedCheckbox) {
+        const relicId = changedCheckbox.getAttribute('data-relic-id');
+        const isChecked = changedCheckbox.checked;
+        const isAll = changedCheckbox.id === 'relic-all' || changedCheckbox.id === 'mobile-relic-all';
+
+        if (isAll) {
+            document.getElementById('relic-all').checked = isChecked;
+            const mobileAll = document.getElementById('mobile-relic-all');
+            if (mobileAll) mobileAll.checked = isChecked;
+            
+            if (isChecked) {
+                document.querySelectorAll('.relic-filter').forEach(cb => cb.checked = false);
+            }
+        } else {
+            document.querySelectorAll(`.relic-filter[data-relic-id="${relicId}"]`).forEach(cb => {
+                cb.checked = isChecked;
+            });
+
+            if (isChecked) {
+                document.getElementById('relic-all').checked = false;
+                const mobileAll = document.getElementById('mobile-relic-all');
+                if (mobileAll) mobileAll.checked = false;
+            } else {
+                const anyChecked = Array.from(document.querySelectorAll('.relic-filter')).some(cb => cb.checked);
+                if (!anyChecked) {
+                    document.getElementById('relic-all').checked = true;
+                    const mobileAll = document.getElementById('mobile-relic-all');
+                    if (mobileAll) mobileAll.checked = true;
+                }
+            }
+        }
+        updateFiltersUI();
+    }
+
+    window.handleRelicAll = function(checkbox) {
+        syncRelicUI(checkbox);
+        applyFilters();
+    }
+
+    window.handleRelicToggle = function(checkbox) {
+        syncRelicUI(checkbox);
+        applyFilters();
+    }
+
+    function updateFiltersUI() {
+        const overflowBtn = document.getElementById('relic-overflow-btn');
+        if (overflowBtn) {
+            const anyOverflowChecked = Array.from(document.querySelectorAll('.overflow-checkbox')).some(cb => cb.checked);
+            overflowBtn.classList.toggle('active', anyOverflowChecked);
+        }
+
+        const mobileFilterBtn = document.getElementById('mobile-filter-btn');
+        if (mobileFilterBtn) {
+            const isRelicFiltered = !document.getElementById('relic-all').checked;
+            const isTraditionFiltered = !showNonOrthodox;
+            mobileFilterBtn.classList.toggle('active', isRelicFiltered || isTraditionFiltered);
+        }
+
+        const desktopBtn = document.getElementById('tradition-toggle');
+        const mobileBtn = document.getElementById('mobile-tradition-toggle');
+        const desktopLabel = document.getElementById('tradition-label');
+        const mobileLabel = document.getElementById('mobile-tradition-label');
+
+        const labelText = showNonOrthodox ? 'Hide Non-Orthodox' : 'Show Non-Orthodox';
+        if (desktopLabel) desktopLabel.textContent = labelText;
+        if (mobileLabel) mobileLabel.textContent = labelText;
+        
+        const isApplied = !showNonOrthodox;
+        if (desktopBtn) desktopBtn.classList.toggle('active', isApplied);
+        if (mobileBtn) mobileBtn.classList.toggle('active', isApplied);
+    }
+
+    let showNonOrthodox = true;
+
+    window.toggleTradition = function() {
+        showNonOrthodox = !showNonOrthodox;
+        updateFiltersUI();
+        applyFilters();
+    }
+
+    window.applyFilters = function() {
+        const isAllRelics = document.getElementById('relic-all').checked;
+        const activeRelicTypes = new Set();
+        document.querySelectorAll('.relic-filter:checked').forEach(cb => {
+            activeRelicTypes.add(cb.getAttribute('data-relic-name'));
+        });
+        
+        vectorSource.clear();
+        const filteredFeatures = allFeatures.filter(f => {
+            const tradition = f.get('tradition') || 'Orthodox';
+            if (!showNonOrthodox && tradition !== 'Orthodox') return false;
+            if (isAllRelics) return true;
+            const relicTypes = f.get('relicTypes') || [];
+            return relicTypes.some(type => activeRelicTypes.has(type));
+        });
+        vectorSource.addFeatures(filteredFeatures);
+    }
+
+    loadChurches(fetchUrl, {{if and .Content (eq .Content.Type "saint")}}true{{else}}false{{end}}, false).then(features => {
+        {{if and .Content (eq .Content.Type "church")}}
+            const initialCoords = ol.proj.fromLonLat([{{.Content.Church.Longitude}}, {{.Content.Church.Latitude}}]);
             focusOnCoordinate(initialCoords, CHURCH_ZOOM, false);
         {{end}}
     });
@@ -200,8 +449,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e) e.stopPropagation();
         const content = document.getElementById('info-content');
         content.classList.toggle('visible');
-        
-        // Stop pulsing and save state
         const toggle = document.querySelector('.info-toggle');
         if (toggle) {
             toggle.classList.remove('pulsing');
@@ -209,12 +456,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Close info overlay when clicking elsewhere
     document.addEventListener('click', function(e) {
-        const content = document.getElementById('info-content');
-        const toggle = document.querySelector('.info-toggle');
-        if (content && content.classList.contains('visible') && !content.contains(e.target) && !toggle.contains(e.target)) {
-            content.classList.remove('visible');
+        const infoContent = document.getElementById('info-content');
+        const infoToggle = document.querySelector('.info-toggle');
+        if (infoContent && infoContent.classList.contains('visible') && !infoContent.contains(e.target) && !infoToggle.contains(e.target)) {
+            infoContent.classList.remove('visible');
+        }
+        const relicMenu = document.getElementById('relic-overflow-menu');
+        const relicBtn = document.getElementById('relic-overflow-btn');
+        if (relicMenu && relicMenu.classList.contains('visible') && !relicMenu.contains(e.target) && !relicBtn.contains(e.target)) {
+            relicMenu.classList.remove('visible');
         }
     });
 
@@ -242,12 +493,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const pixel = map.getEventPixel(e.originalEvent);
         const feature = map.forEachFeatureAtPixel(pixel, f => f);
-
-        if (feature) {
-            tooltipElement.style.display = 'block';
-            tooltipOverlay.setPosition(e.coordinate);
-            tooltipElement.innerText = feature.get('churchName');
-            map.getTargetElement().style.cursor = 'pointer';
+        if (feature && feature.get('features')) {
+            const subFeatures = feature.get('features');
+            if (subFeatures.length === 1) {
+                tooltipElement.style.display = 'block';
+                tooltipOverlay.setPosition(e.coordinate);
+                tooltipElement.innerText = subFeatures[0].get('churchName');
+                map.getTargetElement().style.cursor = 'pointer';
+            } else if (subFeatures.length > 1) {
+                tooltipElement.style.display = 'block';
+                tooltipOverlay.setPosition(e.coordinate);
+                tooltipElement.innerText = subFeatures.length + ' locations';
+                map.getTargetElement().style.cursor = 'pointer';
+            } else {
+                tooltipElement.style.display = 'none';
+                map.getTargetElement().style.cursor = '';
+            }
         } else {
             tooltipElement.style.display = 'none';
             map.getTargetElement().style.cursor = '';
@@ -256,41 +517,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
     map.on('click', function (event) {
         const feature = map.forEachFeatureAtPixel(event.pixel, f => f);
-        if (feature) {
-            const slug = feature.get('churchSlug');
-            htmx.ajax('GET', '/churches/' + slug, {
-                target: '#church-details',
-                swap: 'innerHTML'
-            });
-
-            const coords = feature.getGeometry().getCoordinates();
-            focusOnCoordinate(coords, CHURCH_ZOOM);
+        if (feature && feature.get('features')) {
+            const subFeatures = feature.get('features');
+            if (subFeatures.length > 1) {
+                const extent = ol.extent.createEmpty();
+                subFeatures.forEach(function(f){
+                    ol.extent.extend(extent, f.getGeometry().getExtent());
+                });
+                view.fit(extent, { padding: getMapPadding(), duration: 500, maxZoom: CHURCH_ZOOM });
+            } else if (subFeatures.length === 1) {
+                const originalFeature = subFeatures[0];
+                const slug = originalFeature.get('churchSlug');
+                htmx.ajax('GET', '/churches/' + slug, {
+                    target: '#church-details',
+                    swap: 'innerHTML'
+                });
+                const coords = originalFeature.getGeometry().getCoordinates();
+                focusOnCoordinate(coords, CHURCH_ZOOM);
+            }
         }
     });
 
     document.body.addEventListener('htmx:afterSwap', function(event) {
         if (event.detail.target.id === 'church-details') {
             const sidebar = document.getElementById('sidebar');
-            // Don't reopen if we just loaded the "loading/home" state
             if (sidebar.classList.contains('hidden') && !event.detail.target.querySelector('.loading')) {
                 toggleSidebar();
             }
         }
     });
 
-    // Custom events for map interaction via HTMX
     document.body.addEventListener('churchSelected', function(evt) {
         const data = evt.detail;
         document.getElementById('sidebar-title').innerText = "Church Info";
-
-        // Find feature in source or reload all if not found
         const features = vectorSource.getFeatures();
         const feature = features.find(f => f.get('churchSlug') === data.slug);
-
         if (feature) {
             focusOnCoordinate(feature.getGeometry().getCoordinates(), CHURCH_ZOOM);
         } else {
-            // Might happen if we were in saint view and clicked a church not in that view
             loadChurches('/api/v1/churches').then(() => {
                 focusOnCoordinate(ol.proj.fromLonLat([data.lng, data.lat]), CHURCH_ZOOM);
             });
@@ -307,35 +571,138 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = evt.detail;
         document.getElementById('sidebar-title').innerText = data.title || "Directory";
         loadChurches('/api/v1/churches', false);
-        
-        // Recenter and zoom out to initial state
         view.animate({
             center: ol.proj.fromLonLat([-98.5795, 39.8283]),
             zoom: window.innerWidth <= 500 ? 3 : 4,
             duration: 500
         });
-
         if (data.closeSidebar) {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar.classList.contains('hidden')) {
                 toggleSidebar();
             }
-            // Force hide the toggle button when resetting to the empty state
             document.getElementById('sidebar-toggle').style.display = 'none';
         }
     });
 
-    // Pulse Info Button Feature
     if (!sessionStorage.getItem('infoPulsed')) {
         setTimeout(() => {
-            if (sessionStorage.getItem('infoPulsed')) return; // Check again in case it was clicked during the delay
-            
+            if (sessionStorage.getItem('infoPulsed')) return;
             const toggle = document.querySelector('.info-toggle');
             if (toggle && !document.getElementById('info-content').classList.contains('visible')) {
                 toggle.classList.add('pulsing');
             }
         }, 15000);
     }
+
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const searchPanel = document.getElementById('search-panel');
+    const searchToggle = document.getElementById('search-toggle');
+    const mobileSearchInput = document.getElementById('mobile-search-input');
+    const mobileSearchResults = document.getElementById('mobile-search-results');
+    let searchDebounceTimer;
+
+    window.toggleSearch = function() {
+        if (searchPanel) {
+            searchPanel.classList.toggle('visible');
+            if (searchPanel.classList.contains('visible') && searchInput) {
+                searchInput.focus();
+            }
+        }
+    };
+
+    window.toggleMobileSearchPill = function() {
+        const expand = document.getElementById('mobile-search-expand');
+        expand.classList.toggle('visible');
+        if (expand.classList.contains('visible')) {
+            expand.querySelector('input').focus();
+        }
+    };
+
+    window.toggleMobileFilterPill = function() {
+        const expand = document.getElementById('mobile-filter-expand');
+        expand.classList.toggle('visible');
+    };
+
+    document.addEventListener('click', function(e) {
+        const searchPill = document.getElementById('mobile-search-pill');
+        if (searchPill && !searchPill.contains(e.target)) {
+            const expand = document.getElementById('mobile-search-expand');
+            if (expand && expand.classList.contains('visible')) {
+                expand.classList.remove('visible');
+            }
+        }
+        const filterPill = document.getElementById('mobile-filter-pill');
+        if (filterPill && !filterPill.contains(e.target)) {
+            const expand = document.getElementById('mobile-filter-expand');
+            if (expand && expand.classList.contains('visible')) {
+                expand.classList.remove('visible');
+            }
+        }
+    });
+
+    function setupSearch(input, results, otherInput, otherResults) {
+        if (!input || !results) return;
+        input.addEventListener('input', (e) => {
+            clearTimeout(searchDebounceTimer);
+            const query = e.target.value.trim();
+            if (otherInput) otherInput.value = e.target.value;
+
+            if (query.length < 2) {
+                results.style.display = 'none';
+                if (otherResults) otherResults.style.display = 'none';
+                return;
+            }
+
+            searchDebounceTimer = setTimeout(() => {
+                fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        results.innerHTML = '';
+                        if (otherResults) otherResults.innerHTML = '';
+                        if (data.length > 0) {
+                            data.forEach(result => {
+                                const item = document.createElement('a');
+                                item.href = `/${result.slug}`;
+                                item.className = 'search-result-item';
+                                item.innerHTML = `<span class="search-result-name">${result.name}</span>`;
+                                item.setAttribute('hx-get', `/${result.slug}`);
+                                item.setAttribute('hx-target', '#church-details');
+                                item.setAttribute('hx-push-url', 'true');
+                                htmx.process(item);
+                                
+                                results.appendChild(item);
+                                if (otherResults) {
+                                    const otherItem = item.cloneNode(true);
+                                    htmx.process(otherItem);
+                                    otherResults.appendChild(otherItem);
+                                }
+                            });
+                            results.style.display = 'block';
+                            if (otherResults) otherResults.style.display = 'block';
+                        } else {
+                            results.style.display = 'none';
+                            if (otherResults) otherResults.style.display = 'none';
+                        }
+                    });
+            }, 300);
+        });
+    }
+
+    setupSearch(searchInput, searchResults, mobileSearchInput, mobileSearchResults);
+    setupSearch(mobileSearchInput, mobileSearchResults, searchInput, searchResults);
+
+    document.addEventListener('click', (e) => {
+        if (searchToggle && searchPanel && !searchToggle.contains(e.target) && !searchPanel.contains(e.target)) {
+            searchPanel.classList.remove('visible');
+        }
+        if (searchResults && !searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    updateFiltersUI();
 });
 </script>
 {{end}}

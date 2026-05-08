@@ -34,8 +34,17 @@
                                 <input type="text" id="slug" name="slug" value="{{if not .IsNew}}{{.Church.Slug}}{{end}}" placeholder="e.g. st-nicholas-nyc">
                             </div>
                             <div class="form-group">
-                                <label for="jurisdiction">Jurisdiction</label>
-                                <input type="text" id="jurisdiction" name="jurisdiction" value="{{if and (not .IsNew) .Church.Jurisdiction.Valid}}{{.Church.Jurisdiction.String}}{{end}}" placeholder="e.g. GOARCH">
+                                <label for="jurisdiction_id">Jurisdiction</label>
+                                <select id="jurisdiction_id" name="jurisdiction_id">
+                                    <option value="">None / Unknown</option>
+                                    {{$churchJID := 0}}
+                                    {{if and (not .IsNew) .Church.JurisdictionID.Valid}}
+                                        {{$churchJID = .Church.JurisdictionID.Int64}}
+                                    {{end}}
+                                    {{range .Jurisdictions}}
+                                    <option value="{{.ID}}" {{if eq .ID $churchJID}}selected{{end}}>{{.Name}} ({{.Tradition}})</option>
+                                    {{end}}
+                                </select>
                             </div>
                         </div>
 
@@ -158,48 +167,74 @@
 
             <div class="card max-w-900 p-0 mt-40">
                 <div style="padding: 40px;">
-                    <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 20px;">Relics at this Location</h2>
+                    <h2 class="mb-0 mt-0 text-bold" style="font-size: 1.5rem; margin-bottom: 30px;">Relics at this Location</h2>
                     
                     {{range .Relics}}
-                    <div class="relic-admin-box" id="relic-{{$.Church.ID}}-{{.Relic.ID}}">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="mt-0 mb-10 text-bold">{{.Relic.Name}}</h3>
-                                <p class="text-muted mb-20">{{if .Relic.RelicDescription.Valid}}{{.Relic.RelicDescription.String}}{{else}}No description{{end}}</p>
-                            </div>
-                            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;"
+                    <div class="relic-card" id="relic-{{$.Church.ID}}-{{.Relic.ID}}">
+                        <div class="relic-card-header">
+                            <h3 class="relic-saint-name">{{.Relic.Name}}</h3>
+                            <button class="btn-text-danger"
                                     hx-delete="/admin/relics/delete?church_id={{$.Church.ID}}&saint_id={{.Relic.ID}}" 
                                     hx-confirm="Remove this relic from the church?"
                                     hx-target="#relic-{{$.Church.ID}}-{{.Relic.ID}}"
                                     hx-swap="outerHTML">Remove Relic</button>
                         </div>
 
-                        <div class="relic-images-admin">
-                            <h4 class="text-xs-caps text-muted mb-10">Relic Images</h4>
-                            
-                            <div hx-get="/admin/images/gallery?entity_type=relic&relic_church_id={{$.Church.ID}}&relic_saint_id={{.Relic.ID}}" 
-                                 hx-trigger="load, imageGalleryUpdated from:body"
-                                 hx-swap="innerHTML">
-                                <div class="loading">Loading relic images...</div>
-                            </div>
-
-                            <form hx-post="/admin/images/upload" 
-                                  hx-encoding="multipart/form-data" 
-                                  hx-swap="none" 
-                                  hx-indicator="#relic-upload-indicator-{{.Relic.ID}}"
-                                  class="flex gap-10 items-end mt-15">
-                                <input type="hidden" name="entity_type" value="relic">
-                                <input type="hidden" name="relic_church_id" value="{{$.Church.ID}}">
-                                <input type="hidden" name="relic_saint_id" value="{{.Relic.ID}}">
-                                <div class="form-group mb-0 flex-1">
-                                    <label class="text-xxs">Upload Relic Images</label>
-                                    <input type="file" name="images" multiple accept="image/*" required style="padding: 6px; font-size: 0.8rem;">
+                        <div class="relic-card-body">
+                            <form hx-post="/admin/relics/update" hx-swap="none" class="relic-form-grid mb-20">
+                                <input type="hidden" name="church_id" value="{{$.Church.ID}}">
+                                <input type="hidden" name="saint_id" value="{{.Relic.ID}}">
+                                
+                                <div class="form-group mb-0">
+                                    <label class="text-xxs">Relic Type</label>
+                                    <select name="relic_type_id" style="padding: 10px; font-size: 0.9rem;">
+                                        <option value="">Unknown / Other</option>
+                                        {{$currentRelicTypeID := 0}}
+                                        {{if .Relic.RelicTypeID.Valid}}
+                                            {{$currentRelicTypeID = .Relic.RelicTypeID.Int64}}
+                                        {{end}}
+                                        {{range $.RelicTypes}}
+                                        <option value="{{.ID}}" {{if eq .ID $currentRelicTypeID}}selected{{end}}>{{.Name}}</option>
+                                        {{end}}
+                                    </select>
                                 </div>
-                                <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Upload</button>
+                                <div class="form-group mb-0">
+                                    <label class="text-xxs">Description</label>
+                                    <input type="text" name="description" value="{{if .Relic.RelicDescription.Valid}}{{.Relic.RelicDescription.String}}{{end}}" placeholder="e.g. Portion of relics" style="padding: 10px; font-size: 0.9rem;">
+                                </div>
+                                <button type="submit" class="btn btn-secondary btn-sm">Save</button>
                             </form>
-                            <div id="relic-upload-indicator-{{.Relic.ID}}" class="htmx-indicator mt-10">
-                                <div class="spinner"></div>
-                                <span class="text-xxs text-muted">Uploading...</span>
+
+                            <div class="relic-gallery-section">
+                                <h4 class="section-subtitle">Relic Images</h4>
+                                
+                                <div hx-get="/admin/images/gallery?entity_type=relic&relic_church_id={{$.Church.ID}}&relic_saint_id={{.Relic.ID}}" 
+                                     hx-trigger="load, imageGalleryUpdated from:body"
+                                     hx-swap="innerHTML">
+                                    <div class="loading">Loading relic images...</div>
+                                </div>
+
+                                <form hx-post="/admin/images/upload" 
+                                      hx-encoding="multipart/form-data" 
+                                      hx-swap="none" 
+                                      hx-indicator="#relic-upload-indicator-{{.Relic.ID}}"
+                                      class="relic-upload-zone">
+                                    <input type="hidden" name="entity_type" value="relic">
+                                    <input type="hidden" name="relic_church_id" value="{{$.Church.ID}}">
+                                    <input type="hidden" name="relic_saint_id" value="{{.Relic.ID}}">
+                                    
+                                    <div class="flex items-center justify-between gap-15">
+                                        <div class="flex-1">
+                                            <label for="relic-images-{{.Relic.ID}}" class="text-xxs text-muted mb-5 block">Upload New Images</label>
+                                            <input type="file" id="relic-images-{{.Relic.ID}}" name="images" multiple accept="image/*" required class="w-full text-xxs">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-xs">Upload</button>
+                                    </div>
+                                    <div id="relic-upload-indicator-{{.Relic.ID}}" class="htmx-indicator mt-10">
+                                        <div class="spinner"></div>
+                                        <span class="text-xxs text-muted">Uploading...</span>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -207,29 +242,40 @@
                     <p class="text-center text-muted mb-40">No relics recorded here.</p>
                     {{end}}
 
-                    <h3 class="mb-0 mt-40 text-bold" style="font-size: 1.2rem; margin-bottom: 20px;">Add a Relic</h3>
-                    <form hx-post="/admin/relics/new" hx-push-url="false" style="background: #f8f9fa; padding: 25px; border-radius: 12px; border: 1px solid var(--border);">
-                        <input type="hidden" name="church_id" value="{{.Church.ID}}">
-                        
-                        <div class="form-row">
-                            <div class="form-group mb-0">
-                                <label for="saint_id">Saint</label>
-                                <select id="saint_id" name="saint_id" required>
-                                    <option value="">Select a saint...</option>
-                                    {{range .Saints}}
-                                    <option value="{{.ID}}">{{.Name}}</option>
-                                    {{end}}
-                                </select>
+                    <div style="background: #fdf2f8; padding: 30px; border-radius: 16px; border: 1px solid var(--primary-light); margin-top: 40px;">
+                        <h3 class="mb-20 mt-0 text-bold text-primary" style="font-size: 1.2rem;">Add a Relic</h3>
+                        <form hx-post="/admin/relics/new" hx-push-url="false">
+                            <input type="hidden" name="church_id" value="{{.Church.ID}}">
+                            
+                            <div class="form-row-3">
+                                <div class="form-group mb-0">
+                                    <label for="saint_id">Saint</label>
+                                    <select id="saint_id" name="saint_id" required>
+                                        <option value="">Select a saint...</option>
+                                        {{range .Saints}}
+                                        <option value="{{.ID}}">{{.Name}}</option>
+                                        {{end}}
+                                    </select>
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label for="relic_type_id">Relic Type</label>
+                                    <select id="relic_type_id" name="relic_type_id">
+                                        <option value="">Unknown / Other</option>
+                                        {{range .RelicTypes}}
+                                        <option value="{{.ID}}">{{.Name}}</option>
+                                        {{end}}
+                                    </select>
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label for="relic_description">Description</label>
+                                    <input type="text" id="relic_description" name="description" placeholder="e.g. Right hand, fragment">
+                                </div>
                             </div>
-                            <div class="form-group mb-0">
-                                <label for="relic_description">Description (optional)</label>
-                                <input type="text" id="relic_description" name="description" placeholder="e.g. Right hand, fragment">
+                            <div class="mt-20">
+                                <button type="submit" class="btn btn-primary">Add Relic to Location</button>
                             </div>
-                        </div>
-                        <div class="mt-20">
-                            <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Add Relic</button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
 

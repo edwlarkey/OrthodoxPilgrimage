@@ -23,8 +23,8 @@
 <div class="church-detail" id="church-{{.Church.ID}}">
 <div class="detail-header">
     <h1 class="title">{{.Church.Name}}</h1>
-    {{if .Church.Jurisdiction.Valid}}
-        <p class="subtitle">{{.Church.Jurisdiction.String}}</p>
+    {{if .Church.JurisdictionName.Valid}}
+        <p class="subtitle">{{.Church.JurisdictionName.String}}</p>
     {{end}}
 </div>
 

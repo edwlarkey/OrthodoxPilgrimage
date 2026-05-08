@@ -1,0 +1,64 @@
+{{define "admin-jurisdictions-edit"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Admin</title>
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Antic+Didone&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" defer></script>
+</head>
+<body>
+    {{template "admin-sidebar" .}}
+
+    <main class="admin-main">
+        {{template "admin-topbar" .}}
+
+        <div class="admin-content-area">
+            <div class="card max-w-600 p-0">
+                <div style="padding: 40px;">
+                    <h1 class="mb-0 mt-0 text-bold" style="font-size: 1.8rem; margin-bottom: 30px;">{{.Title}}</h1>
+                    
+                    <form hx-post="{{if .IsNew}}/admin/jurisdictions/new{{else}}/admin/jurisdictions/edit/{{.Jurisdiction.ID}}{{end}}" hx-push-url="false">
+                        <div class="form-group">
+                            <label for="name">Jurisdiction Name</label>
+                            <input type="text" id="name" name="name" value="{{if not .IsNew}}{{.Jurisdiction.Name}}{{end}}" placeholder="e.g. Greek Orthodox Archdiocese" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tradition">Tradition</label>
+                            <select id="tradition" name="tradition" required>
+                                <option value="Orthodox" {{if or .IsNew (eq .Jurisdiction.Tradition "Orthodox")}}selected{{end}}>Orthodox</option>
+                                <option value="Roman Catholic" {{if and (not .IsNew) (eq .Jurisdiction.Tradition "Roman Catholic")}}selected{{end}}>Roman Catholic</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pin_color">Pin Color (Hex Code)</label>
+                            <div class="flex items-center gap-10">
+                                <input type="color" id="color_picker" value="{{if not .IsNew}}{{.Jurisdiction.PinColor}}{{else}}#530c38{{end}}" style="height: 40px; padding: 0; border: none; cursor: pointer;">
+                                <input type="text" id="pin_color" name="pin_color" value="{{if not .IsNew}}{{.Jurisdiction.PinColor}}{{else}}#530c38{{end}}" pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" required style="flex: 1;">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-15 mt-40">
+                            <button type="submit" class="btn btn-primary">Save Jurisdiction</button>
+                            <a href="/admin/jurisdictions" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        document.getElementById('color_picker').addEventListener('input', function(e) {
+            document.getElementById('pin_color').value = e.target.value;
+        });
+        document.getElementById('pin_color').addEventListener('input', function(e) {
+            document.getElementById('color_picker').value = e.target.value;
+        });
+    </script>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,5 @@
+[build]
+cmd = "make build"
+bin = "./bin/orthodoxpilgrimage"
+exclude_dir = ["internal/db/sqlc/"]
+include_ext = ["go", "tpl", "tmpl", "html", "css", "js"]

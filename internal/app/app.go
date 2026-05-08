@@ -58,6 +58,16 @@ func (a *Application) Routes() http.Handler {
 	adminMux.HandleFunc("/admin/saints/edit/", a.adminSaintEditHandler)
 	adminMux.HandleFunc("/admin/saints/delete/", a.adminSaintDeleteHandler)
 
+	adminMux.HandleFunc("/admin/jurisdictions", a.adminJurisdictionsListHandler)
+	adminMux.HandleFunc("/admin/jurisdictions/new", a.adminJurisdictionEditHandler)
+	adminMux.HandleFunc("/admin/jurisdictions/edit/", a.adminJurisdictionEditHandler)
+	adminMux.HandleFunc("/admin/jurisdictions/delete/", a.adminJurisdictionDeleteHandler)
+
+	adminMux.HandleFunc("/admin/relic-types", a.adminRelicTypesListHandler)
+	adminMux.HandleFunc("/admin/relic-types/new", a.adminRelicTypeEditHandler)
+	adminMux.HandleFunc("/admin/relic-types/edit/", a.adminRelicTypeEditHandler)
+	adminMux.HandleFunc("/admin/relic-types/delete/", a.adminRelicTypeDeleteHandler)
+
 	adminMux.HandleFunc("/admin/churches", a.adminChurchesListHandler)
 	adminMux.HandleFunc("/admin/churches/new", a.adminChurchEditHandler)
 	adminMux.HandleFunc("/admin/churches/edit/", a.adminChurchEditHandler)
@@ -65,6 +75,7 @@ func (a *Application) Routes() http.Handler {
 
 	adminMux.HandleFunc("/admin/relics", a.adminRelicsListHandler)
 	adminMux.HandleFunc("/admin/relics/new", a.adminRelicEditHandler)
+	adminMux.HandleFunc("/admin/relics/update", a.adminRelicUpdateHandler)
 	adminMux.HandleFunc("/admin/relics/delete", a.adminRelicDeleteHandler)
 
 	adminMux.HandleFunc("/admin/admins", a.adminListAdminsHandler)
@@ -149,17 +160,21 @@ func (a *Application) AdminAuthMiddleware(next http.Handler) http.Handler {
 }
 
 type churchJSON struct {
-	ID          int64          `json:"id"`
-	Name        string         `json:"name"`
-	Slug        string         `json:"slug"`
-	AddressText string         `json:"addressText"`
-	City        string         `json:"city"`
-	PostalCode  sql.NullString `json:"postalCode"`
-	CountryCode string         `json:"countryCode"`
-	Latitude    float64        `json:"latitude"`
-	Longitude   float64        `json:"longitude"`
-	Website     sql.NullString `json:"website"`
-	Description sql.NullString `json:"description"`
+	ID               int64          `json:"id"`
+	Name             string         `json:"name"`
+	Slug             string         `json:"slug"`
+	AddressText      string         `json:"addressText"`
+	City             string         `json:"city"`
+	PostalCode       sql.NullString `json:"postalCode"`
+	CountryCode      string         `json:"countryCode"`
+	Latitude         float64        `json:"latitude"`
+	Longitude        float64        `json:"longitude"`
+	Website          sql.NullString `json:"website"`
+	Description      sql.NullString `json:"description"`
+	JurisdictionName string         `json:"jurisdictionName"`
+	Tradition        string         `json:"tradition"`
+	PinColor         string         `json:"pinColor"`
+	RelicTypes       []string       `json:"relicTypes"`
 }
 
 type searchResult struct {
@@ -169,7 +184,7 @@ type searchResult struct {
 
 type ChurchWithRelics struct {
 	Type    string
-	Church  sqlcdb.Church
+	Church  sqlcdb.GetChurchBySlugRow
 	Images  []sqlcdb.Image
 	Relics  []RelicWithImages
 	Sources []sqlcdb.ChurchSource
@@ -181,7 +196,7 @@ type RelicWithImages struct {
 }
 
 type ChurchWithRelicImages struct {
-	Church sqlcdb.Church
+	Church sqlcdb.ListChurchesBySaintSlugRow
 	Images []sqlcdb.Image
 }
 
@@ -189,7 +204,7 @@ type SaintWithType struct {
 	Type            string
 	Saint           sqlcdb.Saint
 	Images          []sqlcdb.Image
-	ReferringChurch *sqlcdb.Church
+	ReferringChurch *sqlcdb.GetChurchBySlugRow
 	Churches        []ChurchWithRelicImages
 }
 
@@ -287,9 +302,15 @@ func (a *Application) homeHandler(w http.ResponseWriter, r *http.Request) {
 		metadata = a.getBaseMetadata(r.URL.Path)
 	}
 
+	var relicTypes []sqlcdb.RelicType
+	if a.DB != nil {
+		relicTypes, _ = a.DB.ListRelicTypes(r.Context())
+	}
+
 	pageData := PageData{
-		Metadata: metadata,
-		Content:  data,
+		Metadata:   metadata,
+		Content:    data,
+		RelicTypes: relicTypes,
 	}
 
 	if r.Header.Get("HX-Request") != "" {
@@ -376,11 +397,43 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 	maxLngStr := r.URL.Query().Get("maxLng")
 	saintSlug := r.URL.Query().Get("saint")
 
-	var churches []sqlcdb.Church
-	var err error
+	var churchesJSON []churchJSON
 
 	if saintSlug != "" {
-		churches, err = a.DB.ListChurchesBySaintSlug(ctx, saintSlug)
+		churches, err := a.DB.ListChurchesBySaintSlug(ctx, saintSlug)
+		if err != nil {
+			http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
+			slog.Error("Error retrieving churches", "error", err)
+			return
+		}
+		churchesJSON = make([]churchJSON, len(churches))
+		for i, c := range churches {
+			var relicTypes []string
+			relics, _ := a.DB.ListRelicsForChurch(ctx, c.ID)
+			for _, r := range relics {
+				if r.RelicType.Valid && r.RelicType.String != "" {
+					relicTypes = append(relicTypes, r.RelicType.String)
+				}
+			}
+
+			churchesJSON[i] = churchJSON{
+				ID:               c.ID,
+				Name:             c.Name,
+				Slug:             c.Slug,
+				AddressText:      c.AddressText,
+				City:             c.City,
+				PostalCode:       c.PostalCode,
+				CountryCode:      c.CountryCode,
+				Latitude:         c.Latitude,
+				Longitude:        c.Longitude,
+				Website:          c.Website,
+				Description:      c.Description,
+				JurisdictionName: c.JurisdictionName.String,
+				Tradition:        c.Tradition.String,
+				PinColor:         c.PinColor.String,
+				RelicTypes:       relicTypes,
+			}
+		}
 	} else if minLatStr != "" && maxLatStr != "" && minLngStr != "" && maxLngStr != "" {
 		minLat, err1 := strconv.ParseFloat(minLatStr, 64)
 		maxLat, err2 := strconv.ParseFloat(maxLatStr, 64)
@@ -396,31 +449,74 @@ func (a *Application) listChurchesHandler(w http.ResponseWriter, r *http.Request
 			Longitude:   minLng,
 			Longitude_2: maxLng,
 		}
-		churches, err = a.DB.ListChurchesInBounds(ctx, params)
+		churches, err := a.DB.ListChurchesInBounds(ctx, params)
+		if err != nil {
+			http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
+			slog.Error("Error retrieving churches", "error", err)
+			return
+		}
+		churchesJSON = make([]churchJSON, len(churches))
+		for i, c := range churches {
+			var relicTypes []string
+			relics, _ := a.DB.ListRelicsForChurch(ctx, c.ID)
+			for _, r := range relics {
+				if r.RelicType.Valid && r.RelicType.String != "" {
+					relicTypes = append(relicTypes, r.RelicType.String)
+				}
+			}
+
+			churchesJSON[i] = churchJSON{
+				ID:               c.ID,
+				Name:             c.Name,
+				Slug:             c.Slug,
+				AddressText:      c.AddressText,
+				City:             c.City,
+				PostalCode:       c.PostalCode,
+				CountryCode:      c.CountryCode,
+				Latitude:         c.Latitude,
+				Longitude:        c.Longitude,
+				Website:          c.Website,
+				Description:      c.Description,
+				JurisdictionName: c.JurisdictionName.String,
+				Tradition:        c.Tradition.String,
+				PinColor:         c.PinColor.String,
+				RelicTypes:       relicTypes,
+			}
+		}
 	} else {
-		churches, err = a.DB.ListChurches(ctx)
-	}
+		churches, err := a.DB.ListChurches(ctx)
+		if err != nil {
+			http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
+			slog.Error("Error retrieving churches", "error", err)
+			return
+		}
+		churchesJSON = make([]churchJSON, len(churches))
+		for i, c := range churches {
+			var relicTypes []string
+			relics, _ := a.DB.ListRelicsForChurch(ctx, c.ID)
+			for _, r := range relics {
+				if r.RelicType.Valid && r.RelicType.String != "" {
+					relicTypes = append(relicTypes, r.RelicType.String)
+				}
+			}
 
-	if err != nil {
-		http.Error(w, "Failed to retrieve churches", http.StatusInternalServerError)
-		slog.Error("Error retrieving churches", "error", err)
-		return
-	}
-
-	churchesJSON := make([]churchJSON, len(churches))
-	for i, c := range churches {
-		churchesJSON[i] = churchJSON{
-			ID:          c.ID,
-			Name:        c.Name,
-			Slug:        c.Slug,
-			AddressText: c.AddressText,
-			City:        c.City,
-			PostalCode:  c.PostalCode,
-			CountryCode: c.CountryCode,
-			Latitude:    c.Latitude,
-			Longitude:   c.Longitude,
-			Website:     c.Website,
-			Description: c.Description,
+			churchesJSON[i] = churchJSON{
+				ID:               c.ID,
+				Name:             c.Name,
+				Slug:             c.Slug,
+				AddressText:      c.AddressText,
+				City:             c.City,
+				PostalCode:       c.PostalCode,
+				CountryCode:      c.CountryCode,
+				Latitude:         c.Latitude,
+				Longitude:        c.Longitude,
+				Website:          c.Website,
+				Description:      c.Description,
+				JurisdictionName: c.JurisdictionName.String,
+				Tradition:        c.Tradition.String,
+				PinColor:         c.PinColor.String,
+				RelicTypes:       relicTypes,
+			}
 		}
 	}
 
@@ -522,9 +618,14 @@ func (a *Application) churchDetailHandler(w http.ResponseWriter, r *http.Request
 		}
 	} else {
 		w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
+		var relicTypes []sqlcdb.RelicType
+		if a.DB != nil {
+			relicTypes, _ = a.DB.ListRelicTypes(r.Context())
+		}
 		pageData := PageData{
-			Metadata: metadata,
-			Content:  data,
+			Metadata:   metadata,
+			Content:    data,
+			RelicTypes: relicTypes,
 		}
 		if err := a.Templates.Render(w, "index", pageData); err != nil {
 			http.Error(w, "failed to render template", http.StatusInternalServerError)
@@ -588,7 +689,7 @@ func (a *Application) churchesDirectoryHandler(w http.ResponseWriter, r *http.Re
 
 	data := struct {
 		Type     string
-		Churches []sqlcdb.Church
+		Churches []sqlcdb.ListChurchesRow
 	}{
 		Type:     "church-directory",
 		Churches: churches,
@@ -628,9 +729,15 @@ func (a *Application) churchesDirectoryHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	var relicTypes []sqlcdb.RelicType
+	if a.DB != nil {
+		relicTypes, _ = a.DB.ListRelicTypes(r.Context())
+	}
+
 	pageData := PageData{
-		Metadata: metadata,
-		Content:  data,
+		Metadata:   metadata,
+		Content:    data,
+		RelicTypes: relicTypes,
 	}
 
 	w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
@@ -688,9 +795,15 @@ func (a *Application) saintsDirectoryHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	var relicTypes []sqlcdb.RelicType
+	if a.DB != nil {
+		relicTypes, _ = a.DB.ListRelicTypes(r.Context())
+	}
+
 	pageData := PageData{
-		Metadata: metadata,
-		Content:  data,
+		Metadata:   metadata,
+		Content:    data,
+		RelicTypes: relicTypes,
 	}
 	w.Header().Set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400")
 	if err := a.Templates.Render(w, "index", pageData); err != nil {

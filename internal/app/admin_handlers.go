@@ -399,7 +399,7 @@ func (a *Application) adminChurchesListHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Request) {
-	var church sqlcdb.Church
+	var church sqlcdb.GetChurchBySlugRow
 	var err error
 	isNew := true
 
@@ -422,6 +422,8 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 		var relics []RelicWithImages
 		var saints []sqlcdb.Saint
 		var sources []sqlcdb.ChurchSource
+		jurisdictions, _ := a.DB.ListJurisdictions(r.Context())
+		relicTypes, _ := a.DB.ListRelicTypes(r.Context())
 
 		if !isNew {
 			relicRows, _ := a.DB.ListRelicsForChurch(r.Context(), church.ID)
@@ -442,14 +444,16 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 		}
 
 		data := map[string]any{
-			"Username":  a.SessionManager.GetString(r.Context(), "username"),
-			"Church":    church,
-			"IsNew":     isNew,
-			"Relics":    relics,
-			"Saints":    saints,
-			"Sources":   sources,
-			"ActiveNav": "churches",
-			"Title":     "Edit Church",
+			"Username":      a.SessionManager.GetString(r.Context(), "username"),
+			"Church":        church,
+			"IsNew":         isNew,
+			"Relics":        relics,
+			"Saints":        saints,
+			"Sources":       sources,
+			"Jurisdictions": jurisdictions,
+			"RelicTypes":    relicTypes,
+			"ActiveNav":     "churches",
+			"Title":         "Edit Church",
 		}
 		if isNew {
 			data["Title"] = "New Church"
@@ -479,7 +483,7 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 		countryCode := r.FormValue("country_code")
 		latStr := r.FormValue("latitude")
 		lngStr := r.FormValue("longitude")
-		jurisdiction := r.FormValue("jurisdiction")
+		jurisdictionIDStr := r.FormValue("jurisdiction_id")
 		website := r.FormValue("website")
 		phone := r.FormValue("phone")
 		description := r.FormValue("description")
@@ -492,44 +496,51 @@ func (a *Application) adminChurchEditHandler(w http.ResponseWriter, r *http.Requ
 		lat, _ := strconv.ParseFloat(latStr, 64)
 		lng, _ := strconv.ParseFloat(lngStr, 64)
 
+		var jurisdictionID sql.NullInt64
+		if jurisdictionIDStr != "" {
+			if id, err := strconv.ParseInt(jurisdictionIDStr, 10, 64); err == nil {
+				jurisdictionID = sql.NullInt64{Int64: id, Valid: true}
+			}
+		}
+
 		var updatedChurch sqlcdb.Church
 		if isNew {
 			updatedChurch, err = a.DB.CreateChurch(r.Context(), sqlcdb.CreateChurchParams{
-				Name:          name,
-				Slug:          slug,
-				AddressText:   addressText,
-				City:          city,
-				StateProvince: stateProvince,
-				PostalCode:    sql.NullString{String: postalCode, Valid: postalCode != ""},
-				CountryCode:   countryCode,
-				Latitude:      lat,
-				Longitude:     lng,
-				Jurisdiction:  sql.NullString{String: jurisdiction, Valid: jurisdiction != ""},
-				Website:       sql.NullString{String: website, Valid: website != ""},
-				Phone:         sql.NullString{String: phone, Valid: phone != ""},
-				Description:   sql.NullString{String: description, Valid: description != ""},
-				Status:        status,
+				Name:           name,
+				Slug:           slug,
+				AddressText:    addressText,
+				City:           city,
+				StateProvince:  stateProvince,
+				PostalCode:     sql.NullString{String: postalCode, Valid: postalCode != ""},
+				CountryCode:    countryCode,
+				Latitude:       lat,
+				Longitude:      lng,
+				JurisdictionID: jurisdictionID,
+				Website:        sql.NullString{String: website, Valid: website != ""},
+				Phone:          sql.NullString{String: phone, Valid: phone != ""},
+				Description:    sql.NullString{String: description, Valid: description != ""},
+				Status:         status,
 			})
 			if err == nil {
 				a.logAudit(r.Context(), "CREATE", "church", updatedChurch.ID, updatedChurch)
 			}
 		} else {
 			updatedChurch, err = a.DB.UpdateChurch(r.Context(), sqlcdb.UpdateChurchParams{
-				ID:            church.ID,
-				Name:          name,
-				Slug:          slug,
-				AddressText:   addressText,
-				City:          city,
-				StateProvince: stateProvince,
-				PostalCode:    sql.NullString{String: postalCode, Valid: postalCode != ""},
-				CountryCode:   countryCode,
-				Latitude:      lat,
-				Longitude:     lng,
-				Jurisdiction:  sql.NullString{String: jurisdiction, Valid: jurisdiction != ""},
-				Website:       sql.NullString{String: website, Valid: website != ""},
-				Phone:         sql.NullString{String: phone, Valid: phone != ""},
-				Description:   sql.NullString{String: description, Valid: description != ""},
-				Status:        status,
+				ID:             church.ID,
+				Name:           name,
+				Slug:           slug,
+				AddressText:    addressText,
+				City:           city,
+				StateProvince:  stateProvince,
+				PostalCode:     sql.NullString{String: postalCode, Valid: postalCode != ""},
+				CountryCode:    countryCode,
+				Latitude:       lat,
+				Longitude:      lng,
+				JurisdictionID: jurisdictionID,
+				Website:        sql.NullString{String: website, Valid: website != ""},
+				Phone:          sql.NullString{String: phone, Valid: phone != ""},
+				Description:    sql.NullString{String: description, Valid: description != ""},
+				Status:         status,
 			})
 			if err == nil {
 				a.logAudit(r.Context(), "UPDATE", "church", church.ID, updatedChurch)
@@ -608,13 +619,15 @@ func (a *Application) adminRelicEditHandler(w http.ResponseWriter, r *http.Reque
 	if r.Method == http.MethodGet {
 		saints, _ := a.DB.ListSaints(r.Context())
 		churches, _ := a.DB.ListChurches(r.Context())
+		relicTypes, _ := a.DB.ListRelicTypes(r.Context())
 
 		data := map[string]any{
-			"Username":  a.SessionManager.GetString(r.Context(), "username"),
-			"Saints":    saints,
-			"Churches":  churches,
-			"ActiveNav": "relics",
-			"Title":     "Add Relic",
+			"Username":   a.SessionManager.GetString(r.Context(), "username"),
+			"Saints":     saints,
+			"Churches":   churches,
+			"RelicTypes": relicTypes,
+			"ActiveNav":  "relics",
+			"Title":      "Add Relic",
 		}
 
 		ts, err := a.Templates.Get("admin-relics-edit")
@@ -636,9 +649,17 @@ func (a *Application) adminRelicEditHandler(w http.ResponseWriter, r *http.Reque
 		saintID, _ := strconv.ParseInt(r.FormValue("saint_id"), 10, 64)
 		description := r.FormValue("description")
 
+		var relicTypeID sql.NullInt64
+		if rtIDStr := r.FormValue("relic_type_id"); rtIDStr != "" {
+			if id, err := strconv.ParseInt(rtIDStr, 10, 64); err == nil {
+				relicTypeID = sql.NullInt64{Int64: id, Valid: true}
+			}
+		}
+
 		err := a.DB.CreateRelic(r.Context(), sqlcdb.CreateRelicParams{
 			ChurchID:    churchID,
 			SaintID:     saintID,
+			RelicTypeID: relicTypeID,
 			Description: sql.NullString{String: description, Valid: description != ""},
 		})
 
@@ -655,6 +676,40 @@ func (a *Application) adminRelicEditHandler(w http.ResponseWriter, r *http.Reque
 			redirectUrl = "/admin/relics"
 		}
 		w.Header().Set("HX-Location", redirectUrl)
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (a *Application) adminRelicUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 4096)
+		churchID, _ := strconv.ParseInt(r.FormValue("church_id"), 10, 64)
+		saintID, _ := strconv.ParseInt(r.FormValue("saint_id"), 10, 64)
+		description := r.FormValue("description")
+
+		var relicTypeID sql.NullInt64
+		if rtIDStr := r.FormValue("relic_type_id"); rtIDStr != "" {
+			if id, err := strconv.ParseInt(rtIDStr, 10, 64); err == nil {
+				relicTypeID = sql.NullInt64{Int64: id, Valid: true}
+			}
+		}
+
+		err := a.DB.UpdateRelic(r.Context(), sqlcdb.UpdateRelicParams{
+			ChurchID:    churchID,
+			SaintID:     saintID,
+			RelicTypeID: relicTypeID,
+			Description: sql.NullString{String: description, Valid: description != ""},
+		})
+
+		if err != nil {
+			slog.Error("Failed to update relic", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		a.logAudit(r.Context(), "UPDATE", "relic", churchID, map[string]int64{"church_id": churchID, "saint_id": saintID})
+
+		w.Header().Set("HX-Trigger", `{"adminToast": {"message": "Relic updated successfully.", "type": "success"}}`)
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
@@ -864,4 +919,292 @@ func (a *Application) adminDeleteAdminHandler(w http.ResponseWriter, r *http.Req
 
 	w.Header().Set("HX-Trigger", `{"adminToast": {"message": "Admin deleted successfully.", "type": "success"}}`)
 	w.WriteHeader(http.StatusOK) // Just empty response, outerHTML swap will remove the row
+}
+
+func (a *Application) adminJurisdictionsListHandler(w http.ResponseWriter, r *http.Request) {
+	jurisdictions, err := a.DB.ListJurisdictions(r.Context())
+	if err != nil {
+		slog.Error("Failed to list jurisdictions", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data := map[string]any{
+		"Username":      a.SessionManager.GetString(r.Context(), "username"),
+		"Jurisdictions": jurisdictions,
+		"ActiveNav":     "jurisdictions",
+		"Title":         "Jurisdictions Management",
+	}
+
+	ts, err := a.Templates.Get("admin-jurisdictions-list")
+	if err != nil {
+		slog.Error("Template not found", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	err = ts.ExecuteTemplate(w, "admin-jurisdictions-list", data)
+	if err != nil {
+		slog.Error("Error rendering jurisdictions list", "error", err)
+	}
+}
+
+func (a *Application) adminJurisdictionEditHandler(w http.ResponseWriter, r *http.Request) {
+	var jurisdiction sqlcdb.Jurisdiction
+	var err error
+	isNew := true
+
+	path := r.URL.Path
+	if strings.HasPrefix(path, "/admin/jurisdictions/edit/") {
+		idStr := strings.TrimPrefix(path, "/admin/jurisdictions/edit/")
+		id, _ := strconv.ParseInt(idStr, 10, 64)
+		jurisdiction, err = a.DB.GetJurisdiction(r.Context(), id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.NotFound(w, r)
+				return
+			}
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		isNew = false
+	}
+
+	if r.Method == http.MethodGet {
+		data := map[string]any{
+			"Username":     a.SessionManager.GetString(r.Context(), "username"),
+			"Jurisdiction": jurisdiction,
+			"IsNew":        isNew,
+			"ActiveNav":    "jurisdictions",
+			"Title":        "Edit Jurisdiction",
+		}
+		if isNew {
+			data["Title"] = "New Jurisdiction"
+		}
+
+		ts, err := a.Templates.Get("admin-jurisdictions-edit")
+		if err != nil {
+			slog.Error("Template not found", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		err = ts.ExecuteTemplate(w, "admin-jurisdictions-edit", data)
+		if err != nil {
+			slog.Error("Error rendering jurisdiction edit", "error", err)
+		}
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 4096)
+		name := r.FormValue("name")
+		tradition := r.FormValue("tradition")
+		pinColor := r.FormValue("pin_color")
+
+		if name == "" || tradition == "" {
+			http.Error(w, "Name and Tradition are required", http.StatusBadRequest)
+			return
+		}
+
+		if isNew {
+			j, err := a.DB.CreateJurisdiction(r.Context(), sqlcdb.CreateJurisdictionParams{
+				Name:      name,
+				Tradition: tradition,
+				PinColor:  pinColor,
+			})
+			if err == nil {
+				a.logAudit(r.Context(), "CREATE", "jurisdiction", j.ID, map[string]string{"name": name})
+			} else {
+				slog.Error("Failed to save new jurisdiction", "error", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			_, err = a.DB.UpdateJurisdiction(r.Context(), sqlcdb.UpdateJurisdictionParams{
+				ID:        jurisdiction.ID,
+				Name:      name,
+				Tradition: tradition,
+				PinColor:  pinColor,
+			})
+			if err == nil {
+				a.logAudit(r.Context(), "UPDATE", "jurisdiction", jurisdiction.ID, map[string]string{"name": name})
+			} else {
+				slog.Error("Failed to update jurisdiction", "error", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		redirectUrl := "/admin/jurisdictions"
+		w.Header().Set("HX-Location", redirectUrl)
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (a *Application) adminJurisdictionDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	err = a.DB.DeleteJurisdiction(r.Context(), id)
+	if err != nil {
+		slog.Error("Failed to delete jurisdiction", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	a.logAudit(r.Context(), "DELETE", "jurisdiction", id, nil)
+
+	w.Header().Set("HX-Trigger", `{"adminToast": {"message": "Jurisdiction deleted successfully.", "type": "success"}}`)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (a *Application) adminRelicTypesListHandler(w http.ResponseWriter, r *http.Request) {
+	relicTypes, err := a.DB.ListRelicTypes(r.Context())
+	if err != nil {
+		slog.Error("Failed to list relic types", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data := map[string]any{
+		"Username":   a.SessionManager.GetString(r.Context(), "username"),
+		"RelicTypes": relicTypes,
+		"ActiveNav":  "relic-types",
+		"Title":      "Relic Types Management",
+	}
+
+	ts, err := a.Templates.Get("admin-relic-types-list")
+	if err != nil {
+		slog.Error("Template not found", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	err = ts.ExecuteTemplate(w, "admin-relic-types-list", data)
+	if err != nil {
+		slog.Error("Error rendering relic types list", "error", err)
+	}
+}
+
+func (a *Application) adminRelicTypeEditHandler(w http.ResponseWriter, r *http.Request) {
+	var relicType sqlcdb.RelicType
+	var err error
+	isNew := true
+
+	path := r.URL.Path
+	if strings.HasPrefix(path, "/admin/relic-types/edit/") {
+		idStr := strings.TrimPrefix(path, "/admin/relic-types/edit/")
+		id, _ := strconv.ParseInt(idStr, 10, 64)
+		relicType, err = a.DB.GetRelicType(r.Context(), id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.NotFound(w, r)
+				return
+			}
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		isNew = false
+	}
+
+	if r.Method == http.MethodGet {
+		data := map[string]any{
+			"Username":  a.SessionManager.GetString(r.Context(), "username"),
+			"RelicType": relicType,
+			"IsNew":     isNew,
+			"ActiveNav": "relic-types",
+			"Title":     "Edit Relic Type",
+		}
+		if isNew {
+			data["Title"] = "New Relic Type"
+		}
+
+		ts, err := a.Templates.Get("admin-relic-types-edit")
+		if err != nil {
+			slog.Error("Template not found", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		err = ts.ExecuteTemplate(w, "admin-relic-types-edit", data)
+		if err != nil {
+			slog.Error("Error rendering relic type edit", "error", err)
+		}
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 4096)
+		name := r.FormValue("name")
+		sortOrderStr := r.FormValue("sort_order")
+		sortOrder, _ := strconv.ParseInt(sortOrderStr, 10, 64)
+
+		if name == "" {
+			http.Error(w, "Name is required", http.StatusBadRequest)
+			return
+		}
+
+		if isNew {
+			rt, err := a.DB.CreateRelicType(r.Context(), sqlcdb.CreateRelicTypeParams{
+				Name:      name,
+				SortOrder: sortOrder,
+			})
+			if err == nil {
+				a.logAudit(r.Context(), "CREATE", "relic_type", rt.ID, map[string]any{"name": name, "sort_order": sortOrder})
+			} else {
+				slog.Error("Failed to save new relic type", "error", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			_, err = a.DB.UpdateRelicType(r.Context(), sqlcdb.UpdateRelicTypeParams{
+				ID:        relicType.ID,
+				Name:      name,
+				SortOrder: sortOrder,
+			})
+			if err == nil {
+				a.logAudit(r.Context(), "UPDATE", "relic_type", relicType.ID, map[string]any{"name": name, "sort_order": sortOrder})
+			} else {
+				slog.Error("Failed to update relic type", "error", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		redirectUrl := "/admin/relic-types"
+		w.Header().Set("HX-Location", redirectUrl)
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (a *Application) adminRelicTypeDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	err = a.DB.DeleteRelicType(r.Context(), id)
+	if err != nil {
+		slog.Error("Failed to delete relic type", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	a.logAudit(r.Context(), "DELETE", "relic_type", id, nil)
+
+	w.Header().Set("HX-Trigger", `{"adminToast": {"message": "Relic Type deleted successfully.", "type": "success"}}`)
+	w.WriteHeader(http.StatusOK)
 }
