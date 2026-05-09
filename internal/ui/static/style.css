@@ -40,7 +40,7 @@ body, html {
     backdrop-filter: blur(8px);
     border-radius: 12px;
     border: 1px solid var(--glass-border);
-    /* box-shadow: var(--shadow); */
+    box-shadow: var(--shadow);
     width: 280px;
     overflow: hidden;
     transition: all 0.3s ease;
@@ -687,7 +687,7 @@ h1.site-title a {
     /* Mobile Filter Pills - positioned under header */
     .mobile-filter-pills {
         position: absolute;
-        top: 80px;
+        top: 85px;
         left: 20px;
         right: 20px;
         z-index: 150;
