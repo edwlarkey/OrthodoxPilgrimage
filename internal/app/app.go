@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
+	"github.com/tdewolff/minify/v2"
 )
 
 type S3API interface {
@@ -29,6 +30,7 @@ type Application struct {
 	S3Client       S3API
 	S3Bucket       string
 	DevMode        bool
+	Minifier       *minify.M
 }
 
 func (a *Application) SeedDatabase(ctx context.Context) error {
@@ -127,6 +129,21 @@ func (a *Application) Routes() http.Handler {
 	staticHandler := http.FileServer(http.FS(ui.StaticFS))
 	mux.Handle("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=86400")
+
+		if strings.HasSuffix(r.URL.Path, ".css") {
+			filePath := strings.TrimPrefix(r.URL.Path, "/")
+			content, err := ui.StaticFS.ReadFile(filePath)
+			if err == nil {
+				minified, err := a.Minifier.Bytes("text/css", content)
+				if err == nil {
+					w.Header().Set("Content-Type", "text/css")
+					w.Write(minified)
+					return
+				}
+				slog.Error("Failed to minify CSS", "path", r.URL.Path, "error", err)
+			}
+		}
+
 		staticHandler.ServeHTTP(w, r)
 	}))
 

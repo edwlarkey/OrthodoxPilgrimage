@@ -16,6 +16,8 @@ import (
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/css"
 )
 
 const testSeedData = `{
@@ -84,11 +86,15 @@ func seedTestDB(t *testing.T) (*Application, *sql.DB) {
 	err = SeedFromReader(context.Background(), queries, strings.NewReader(testSeedData))
 	require.NoError(t, err)
 
+	m := minify.New()
+	m.AddFunc("text/css", css.Minify)
+
 	appInstance := &Application{
 		DB:             queries,
 		DBConn:         dbConn,
 		Templates:      tmplMgr,
 		SessionManager: sessionManager,
+		Minifier:       m,
 	}
 	return appInstance, dbConn
 }

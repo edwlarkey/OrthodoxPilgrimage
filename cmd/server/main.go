@@ -18,6 +18,8 @@ import (
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/db/sessionstore"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/css"
 )
 
 func main() {
@@ -118,6 +120,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	m := minify.New()
+	m.AddFunc("text/css", css.Minify)
+
 	application := &app.Application{
 		DB:             queries,
 		DBConn:         dbConn,
@@ -126,6 +131,7 @@ func main() {
 		S3Client:       s3Client,
 		S3Bucket:       imageBucket,
 		DevMode:        *devMode,
+		Minifier:       m,
 	}
 
 	srv := &http.Server{
