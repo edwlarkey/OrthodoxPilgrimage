@@ -4,13 +4,14 @@
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(255, 255, 255, 0.4);
     --shadow: 0 8px 32px 0 rgba(83, 12, 56, 0.15);
+    --system-fonts: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
 body, html {
     margin: 0;
     padding: 0;
     height: 100%;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--system-fonts);
     color: var(--primary-color);
     overflow: hidden;
 }
@@ -456,7 +457,7 @@ h1.site-title a {
 .info-section-content h3 {
     margin: 0 0 15px 0;
     font-size: 1.05rem;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--system-fonts);
     font-weight: 800;
     color: var(--primary-color);
     letter-spacing: -0.02em;
