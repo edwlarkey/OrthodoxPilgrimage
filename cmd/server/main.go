@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/alexedwards/scs/v2"
@@ -142,9 +144,32 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
+		<-sigint
+
+		slog.Info("Shutting down server...")
+
+		// We received an interrupt signal, shut down with a timeout
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
+			// Error from closing listeners, or context timeout:
+			slog.Error("HTTP server Shutdown error", "error", err)
+		}
+		close(idleConnsClosed)
+	}()
+
 	slog.Info("Starting server on :8080")
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		slog.Error("server failed", "error", err)
-		os.Exit(1)
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		// Error starting or closing listener:
+		slog.Error("HTTP server ListenAndServe error", "error", err)
+		// We don't call os.Exit(1) here so that defers (like dbConn.Close()) will run
 	}
+
+	<-idleConnsClosed
+	slog.Info("Server exiting")
 }
