@@ -137,7 +137,9 @@ func (a *Application) Routes() http.Handler {
 				minified, err := a.Minifier.Bytes("text/css", content)
 				if err == nil {
 					w.Header().Set("Content-Type", "text/css")
-					w.Write(minified)
+					if _, err := w.Write(minified); err != nil { // nolint:gosec // G705: content is from trusted local static FS
+						slog.Error("Failed to write minified CSS", "path", r.URL.Path, "error", err)
+					}
 					return
 				}
 				slog.Error("Failed to minify CSS", "path", r.URL.Path, "error", err)
