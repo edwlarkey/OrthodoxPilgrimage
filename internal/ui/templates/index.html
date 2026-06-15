@@ -56,7 +56,7 @@
     <div class="filter-section">
         <button id="tradition-toggle" class="tradition-toggle" onclick="toggleTradition()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            <span id="tradition-label">Hide Non-Orthodox</span>
+            <span id="tradition-label">Orthodox Sites Only</span>
         </button>
     </div>
 
@@ -124,7 +124,7 @@
             <!-- Tradition -->
             <button id="mobile-tradition-toggle" class="mobile-pill-tradition" onclick="toggleTradition()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                <span id="mobile-tradition-label">Hide Non-Orthodox</span>
+                <span id="mobile-tradition-label">Orthodox Sites Only</span>
             </button>
             <!-- Relic Types -->
             <div class="mobile-relic-scroll">
@@ -396,13 +396,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const desktopBtn = document.getElementById('tradition-toggle');
         const mobileBtn = document.getElementById('mobile-tradition-toggle');
-        const desktopLabel = document.getElementById('tradition-label');
-        const mobileLabel = document.getElementById('mobile-tradition-label');
-
-        const labelText = showNonOrthodox ? 'Hide Non-Orthodox' : 'Show Non-Orthodox';
-        if (desktopLabel) desktopLabel.textContent = labelText;
-        if (mobileLabel) mobileLabel.textContent = labelText;
-        
         const isApplied = !showNonOrthodox;
         if (desktopBtn) desktopBtn.classList.toggle('active', isApplied);
         if (mobileBtn) mobileBtn.classList.toggle('active', isApplied);
