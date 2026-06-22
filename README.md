@@ -16,13 +16,14 @@ Orthodox Pilgrimage is a modern, community-driven web application designed to he
 - **Backend**: [Go](https://go.dev/) (standard library `net/http`)
 - **Database**: SQLite with [sqlc](https://sqlc.dev/) for type-safe queries.
 - **Frontend**: HTML Templates, [HTMX](https://htmx.org/), [OpenLayers](https://openlayers.org/) (Maps), and Vanilla CSS.
+- **Storage**: AWS S3 compatible object storage (e.g., Tigris) for image uploads.
 - **Caching**: Strategy optimized for Cloudflare Edge Caching.
 
 ## 🏃 Getting Started
 
 ### Prerequisites
 
-- Go 1.22+
+- Go 1.26+
 - `make`
 - `sqlc` (for regenerating database code) `make install/tools`
 
@@ -45,7 +46,7 @@ Orthodox Pilgrimage is a modern, community-driven web application designed to he
     ```bash
     ./bin/orthodoxpilgrimage
     ```
-    The server will start on `:8080`. The database (`orthodox_pilgrimage.db`) is automatically created and migrated on startup. Use the `--seed` flag to populate it from `data.json`.
+    The server will start on `:8080`. The database (`orthodox_pilgrimage.db`) is automatically created and migrated on startup. Use the `--seed` flag to populate it with initial development data.
 
 ## 🤝 Contributing
 
@@ -53,16 +54,9 @@ We welcome contributions of all kinds, from bug fixes and feature requests to da
 
 ### Contributing Data Updates
 
-The "Source of Truth" for the application's data is a single JSON file. You don't need to know how to code to help us keep the map accurate!
+The application's data is managed via a secure internal admin interface. 
 
-**File Location**: `internal/app/data/data.json`
-
-To add a new church or saint:
-
-1.  Locate `internal/app/data/data.json`.
-2.  Add a new entry to the `saints` array or `churches` array.
-3.  Ensure `saint_slug` in the church's `relics` list matches the `slug` defined in the `saints` section.
-4.  Submit a Pull Request with your changes.
+If you have corrections, new information, or want to add a new church or saint to the map, please reach out to us at info@orthodoxpilgrimage.com or open an issue on GitHub. We'll be happy to add it!
 
 ### Contributing Code
 
