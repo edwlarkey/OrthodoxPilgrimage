@@ -6,9 +6,10 @@ An interactive, community-driven Go web application that maps Orthodox Christian
 
 ## Tech Stack
 
-- **Backend:** Go 1.24, `net/http` standard library, SQLite (`modernc.org/sqlite`)
+- **Backend:** Go 1.26, `net/http` standard library, SQLite (`modernc.org/sqlite`)
 - **Database:** SQLite with sqlc for type-safe query generation, embed-based migrations
-- **Frontend:** Go `html/template`, HTMX, Leaflet.js, OpenStreetMap
+- **Frontend:** Go `html/template`, HTMX, OpenLayers, OpenStreetMap
+- **Storage:** AWS S3 compatible object storage (Tigris) for image uploads
 - **Deployment:** Docker (multi-stage), Fly.io
 - **Module path:** `github.com/edwlarkey/orthodoxpilgrimage`
 
@@ -35,7 +36,7 @@ This ensures that:
 1.  **Code Quality:** `go fmt` and `go vet` are satisfied.
 2.  **Linter Compliance:** `golangci-lint` (including `errcheck`, `gosec`, etc.) passes with the project's specific `.golangci.yml` configuration.
 3.  **Stability:** All tests, including those with the race detector, pass.
-4.  **Data Integrity:** The `data.json` source of truth remains valid.
+4.  **Data Integrity:** Seeding and data validations pass.
 
 No change is considered complete until `make audit` has passed successfully.
 
@@ -68,10 +69,10 @@ No change is considered complete until `make audit` has passed successfully.
 - **Template structure:** `base.html` is the root template. Page templates extend it via `{{define "content"}}`.
 - **Data passing:** Use typed structs (e.g., `ChurchWithRelics`, `SaintWithType`) rather than `map[string]interface{}`.
 
-### Seeding
+### Admin & Seeding
 
-- **Source of truth:** `internal/app/data/data.json` is the single source of truth for all data.
-- **Sync:** Database can be synced from the embedded JSON using the `--seed` flag on startup. This clears and re-inserts all data.
+- **Data Management:** Data is managed via an internal admin interface.
+- **Seeding:** For development, the database can be seeded from `internal/app/data/data.json` using the `--seed` flag on startup.
 - **Test seeding:** Use `SeedFromReader()` with `strings.NewReader()` or `bytes.NewReader()` for test data.
 
 ## Development Commands
@@ -164,5 +165,5 @@ Configuration is in `fly.toml`. Deploy via `fly deploy`.
 2. **New queries:** Add to `internal/db/queries/queries.sql`, run `make generate`.
 3. **New endpoint:** Add route in `Application.Routes()`, create handler method on `*Application`, write tests.
 4. **New template:** Add `.html` file to `internal/ui/templates/`, it will be auto-embedded.
-5. **New data:** Update `internal/app/data/data.json`, the next startup will sync it.
+5. **New data:** Add data via the admin interface (or update `data.json` for development seeding).
 6. **Always:** Run `make audit` before committing.

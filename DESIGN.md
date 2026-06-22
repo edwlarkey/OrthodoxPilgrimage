@@ -15,17 +15,17 @@ typography:
     fontWeight: 400
     lineHeight: 1
   headline:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "System Fonts"
     fontSize: 19px
     fontWeight: 800
     lineHeight: 1.2
   body:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "System Fonts"
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.6
   label:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "System Fonts"
     fontSize: 12px
     fontWeight: 700
     lineHeight: 1
@@ -58,12 +58,12 @@ The palette is rooted in sophisticated slates and a vibrant plum accent.
 
 ## Typography
 
-The system uses a combination of **Antic Didone** for branding and **Inter** for all functional interface elements.
+The system uses a combination of **Antic Didone** for branding and **System Fonts** for all functional interface elements.
 
 - **Brand:** Set in Antic Didone (Regular). Provides a classical, liturgical feel to the main title.
-- **Headlines:** Set in Inter (Extra Bold). Compact and high-impact.
-- **Body:** Inter (Regular) at 14px. Clean and optimized for digital readability.
-- **Labels:** Inter (Bold) with slight letter spacing for metadata and navigation.
+- **Headlines:** Set in System Fonts (Extra Bold). Compact and high-impact.
+- **Body:** System Fonts (Regular) at 14px. Clean and optimized for digital readability.
+- **Labels:** System Fonts (Bold) with slight letter spacing for metadata and navigation.
 
 ## Layout
 
@@ -83,7 +83,7 @@ Containers and buttons use generous rounded corners (12px - 20px) to evoke a fri
 The site logo is featured prominently in the header with a height of 44px, paired with the site title in Antic Didone. The title uses a tight line-height and stacked layout on smaller screens.
 
 ### Buttons
-Primary actions use solid Plum backgrounds with white text and rounded "pill" or semi-pill shapes. All interactive elements inherit the system font stack (`Inter`) for consistent weight and clarity.
+Primary actions use solid Plum backgrounds with white text and rounded "pill" or semi-pill shapes. All interactive elements inherit the system font stack for consistent weight and clarity.
 
 ### Panels
 All panels (Header, Sidebar, Search) utilize the glass background and border tokens with a blur effect.
