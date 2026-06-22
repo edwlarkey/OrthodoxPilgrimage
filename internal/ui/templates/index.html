@@ -29,6 +29,10 @@
             <div class="loading">Select a location on the map to begin your pilgrimage.</div>
         {{end}}
     </div>
+    <div class="sidebar-scroll-indicator" id="sidebar-scroll-indicator">
+        <span>Scroll</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
 </div>
 
 <div class="top-controls-bar">
@@ -52,7 +56,7 @@
     <div class="filter-section">
         <button id="tradition-toggle" class="tradition-toggle" onclick="toggleTradition()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            <span id="tradition-label">Hide Non-Orthodox</span>
+            <span id="tradition-label">Orthodox Sites Only</span>
         </button>
     </div>
 
@@ -120,7 +124,7 @@
             <!-- Tradition -->
             <button id="mobile-tradition-toggle" class="mobile-pill-tradition" onclick="toggleTradition()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                <span id="mobile-tradition-label">Hide Non-Orthodox</span>
+                <span id="mobile-tradition-label">Orthodox Sites Only</span>
             </button>
             <!-- Relic Types -->
             <div class="mobile-relic-scroll">
@@ -392,13 +396,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const desktopBtn = document.getElementById('tradition-toggle');
         const mobileBtn = document.getElementById('mobile-tradition-toggle');
-        const desktopLabel = document.getElementById('tradition-label');
-        const mobileLabel = document.getElementById('mobile-tradition-label');
-
-        const labelText = showNonOrthodox ? 'Hide Non-Orthodox' : 'Show Non-Orthodox';
-        if (desktopLabel) desktopLabel.textContent = labelText;
-        if (mobileLabel) mobileLabel.textContent = labelText;
-        
         const isApplied = !showNonOrthodox;
         if (desktopBtn) desktopBtn.classList.toggle('active', isApplied);
         if (mobileBtn) mobileBtn.classList.toggle('active', isApplied);
@@ -538,14 +535,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    function updateScrollIndicator() {
+        const content = document.getElementById('church-details');
+        const indicator = document.getElementById('sidebar-scroll-indicator');
+        if (!indicator || !content) return;
+        
+        if (window.innerWidth <= 500) {
+            // Check if there is scrollable content and we haven't scrolled down much
+            if (content.scrollHeight > content.clientHeight && content.scrollTop < 20) {
+                indicator.classList.add('visible');
+            } else {
+                indicator.classList.remove('visible');
+            }
+        } else {
+            indicator.classList.remove('visible');
+        }
+    }
+
+    document.getElementById('church-details').addEventListener('scroll', updateScrollIndicator);
+    window.addEventListener('resize', updateScrollIndicator);
+
     document.body.addEventListener('htmx:afterSwap', function(event) {
         if (event.detail.target.id === 'church-details') {
             const sidebar = document.getElementById('sidebar');
             if (sidebar.classList.contains('hidden') && !event.detail.target.querySelector('.loading')) {
                 toggleSidebar();
             }
+            // Add a small delay to let DOM settle and calculate heights correctly
+            setTimeout(updateScrollIndicator, 100);
         }
     });
+
 
     document.body.addEventListener('churchSelected', function(evt) {
         const data = evt.detail;
@@ -703,6 +723,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     updateFiltersUI();
+    updateScrollIndicator();
+    // Also check after a slight delay in case images are loading and changing the scroll height
+    setTimeout(updateScrollIndicator, 500);
 });
 </script>
 {{end}}
