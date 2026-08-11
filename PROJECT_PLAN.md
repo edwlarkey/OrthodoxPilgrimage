@@ -73,31 +73,31 @@ The project will be built with the following technologies:
 This is a high-level plan for development.
 
 *   **Phase 1: Backend Setup & Data Modeling**
-    *   Set up the Go project structure (`/cmd`, `/internal`, etc.).
-    *   Define the database schema in SQL (`schema.sql`).
-    *   Write initial queries (`queries.sql`) and use `sqlc` to generate Go models and query code.
-    *   Create a simple command-line script or tool to seed the database with initial data (including geocoding).
+    *   [x] Set up the Go project structure (`/cmd`, `/internal`, etc.).
+    *   [x] Define the database schema in SQL (`schema.sql`).
+    *   [x] Write initial queries (`queries.sql`) and use `sqlc` to generate Go models and query code.
+    *   [x] Create a simple command-line script or tool to seed the database with initial data (including geocoding).
 
 *   **Phase 2: Core Map & API Endpoint**
-    *   Set up a basic Go web server using `net/http`.
-    *   Create an API endpoint that returns a list of churches (in a specific geographic boundary) as JSON.
-    *   Build the initial frontend page with a full-screen Leaflet.js map that fetches and displays church locations from the API endpoint.
+    *   [x] Set up a basic Go web server using `net/http`.
+    *   [x] Create an API endpoint that returns a list of churches (in a specific geographic boundary) as JSON.
+    *   [x] Build the initial frontend page with a full-screen Leaflet.js map that fetches and displays church locations from the API endpoint.
 
 *   **Phase 3: HTMX Interactivity & UI**
-    *   Create a server endpoint that renders an HTML fragment for a single church's details.
-    *   Use HTMX so that clicking a map pin fetches and displays this HTML fragment.
-    *   Implement the URL update for bookmarking when a church is selected (using `hx-push-url`).
-    *   Implement the city search functionality using an HTMX-powered form.
-    *   Develop the overall layout and styling.
+    *   [x] Create a server endpoint that renders an HTML fragment for a single church's details.
+    *   [x] Use HTMX so that clicking a map pin fetches and displays this HTML fragment.
+    *   [x] Implement the URL update for bookmarking when a church is selected (using `hx-push-url`).
+    *   [x] Implement the city search functionality using an HTMX-powered form.
+    *   [x] Develop the overall layout and styling.
 
 *   **Phase 4: Deployment**
-    *   Containerize the application using a `Dockerfile`.
-    *   Prepare for deployment to a hosting service.
+    *   [x] Containerize the application using a `Dockerfile`.
+    *   [x] Prepare for deployment to a hosting service.
 
 ## 6. Future Features (Post-MVP)
 
-*   **Admin Interface:** A web-based UI for admins to add/edit/delete data.
-*   **User Accounts:** Allowing users to save favorite churches or plan itineraries.
-*   **Crowdsourcing:** A system for users to submit new churches or suggest corrections, with an admin approval workflow.
-*   **Advanced Filtering:** Filter churches by jurisdiction or saint.
-*   **Detailed Saint Pages:** Pages with more information about each saint.
+*   [x] **Admin Interface:** A web-based UI for admins to add/edit/delete data.
+*   [ ] **User Accounts:** Allowing users to save favorite churches or plan itineraries.
+*   [ ] **Crowdsourcing:** A system for users to submit new churches or suggest corrections, with an admin approval workflow.
+*   [ ] **Advanced Filtering:** Filter churches by jurisdiction or saint.
+*   [x] **Detailed Saint Pages:** Pages with more information about each saint.

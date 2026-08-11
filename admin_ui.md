@@ -141,11 +141,11 @@ High test coverage is a mandatory requirement for the admin interface.
 - [x] **Tests:** E2E tests for address search and pin dragging.
 
 ### Phase 5: Image Pipeline & Tigris Integration
-- [ ] Set up Tigris S3 client and configuration.
-- [ ] Implement the multi-file upload handler.
-- [ ] Integrate ImageMagick (\`magick\`) for WebP conversion and optimization.
-- [ ] Implement the image management gallery (set primary, delete, edit alt text).
-- [ ] **Tests:** Pipeline integration tests verifying WebP output and Tigris storage.
+- [x] Set up Tigris S3 client and configuration.
+- [x] Implement the multi-file upload handler.
+- [x] Integrate ImageMagick (\`magick\`) for WebP conversion and optimization.
+- [x] Implement the image management gallery (set primary, delete, edit alt text).
+- [x] **Tests:** Pipeline integration tests verifying WebP output and Tigris storage.
 
 ### Phase 6: Polish & Advanced Security
 - [ ] Implement Bulk Actions (batch publish/delete).
