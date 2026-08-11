@@ -94,9 +94,9 @@ func (a *Application) Routes() http.Handler {
 
 	mux.Handle("/admin/", a.AdminAuthMiddleware(adminMux))
 
-	mux.HandleFunc("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "sitemap.xml")
-	})
+	mux.HandleFunc("/healthz", a.healthHandler)
+
+	mux.HandleFunc("/sitemap.xml", a.sitemapHandler)
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "public, max-age=2592000")
 		r.URL.Path = "/static/favicon.ico"
@@ -159,6 +159,19 @@ func (a *Application) flyDevRobotsMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (a *Application) healthHandler(w http.ResponseWriter, r *http.Request) {
+	if err := a.DBConn.PingContext(r.Context()); err != nil {
+		slog.Error("health check: database ping failed", "error", err)
+		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	if _, err := fmt.Fprintln(w, "ok"); err != nil {
+		slog.Error("health check: failed to write response", "error", err)
+	}
 }
 
 func (a *Application) AdminAuthMiddleware(next http.Handler) http.Handler {

@@ -1,13 +1,11 @@
 package app
 
 import (
-	"context"
 	"encoding/xml"
 	"fmt"
-	"os"
+	"log/slog"
+	"net/http"
 	"time"
-
-	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 )
 
 type URL struct {
@@ -20,15 +18,22 @@ type URLSet struct {
 	URLs    []URL    `xml:"url"`
 }
 
-func GenerateSitemap(ctx context.Context, queries *sqlcdb.Queries, baseURL string) error {
-	churches, err := queries.ListChurches(ctx)
+func (a *Application) sitemapHandler(w http.ResponseWriter, r *http.Request) {
+	baseURL := "https://orthodoxpilgrimage.com"
+	ctx := r.Context()
+
+	churches, err := a.DB.ListChurches(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to list churches: %w", err)
+		slog.Error("failed to list churches for sitemap", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
 	}
 
-	saints, err := queries.ListSaints(ctx)
+	saints, err := a.DB.ListSaints(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to list saints: %w", err)
+		slog.Error("failed to list saints for sitemap", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	urlSet := URLSet{
@@ -59,21 +64,18 @@ func GenerateSitemap(ctx context.Context, queries *sqlcdb.Queries, baseURL strin
 		})
 	}
 
-	f, err := os.Create("sitemap.xml")
-	if err != nil {
-		return fmt.Errorf("failed to create sitemap file: %w", err)
-	}
-	defer f.Close()
+	w.Header().Set("Content-Type", "application/xml")
+	// Cache the sitemap for 1 hour to reduce DB load
+	w.Header().Set("Cache-Control", "public, max-age=3600")
 
-	if _, err := f.Write([]byte(xml.Header)); err != nil {
-		return err
+	if _, err := w.Write([]byte(xml.Header)); err != nil {
+		slog.Error("failed to write xml header for sitemap", "error", err)
+		return
 	}
 
-	enc := xml.NewEncoder(f)
+	enc := xml.NewEncoder(w)
 	enc.Indent("", "  ")
 	if err := enc.Encode(urlSet); err != nil {
-		return fmt.Errorf("failed to encode sitemap: %w", err)
+		slog.Error("failed to encode sitemap", "error", err)
 	}
-
-	return nil
 }

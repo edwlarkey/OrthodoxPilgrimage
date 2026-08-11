@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/app"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/db"
+	"github.com/edwlarkey/orthodoxpilgrimage/internal/db/sessionstore"
 	sqlcdb "github.com/edwlarkey/orthodoxpilgrimage/internal/db/sqlc"
 	"github.com/edwlarkey/orthodoxpilgrimage/internal/ui"
 	"github.com/stretchr/testify/assert"
@@ -98,10 +99,14 @@ func seedTestDB(t *testing.T) (*app.Application, *sql.DB) {
 	m := minify.New()
 	m.AddFunc("text/css", css.Minify)
 
+	sessionManager := scs.New()
+	sessionManager.Store = sessionstore.New(dbConn)
+
 	appInstance := &app.Application{
-		DB:        queries,
-		Templates: tmplMgr,
-		Minifier:  m,
+		DB:             queries,
+		Templates:      tmplMgr,
+		Minifier:       m,
+		SessionManager: sessionManager,
 	}
 	return appInstance, dbConn
 }
@@ -289,44 +294,38 @@ func TestHomeHandler_ChurchWithSources(t *testing.T) {
 	assert.Contains(t, rr.Body.String(), "https://example.com/source1")
 }
 
-func TestGenerateSitemap_UsesUpdatedDates(t *testing.T) {
+func TestSitemapHandler_UsesUpdatedDates(t *testing.T) {
 	appInstance, dbConn := seedTestDB(t)
 	defer dbConn.Close()
 
-	ctx := context.Background()
+	req, _ := http.NewRequest("GET", "/sitemap.xml", nil)
+	rr := httptest.NewRecorder()
+	handler := appInstance.Routes()
+	handler.ServeHTTP(rr, req)
 
-	err := app.GenerateSitemap(ctx, appInstance.DB, "https://example.com")
-	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, rr.Code)
+	body := rr.Body.String()
 
-	data, err := os.ReadFile("sitemap.xml")
-	require.NoError(t, err)
-	defer os.Remove("sitemap.xml")
-
-	body := string(data)
-
-	assert.Contains(t, body, "<loc>https://example.com/churches/st-john-baptist-ny</loc>")
-	assert.Contains(t, body, "<loc>https://example.com/st-seraphim-of-sarov</loc>")
+	assert.Contains(t, body, "<loc>https://orthodoxpilgrimage.com/churches/st-john-baptist-ny</loc>")
+	assert.Contains(t, body, "<loc>https://orthodoxpilgrimage.com/st-seraphim-of-sarov</loc>")
 
 	assert.Contains(t, body, "2026-03-10")
 	assert.Contains(t, body, "2026-01-15")
 }
 
-func TestGenerateSitemap_NoUpdatedDate(t *testing.T) {
+func TestSitemapHandler_NoUpdatedDate(t *testing.T) {
 	appInstance, dbConn := seedTestDB(t)
 	defer dbConn.Close()
 
-	ctx := context.Background()
+	req, _ := http.NewRequest("GET", "/sitemap.xml", nil)
+	rr := httptest.NewRecorder()
+	handler := appInstance.Routes()
+	handler.ServeHTTP(rr, req)
 
-	err := app.GenerateSitemap(ctx, appInstance.DB, "https://example.com")
-	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, rr.Code)
+	body := rr.Body.String()
 
-	data, err := os.ReadFile("sitemap.xml")
-	require.NoError(t, err)
-	defer os.Remove("sitemap.xml")
-
-	body := string(data)
-
-	assert.Contains(t, body, "<loc>https://example.com/churches/holy-trinity-chicago</loc>")
+	assert.Contains(t, body, "<loc>https://orthodoxpilgrimage.com/churches/holy-trinity-chicago</loc>")
 
 	today := time.Now().Format("2006-01-02")
 	assert.Contains(t, body, today)

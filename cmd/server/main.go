@@ -25,6 +25,8 @@ import (
 )
 
 func main() {
+	bootStart := time.Now()
+
 	logFormat := flag.String("log-format", "text", "log format: text or json")
 	devMode := flag.Bool("dev", false, "enable development mode")
 	seed := flag.Bool("seed", false, "seed database from data/data.json")
@@ -39,6 +41,7 @@ func main() {
 		handler = slog.NewTextHandler(os.Stdout, nil)
 	}
 	slog.SetDefault(slog.New(handler))
+	slog.Info("Starting up", "phase", "init")
 
 	// S3 / Tigris Configuration
 	imageBucket := os.Getenv("IMAGE_BUCKET")
@@ -50,6 +53,7 @@ func main() {
 
 	var s3Client *s3.Client
 	if imageBucket != "" && s3Endpoint != "" {
+		s3Start := time.Now()
 		cfg, err := config.LoadDefaultConfig(context.TODO(),
 			config.WithRegion(s3Region),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
@@ -64,30 +68,33 @@ func main() {
 			s3Client = s3.NewFromConfig(cfg, func(o *s3.Options) {
 				o.BaseEndpoint = aws.String(s3Endpoint)
 			})
-			slog.Info("S3 client initialized", "bucket", imageBucket, "endpoint", s3Endpoint)
+			slog.Info("S3 client initialized", "bucket", imageBucket, "endpoint", s3Endpoint, "elapsed", time.Since(s3Start).String())
 		}
 	} else {
 		slog.Warn("S3 configuration missing; image uploads will be disabled", "bucket", imageBucket, "endpoint", s3Endpoint)
 	}
 
+	dbStart := time.Now()
 	dsn := *dbPath + "?_busy_timeout=5000"
 	dbConn, err := internaldb.New(dsn)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
 		os.Exit(1)
 	}
+	slog.Info("Database connection successful", "elapsed", time.Since(dbStart).String())
+
 	defer func() {
 		if err := dbConn.Close(); err != nil {
 			slog.Error("failed to close database connection", "error", err)
 		}
 	}()
-	slog.Info("Database connection successful")
 
+	migrateStart := time.Now()
 	if err := internaldb.MigrateUp(dbConn); err != nil {
 		slog.Error("failed to run migrations", "error", err)
 		os.Exit(1)
 	}
-	slog.Info("Database migrations successful")
+	slog.Info("Database migrations successful", "elapsed", time.Since(migrateStart).String())
 
 	queries := sqlcdb.New(dbConn)
 
@@ -109,18 +116,13 @@ func main() {
 		slog.Info("Database synced successfully")
 	}
 
-	slog.Info("Generating sitemap.xml...")
-	if err := app.GenerateSitemap(context.Background(), queries, "https://orthodoxpilgrimage.com"); err != nil {
-		slog.Error("failed to generate sitemap", "error", err)
-		os.Exit(1)
-	}
-	slog.Info("Sitemap generated successfully")
-
+	tmplStart := time.Now()
 	tmplMgr, err := ui.NewTemplateManager()
 	if err != nil {
 		slog.Error("failed to create template manager", "error", err)
 		os.Exit(1)
 	}
+	slog.Info("Templates loaded", "elapsed", time.Since(tmplStart).String())
 
 	m := minify.New()
 	m.AddFunc("text/css", css.Minify)
@@ -163,7 +165,7 @@ func main() {
 		close(idleConnsClosed)
 	}()
 
-	slog.Info("Starting server on :8080")
+	slog.Info("Server ready", "addr", ":8080", "total_startup", time.Since(bootStart).String())
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		// Error starting or closing listener:
 		slog.Error("HTTP server ListenAndServe error", "error", err)
